@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(dir:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(php:*)",
+      "Bash(composer:*)",
+      "Bash(where:*)",
+      "Bash(pnpm --version:*)",
+      "Bash(yarn --version:*)",
+      "Bash(git --version:*)",
+      "Bash(docker:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Bash(echo:*)",
+      "Bash(node -e:*)",
+      "Bash(npm run build:*)",
+      "Bash(MSYS_NO_PATHCONV=1 docker run:*)"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+    "_comment": "Packages to install after composer create-project. Run: composer require $(cat composer.local.json | jq -r '.require | to_entries[] | .key + \":\" + .value' | tr '\n' ' ')",
+    "require": {
+        "laravel/sanctum": "^4.0",
+        "spatie/laravel-permission": "^6.0",
+        "spatie/laravel-media-library": "^11.0"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23"
+    }
+}

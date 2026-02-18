@@ -1,0 +1,66 @@
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── IDE / Editores ────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ── Frontend (Vue / Vite) ──────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/*.local
+
+# ── Backend (Laravel) ─────────────────────────────────────────────────────────
+backend/vendor/
+backend/node_modules/
+backend/.env
+backend/.env.backup
+backend/.env.production
+backend/.env.docker
+backend/public/build/
+backend/public/hot
+backend/public/storage
+backend/storage/*.key
+backend/storage/logs/*.log
+backend/storage/pail
+backend/storage/app/public/*
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*.php
+backend/.phpunit.result.cache
+backend/.phpunit.cache/
+backend/auth.json
+
+# Marcadores Docker (se generan en runtime)
+backend/.docker-published
+backend/.docker-seeded
+backend/.docker-packages-installed
+
+# ── Docker (datos locales) ────────────────────────────────────────────────────
+docker/data/
+
+# ── Logs y temporales ─────────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Otros ─────────────────────────────────────────────────────────────────────
+Homestead.json
+Homestead.yaml
+.phpactor.json
