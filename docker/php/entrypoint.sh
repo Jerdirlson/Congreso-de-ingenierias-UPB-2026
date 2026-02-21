@@ -63,6 +63,15 @@ if [ ! -f "$MARKER" ]; then
   touch "$MARKER"
 fi
 
+# ── Directorios de storage (necesarios antes de config:cache) ─────────────────
+mkdir -p "$APP_DIR/storage/framework/views" \
+         "$APP_DIR/storage/framework/cache/data" \
+         "$APP_DIR/storage/framework/sessions" \
+         "$APP_DIR/storage/framework/testing" \
+         "$APP_DIR/storage/logs" \
+         "$APP_DIR/storage/app/public" \
+         "$APP_DIR/bootstrap/cache"
+
 # ── Storage link ──────────────────────────────────────────────────────────────
 [ ! -L "$APP_DIR/public/storage" ] && php "$APP_DIR/artisan" storage:link --no-interaction 2>/dev/null || true
 
