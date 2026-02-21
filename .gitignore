@@ -49,6 +49,9 @@ backend/.docker-published
 backend/.docker-seeded
 backend/.docker-packages-installed
 
+# ── Entorno de producción (NUNCA subir al repo) ───────────────────────────────
+.env
+
 # ── Docker (datos locales) ────────────────────────────────────────────────────
 docker/data/
 

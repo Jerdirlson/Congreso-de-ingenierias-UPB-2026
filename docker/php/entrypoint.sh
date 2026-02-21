@@ -32,6 +32,13 @@ sed -i "s|^REDIS_PORT=.*|REDIS_PORT=${REDIS_PORT}|"         "$APP_DIR/.env"
 sed -i "s|^CACHE_STORE=.*|CACHE_STORE=${CACHE_DRIVER:-redis}|" "$APP_DIR/.env"
 sed -i "s|^SESSION_DRIVER=.*|SESSION_DRIVER=${SESSION_DRIVER:-redis}|" "$APP_DIR/.env"
 sed -i "s|^QUEUE_CONNECTION=.*|QUEUE_CONNECTION=${QUEUE_CONNECTION:-redis}|" "$APP_DIR/.env"
+if [ -n "${SANCTUM_STATEFUL_DOMAINS}" ]; then
+  sed -i "s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAINS}|" "$APP_DIR/.env" 2>/dev/null || true
+fi
+if [ -n "${APP_ENV}" ]; then
+  sed -i "s|^APP_ENV=.*|APP_ENV=${APP_ENV}|"     "$APP_DIR/.env"
+  sed -i "s|^APP_DEBUG=.*|APP_DEBUG=${APP_DEBUG:-false}|" "$APP_DIR/.env"
+fi
 
 # ── App Key ───────────────────────────────────────────────────────────────────
 if ! grep -q "APP_KEY=base64" "$APP_DIR/.env" 2>/dev/null; then
@@ -65,18 +72,32 @@ chown -R www-data:www-data "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/
 
 # ── Migraciones ───────────────────────────────────────────────────────────────
 cd "$APP_DIR"
-SEED_MARKER="$APP_DIR/.docker-seeded"
-if [ ! -f "$SEED_MARKER" ]; then
-  php artisan migrate --force --seed --no-interaction
-  touch "$SEED_MARKER"
-else
+if [ "$APP_ENV" = "production" ]; then
+  # Producción: solo migrar, nunca sembrar datos de prueba
   php artisan migrate --force --no-interaction 2>&1 || true
+else
+  # Desarrollo: sembrar solo en el primer arranque
+  SEED_MARKER="$APP_DIR/.docker-seeded"
+  if [ ! -f "$SEED_MARKER" ]; then
+    php artisan migrate --force --seed --no-interaction
+    touch "$SEED_MARKER"
+  else
+    php artisan migrate --force --no-interaction 2>&1 || true
+  fi
 fi
 
-# ── Limpiar cache ─────────────────────────────────────────────────────────────
-php artisan config:clear
-php artisan route:clear
-php artisan cache:clear
+# ── Cache de configuración ────────────────────────────────────────────────────
+if [ "$APP_ENV" = "production" ]; then
+  # Producción: cachear config/rutas/vistas para máximo rendimiento
+  php artisan config:cache
+  php artisan route:cache
+  php artisan view:cache
+else
+  # Desarrollo: limpiar cache para hot-reload
+  php artisan config:clear
+  php artisan route:clear
+  php artisan cache:clear
+fi
 
 echo ""
 echo "============================================"

@@ -1,0 +1,23 @@
+# ── Stage 1: Build del frontend (Vue 3 + Vite) ───────────────────────────────
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app
+
+# Instalar dependencias primero (caching de capas)
+COPY frontend/package*.json ./
+RUN npm ci
+
+# Copiar código fuente y compilar
+COPY frontend/ .
+RUN npm run build
+
+# ── Stage 2: Nginx sirviendo el frontend compilado ────────────────────────────
+FROM nginx:1.27-alpine
+
+# Archivos estáticos del frontend
+COPY --from=frontend-builder /app/dist /usr/share/nginx/html
+
+# Configuración de Nginx para producción
+COPY docker/nginx/nginx.prod.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80 443

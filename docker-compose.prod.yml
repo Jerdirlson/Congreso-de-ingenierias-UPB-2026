@@ -1,0 +1,105 @@
+services:
+
+  # ── Nginx: sirve el frontend compilado y hace proxy al backend ────────────
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile.prod
+    container_name: cgr-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Storage compartido (read-only) para servir archivos de media
+      - cgr-storage:/var/www/html/storage:ro
+      # SSL (se agrega cuando el CTIC entregue los certificados)
+      # - /etc/ssl/congreso:/etc/ssl/congreso:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - cgr-network
+
+  # ── PHP-FPM (Laravel backend) ─────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: cgr-backend
+    volumes:
+      - ./backend:/var/www/html
+      - cgr-vendor:/var/www/html/vendor
+      - cgr-storage:/var/www/html/storage
+    environment:
+      APP_ENV:    production
+      APP_DEBUG:  "false"
+      APP_URL:    ${APP_URL:-http://congreso2026.bucaramanga.upb.edu.co}
+      DB_CONNECTION: mysql
+      DB_HOST:    mysql
+      DB_PORT:    "3306"
+      DB_DATABASE: ${DB_DATABASE:-congreso_db}
+      DB_USERNAME: ${DB_USERNAME:-congreso}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST:  redis
+      REDIS_PORT:  "6379"
+      CACHE_DRIVER:      redis
+      SESSION_DRIVER:    redis
+      QUEUE_CONNECTION:  redis
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-congreso2026.bucaramanga.upb.edu.co}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cgr-network
+
+  # ── MySQL 8.0 ─────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: cgr-mysql
+    # Puerto NO expuesto al host en producción (solo accesible internamente)
+    environment:
+      MYSQL_DATABASE:      ${DB_DATABASE:-congreso_db}
+      MYSQL_USER:          ${DB_USERNAME:-congreso}
+      MYSQL_PASSWORD:      ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - cgr-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - cgr-network
+
+  # ── Redis 7 ───────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cgr-redis
+    # Puerto NO expuesto al host en producción
+    volumes:
+      - cgr-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - cgr-network
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  cgr-mysql:
+  cgr-redis:
+  cgr-storage:
+  cgr-vendor:
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  cgr-network:
+    driver: bridge
