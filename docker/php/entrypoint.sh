@@ -88,10 +88,9 @@ fi
 
 # ── Cache de configuración ────────────────────────────────────────────────────
 if [ "$APP_ENV" = "production" ]; then
-  # Producción: cachear config/rutas/vistas para máximo rendimiento
+  # Producción: cachear config/rutas (sin view:cache, es API sin vistas Blade)
   php artisan config:cache
   php artisan route:cache
-  php artisan view:cache
 else
   # Desarrollo: limpiar cache para hot-reload
   php artisan config:clear
