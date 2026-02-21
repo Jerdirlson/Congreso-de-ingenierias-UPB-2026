@@ -16,10 +16,10 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Instalar PHP 8.3
+      - name: Instalar PHP 8.4
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
+          php-version: "8.4"
           extensions: mbstring, pdo_sqlite, sqlite3, zip, gd, bcmath
           coverage: none
 
