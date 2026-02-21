@@ -22,19 +22,13 @@ class HealthController extends Controller
             return response()->json([
                 'status'    => $healthy ? 'ok' : 'degraded',
                 'service'   => 'congreso-ingenierias-2026-api',
-                'version'   => '1.0.0',
                 'timestamp' => now()->toISOString(),
-                'php'       => PHP_VERSION,
-                'laravel'   => app()->version(),
                 'checks'    => $checks,
             ], $healthy ? 200 : 503);
         } catch (\Throwable $e) {
             return response()->json([
-                'status'    => 'error',
-                'service'   => 'congreso-ingenierias-2026-api',
-                'message'   => $e->getMessage(),
-                'file'      => $e->getFile(),
-                'line'      => $e->getLine(),
+                'status'  => 'error',
+                'service' => 'congreso-ingenierias-2026-api',
             ], 503);
         }
     }

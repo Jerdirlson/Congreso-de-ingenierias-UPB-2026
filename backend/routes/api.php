@@ -23,20 +23,23 @@ use Illuminate\Support\Facades\Route;
 /** GET /api/health — Sin throttle ni auth; siempre responde aunque Redis/cache fallen */
 Route::get('/health', HealthController::class)->withoutMiddleware([ThrottleRequests::class]);
 
-/** Public read-only resources */
-Route::get('/events',           [EventController::class, 'index']);
-Route::get('/events/{event}',   [EventController::class, 'show']);
-Route::get('/speakers',         [SpeakerController::class, 'index']);
-Route::get('/speakers/{speaker}', [SpeakerController::class, 'show']);
-Route::get('/documents',        [DocumentController::class, 'index']);
-Route::get('/documents/{document}', [DocumentController::class, 'show']);
-Route::get('/documents/{document}/download', [DocumentController::class, 'download']);
-Route::get('/streams',          [StreamController::class, 'index']);
-Route::get('/streams/{stream}', [StreamController::class, 'show']);
+/** Public read-only resources — 120 requests/minute por IP */
+Route::middleware('throttle:120,1')->group(function () {
+    Route::get('/events',           [EventController::class, 'index']);
+    Route::get('/events/{event}',   [EventController::class, 'show']);
+    Route::get('/speakers',         [SpeakerController::class, 'index']);
+    Route::get('/speakers/{speaker}', [SpeakerController::class, 'show']);
+    Route::get('/documents',        [DocumentController::class, 'index']);
+    Route::get('/documents/{document}', [DocumentController::class, 'show']);
+    Route::get('/documents/{document}/download', [DocumentController::class, 'download']);
+    Route::get('/streams',          [StreamController::class, 'index']);
+    Route::get('/streams/{stream}', [StreamController::class, 'show']);
+});
 
 // ── Authenticated ─────────────────────────────────────────────────────────────
 
-Route::middleware('auth:sanctum')->group(function () {
+/** Rutas autenticadas — 60 requests/minute por usuario */
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     // Events (admin)
     Route::post('/events',              [EventController::class, 'store']);
