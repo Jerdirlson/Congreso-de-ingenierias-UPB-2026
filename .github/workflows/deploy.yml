@@ -47,19 +47,18 @@ jobs:
   # ── 2. Deploy al VPS (solo push a main, solo si los tests pasan) ────────────
   deploy:
     name: Deploy to VPS
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: test-backend
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: Deploy vía SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd ~/congreso
-            git pull origin main
-            docker compose -f docker-compose.prod.yml up --build -d
-            echo "✅ Deploy completado — $(date)"
+      - name: Actualizar código
+        run: git -C ~/congreso pull origin main
+
+      - name: Reconstruir y reiniciar servicios
+        run: docker compose -f ~/congreso/docker-compose.prod.yml up --build -d
+
+      - name: Verificar despliegue
+        run: |
+          sleep 10
+          docker compose -f ~/congreso/docker-compose.prod.yml ps
