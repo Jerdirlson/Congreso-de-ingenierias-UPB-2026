@@ -19,6 +19,12 @@ export default defineConfig({
         // Host esperado por Laravel (evita 500 por TrustHosts/proxy)
         headers: { Host: 'localhost:8000' },
       },
+      // Archivos subidos: Nginx los sirve en /storage/, Vite los re-proxy al backend
+      '/storage': {
+        target: apiTarget,
+        changeOrigin: true,
+        headers: { Host: 'localhost:8000' },
+      },
     },
   },
 })

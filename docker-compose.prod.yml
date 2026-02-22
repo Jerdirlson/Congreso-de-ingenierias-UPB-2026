@@ -10,8 +10,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # Storage compartido (read-only) para servir archivos de media
-      - cgr-storage:/var/www/html/storage:ro
+      # Bind mount al host (read-only) — Nginx sirve archivos directamente
+      - ./data/storage/app/public:/var/www/html/storage/app/public:ro
       # SSL (se agrega cuando el CTIC entregue los certificados)
       # - /etc/ssl/congreso:/etc/ssl/congreso:ro
     depends_on:
@@ -29,11 +29,15 @@ services:
     volumes:
       - ./backend:/var/www/html
       - cgr-vendor:/var/www/html/vendor
-      - cgr-storage:/var/www/html/storage
+      # Bind mount al host → archivos accesibles y fáciles de respaldar
+      - ./data/storage:/var/www/html/storage
+      # Sobreescribe php.ini del build con límites grandes para prod
+      - ./docker/php/php.prod.ini:/usr/local/etc/php/conf.d/app.ini:ro
     environment:
       APP_ENV:    production
       APP_DEBUG:  "false"
-      APP_URL:    ${APP_URL:-http://congreso2026.bucaramanga.upb.edu.co}
+      APP_URL:    ${APP_URL:-https://congreso2026.bucaramanga.upb.edu.co}
+      APP_KEY:    ${APP_KEY}
       DB_CONNECTION: mysql
       DB_HOST:    mysql
       DB_PORT:    "3306"
@@ -45,6 +49,8 @@ services:
       CACHE_DRIVER:      redis
       SESSION_DRIVER:    redis
       QUEUE_CONNECTION:  redis
+      FILESYSTEM_DISK:   public
+      LOG_CHANNEL:       stderr
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-congreso2026.bucaramanga.upb.edu.co}
     depends_on:
       mysql:
@@ -66,7 +72,8 @@ services:
       MYSQL_PASSWORD:      ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
-      - cgr-mysql:/var/lib/mysql
+      # Bind mount → mysqldump / rsync funciona directo sobre ./data/mysql
+      - ./data/mysql:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -82,7 +89,7 @@ services:
     container_name: cgr-redis
     # Puerto NO expuesto al host en producción
     volumes:
-      - cgr-redis:/data
+      - ./data/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -94,9 +101,8 @@ services:
 
 # ── Volumes ───────────────────────────────────────────────────────────────────
 volumes:
-  cgr-mysql:
-  cgr-redis:
-  cgr-storage:
+  # Solo vendor queda como named volume (se rellena durante el build)
+  # mysql, redis y storage usan bind mounts en ./data/ → respaldar con rsync
   cgr-vendor:
 
 # ── Networks ──────────────────────────────────────────────────────────────────

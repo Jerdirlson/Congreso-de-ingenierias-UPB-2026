@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Media Test — Congreso Ingenierías 2026</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; }
+    #drop-zone.drag-over { border-color: #6366f1; background: #1e1b4b; }
+    .progress-bar { transition: width 0.3s ease; }
+    .check-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; }
+    .check-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+    .check-ok   { background: #14532d; color: #86efac; }
+    .check-fail { background: #450a0a; color: #fca5a5; }
+    .check-warn { background: #422006; color: #fcd34d; }
+    .check-spin { background: #1e1b4b; color: #a5b4fc; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-indigo-400">Media Upload Test</h1>
+      <p class="text-xs text-gray-500 mt-0.5">Herramienta de prueba — Solo disponible en APP_ENV=local</p>
+    </div>
+    <span id="status-badge" class="text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-400">Verificando backend…</span>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 py-8 space-y-8">
+
+    <!-- Requisitos -->
+    <section class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <h2 class="text-sm font-semibold text-gray-300 mb-3">Requisitos para videos del congreso</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+        <div class="bg-gray-800 rounded-lg p-3">
+          <div class="text-2xl mb-1">⏱</div>
+          <div class="text-xs font-semibold text-white">Máx. 8 minutos</div>
+          <div class="text-xs text-gray-500 mt-0.5">480 segundos</div>
+        </div>
+        <div class="bg-gray-800 rounded-lg p-3">
+          <div class="text-2xl mb-1">🎬</div>
+          <div class="text-xs font-semibold text-white">Solo MP4</div>
+          <div class="text-xs text-gray-500 mt-0.5">Codificación H.264</div>
+        </div>
+        <div class="bg-gray-800 rounded-lg p-3">
+          <div class="text-2xl mb-1">🖥</div>
+          <div class="text-xs font-semibold text-white">1080p o 720p</div>
+          <div class="text-xs text-gray-500 mt-0.5">1920×1080 / 1280×720</div>
+        </div>
+        <div class="bg-gray-800 rounded-lg p-3">
+          <div class="text-2xl mb-1">📐</div>
+          <div class="text-xs font-semibold text-white">16:9 horizontal</div>
+          <div class="text-xs text-gray-500 mt-0.5">Relación de aspecto</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Upload zone -->
+    <section>
+      <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Subir archivo</h2>
+
+      <div
+        id="drop-zone"
+        class="border-2 border-dashed border-gray-700 rounded-xl p-10 text-center cursor-pointer hover:border-indigo-500 transition-colors"
+        onclick="document.getElementById('file-input').click()"
+      >
+        <div class="text-4xl mb-3">📁</div>
+        <p class="text-gray-300 font-medium">Arrastra un archivo aquí o haz clic para seleccionar</p>
+        <p class="text-gray-500 text-sm mt-1">Videos MP4 · Documentos PDF, DOCX, PPTX · Imágenes</p>
+        <input id="file-input" type="file" class="hidden"
+          accept="video/mp4,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,image/*" />
+      </div>
+
+      <!-- Panel de validación (solo aparece para MP4) -->
+      <div id="validation-panel" class="hidden mt-4 bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-300">Validando video…</h3>
+          <span id="val-filename" class="text-xs text-gray-500 truncate max-w-xs"></span>
+        </div>
+        <div id="val-checks" class="divide-y divide-gray-800"></div>
+        <div id="val-actions" class="hidden mt-4 flex gap-3">
+          <button id="btn-upload" onclick="proceedUpload()"
+            class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors">
+            Subir video ↑
+          </button>
+          <button onclick="cancelValidation()"
+            class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg px-4 py-2 transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div id="progress-container" class="mt-4 hidden">
+        <div class="flex justify-between text-xs text-gray-400 mb-1">
+          <span id="progress-filename" class="truncate max-w-xs"></span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+          <div id="progress-bar" class="progress-bar h-full bg-indigo-500 rounded-full w-0"></div>
+        </div>
+        <p class="text-xs text-gray-600 mt-1">No cierres esta ventana mientras se sube el archivo</p>
+      </div>
+
+      <!-- Mensaje resultado -->
+      <div id="upload-msg" class="mt-3 hidden text-sm rounded-lg px-4 py-3"></div>
+    </section>
+
+    <!-- Files list -->
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Archivos subidos</h2>
+        <button onclick="loadFiles()" class="text-xs text-indigo-400 hover:text-indigo-300">↻ Recargar</button>
+      </div>
+      <div id="files-empty" class="hidden text-center text-gray-600 py-8 border border-gray-800 rounded-xl">
+        Aún no hay archivos subidos
+      </div>
+      <div id="files-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+  </main>
+
+  <!-- Preview modal -->
+  <div id="modal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-4"
+       onclick="closeModal(event)">
+    <div class="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-auto shadow-2xl"
+         onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between p-4 border-b border-gray-800">
+        <span id="modal-title" class="font-medium text-sm truncate max-w-md"></span>
+        <button onclick="closeModal({target:document.getElementById('modal')})"
+                class="text-gray-500 hover:text-white text-xl leading-none px-1">✕</button>
+      </div>
+      <div id="modal-body" class="p-4"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/api/dev'
+
+    // Reglas de validación para videos del congreso
+    const VIDEO_RULES = {
+      maxDuration:   480,           // 8 minutos en segundos
+      validSizes:    [[1920, 1080], [1280, 720]],
+      targetRatio:   16 / 9,        // 1.7778
+      ratioTolerance: 0.03,         // ±3%
+    }
+
+    let pendingFile = null   // archivo esperando confirmación post-validación
+
+    // ── Backend health ────────────────────────────────────────────────────────
+    async function checkBackend() {
+      const badge = document.getElementById('status-badge')
+      try {
+        const r = await fetch('/api/health')
+        if (r.ok) {
+          badge.textContent = '✓ Backend activo'
+          badge.className = 'text-xs px-2 py-1 rounded-full bg-green-900/60 text-green-400'
+        } else {
+          badge.textContent = `✗ Backend error (${r.status})`
+          badge.className = 'text-xs px-2 py-1 rounded-full bg-red-900/60 text-red-400'
+        }
+      } catch {
+        badge.textContent = '✗ Backend no disponible'
+        badge.className = 'text-xs px-2 py-1 rounded-full bg-red-900/60 text-red-400'
+      }
+    }
+
+    // ── Drag & Drop ───────────────────────────────────────────────────────────
+    const dropZone  = document.getElementById('drop-zone')
+    const fileInput = document.getElementById('file-input')
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over') })
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'))
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault()
+      dropZone.classList.remove('drag-over')
+      const file = e.dataTransfer.files[0]
+      if (file) handleFile(file)
+    })
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) handleFile(fileInput.files[0])
+    })
+
+    // ── File handler: valida MP4 o sube directo ────────────────────────────────
+    async function handleFile(file) {
+      if (file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4')) {
+        await runVideoValidation(file)
+      } else {
+        // Documentos e imágenes: subir directo sin validación de video
+        doUpload(file)
+      }
+    }
+
+    // ── Validación de video ────────────────────────────────────────────────────
+    async function runVideoValidation(file) {
+      pendingFile = null
+      const panel = document.getElementById('validation-panel')
+      const checks = document.getElementById('val-checks')
+      const actions = document.getElementById('val-actions')
+
+      document.getElementById('val-filename').textContent = file.name
+      checks.innerHTML = ''
+      actions.classList.add('hidden')
+      panel.classList.remove('hidden')
+
+      // Check 1: formato
+      const isMp4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4')
+      addCheck(checks, 'Formato MP4 (H.264)', isMp4, isMp4 ? 'video/mp4 ✓' : `Detectado: ${file.type || 'desconocido'}`)
+
+      if (!isMp4) {
+        addCheck(checks, 'Duración, resolución y aspecto', null, 'No se puede verificar — el archivo no es MP4')
+        showValActions(checks, false)
+        return
+      }
+
+      // Leer metadatos con HTML5 video
+      addCheck(checks, 'Leyendo metadatos del video…', null, '', true)
+
+      let meta
+      try {
+        meta = await readVideoMeta(file)
+      } catch (err) {
+        checks.innerHTML = ''
+        addCheck(checks, 'Formato MP4 (H.264)', true, 'video/mp4 ✓')
+        addCheck(checks, 'Metadatos del video', false, err)
+        showValActions(checks, false)
+        return
+      }
+
+      // Reemplazar spinner con checks reales
+      checks.innerHTML = ''
+      addCheck(checks, 'Formato MP4 (H.264)', true, 'video/mp4 ✓')
+
+      // Check 2: duración
+      const durOk = meta.duration <= VIDEO_RULES.maxDuration
+      const durStr = formatDuration(meta.duration)
+      addCheck(checks, `Duración máx. 8:00 min`, durOk,
+        durOk ? `${durStr} ✓` : `${durStr} — excede el límite de 8:00`)
+
+      // Check 3: resolución
+      const resOk = VIDEO_RULES.validSizes.some(([w, h]) => meta.width === w && meta.height === h)
+      addCheck(checks, 'Resolución 1920×1080 o 1280×720', resOk,
+        resOk ? `${meta.width}×${meta.height} ✓` : `${meta.width}×${meta.height} — no es 1080p ni 720p`)
+
+      // Check 4: aspecto 16:9
+      const ratio = meta.width / meta.height
+      const ratioOk = Math.abs(ratio - VIDEO_RULES.targetRatio) <= VIDEO_RULES.targetRatio * VIDEO_RULES.ratioTolerance
+      addCheck(checks, 'Relación de aspecto 16:9 horizontal', ratioOk,
+        ratioOk ? `${ratio.toFixed(3)} ≈ 16:9 ✓` : `${ratio.toFixed(3)} — no es 16:9`)
+
+      // Tamaño estimado en disco
+      const sizeStr = formatBytes(file.size)
+      const warn = file.size > 600 * 1024 * 1024
+      addCheck(checks, 'Tamaño del archivo', !warn,
+        warn ? `${sizeStr} — muy grande para su duración (¿alta tasa de bits?)` : `${sizeStr}`, !warn && file.size > 0)
+
+      const allOk = durOk && resOk && ratioOk
+      pendingFile = file
+      showValActions(checks, allOk)
+    }
+
+    function readVideoMeta(file) {
+      return new Promise((resolve, reject) => {
+        const video = document.createElement('video')
+        video.preload = 'metadata'
+        const url = URL.createObjectURL(file)
+
+        const timer = setTimeout(() => {
+          URL.revokeObjectURL(url)
+          reject('Tiempo de espera agotado al leer metadatos')
+        }, 15000)
+
+        video.onloadedmetadata = () => {
+          clearTimeout(timer)
+          URL.revokeObjectURL(url)
+          if (!video.duration || !video.videoWidth) {
+            reject('No se pudieron leer los metadatos del video')
+            return
+          }
+          resolve({ duration: video.duration, width: video.videoWidth, height: video.videoHeight })
+        }
+
+        video.onerror = () => {
+          clearTimeout(timer)
+          URL.revokeObjectURL(url)
+          reject('No se pudo leer el video — verifica que el archivo no esté dañado')
+        }
+
+        video.src = url
+      })
+    }
+
+    function addCheck(container, label, ok, detail = '', isInfo = false) {
+      const row = document.createElement('div')
+      row.className = 'check-row'
+
+      let iconClass, icon
+      if (ok === null && !isInfo) { iconClass = 'check-warn'; icon = '!' }
+      else if (isInfo || ok === true) { iconClass = 'check-ok'; icon = '✓' }
+      else if (ok === false) { iconClass = 'check-fail'; icon = '✗' }
+      else { iconClass = 'check-spin'; icon = '↻' }
+
+      row.innerHTML = `
+        <div class="check-icon ${iconClass}">${icon}</div>
+        <div class="flex-1 min-w-0">
+          <span class="text-gray-300">${label}</span>
+          ${detail ? `<span class="ml-2 text-gray-500 text-xs">${detail}</span>` : ''}
+        </div>
+      `
+      container.appendChild(row)
+    }
+
+    function showValActions(container, allPassed) {
+      const actions = document.getElementById('val-actions')
+      const btn = document.getElementById('btn-upload')
+
+      if (allPassed) {
+        btn.textContent = 'Subir video ↑'
+        btn.className = 'flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors'
+      } else {
+        btn.textContent = 'Subir de todas formas (no cumple requisitos)'
+        btn.className = 'flex-1 bg-yellow-800 hover:bg-yellow-700 text-yellow-200 text-sm font-medium rounded-lg px-4 py-2 transition-colors'
+      }
+
+      actions.classList.remove('hidden')
+    }
+
+    function proceedUpload() {
+      if (!pendingFile) return
+      document.getElementById('validation-panel').classList.add('hidden')
+      doUpload(pendingFile)
+      pendingFile = null
+    }
+
+    function cancelValidation() {
+      pendingFile = null
+      document.getElementById('validation-panel').classList.add('hidden')
+      fileInput.value = ''
+    }
+
+    // ── Subida ────────────────────────────────────────────────────────────────
+    function doUpload(file) {
+      const container = document.getElementById('progress-container')
+      const bar       = document.getElementById('progress-bar')
+      const pct       = document.getElementById('progress-pct')
+      const fname     = document.getElementById('progress-filename')
+
+      fname.textContent = file.name
+      bar.style.width = '0%'
+      pct.textContent = '0%'
+      container.classList.remove('hidden')
+      document.getElementById('upload-msg').classList.add('hidden')
+
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const xhr = new XMLHttpRequest()
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const p = Math.round((e.loaded / e.total) * 100)
+          bar.style.width = p + '%'
+          pct.textContent = p + '%'
+        }
+      })
+
+      xhr.addEventListener('load', () => {
+        container.classList.add('hidden')
+        if (xhr.status === 201) {
+          showMsg('success', `✓ "${file.name}" subido correctamente`)
+          loadFiles()
+        } else {
+          let errMsg = `Error ${xhr.status}`
+          try {
+            const j = JSON.parse(xhr.responseText)
+            errMsg = j.message || j.errors?.file?.[0] || errMsg
+          } catch {}
+          showMsg('error', `✗ ${errMsg}`)
+        }
+        fileInput.value = ''
+      })
+
+      xhr.addEventListener('error', () => {
+        container.classList.add('hidden')
+        showMsg('error', '✗ Error de red al subir el archivo')
+        fileInput.value = ''
+      })
+
+      xhr.open('POST', `${API_BASE}/upload`)
+      xhr.send(formData)
+    }
+
+    function showMsg(type, text) {
+      const msg = document.getElementById('upload-msg')
+      msg.textContent = text
+      msg.className = type === 'success'
+        ? 'mt-3 text-sm rounded-lg px-4 py-3 bg-green-900/50 text-green-300 border border-green-800'
+        : 'mt-3 text-sm rounded-lg px-4 py-3 bg-red-900/50 text-red-300 border border-red-800'
+      msg.classList.remove('hidden')
+      if (type === 'success') setTimeout(() => msg.classList.add('hidden'), 5000)
+    }
+
+    // ── Listar archivos ───────────────────────────────────────────────────────
+    async function loadFiles() {
+      const grid  = document.getElementById('files-grid')
+      const empty = document.getElementById('files-empty')
+      grid.innerHTML = '<p class="text-gray-600 text-sm col-span-3 py-4">Cargando…</p>'
+
+      try {
+        const r = await fetch(`${API_BASE}/files`)
+        if (!r.ok) {
+          grid.innerHTML = `<p class="text-red-400 text-sm col-span-3">Error ${r.status} — ¿Está APP_ENV=local activo?</p>`
+          return
+        }
+        const files = await r.json()
+        grid.innerHTML = ''
+
+        if (files.length === 0) { empty.classList.remove('hidden'); return }
+        empty.classList.add('hidden')
+        files.forEach(f => grid.appendChild(buildCard(f)))
+      } catch {
+        grid.innerHTML = '<p class="text-red-400 text-sm col-span-3">No se pudo conectar con el backend</p>'
+      }
+    }
+
+    // ── Card de archivo ───────────────────────────────────────────────────────
+    function buildCard(file) {
+      const card = document.createElement('div')
+      card.className = 'bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-colors'
+
+      const isVideo = file.mime?.startsWith('video/')
+      const isImage = file.mime?.startsWith('image/')
+      const isPdf   = file.mime === 'application/pdf'
+
+      let thumb
+      if (isImage) thumb = `<img src="${file.url}" class="w-full h-36 object-cover bg-gray-800" />`
+      else if (isVideo) thumb = `<div class="w-full h-36 bg-gray-800 flex flex-col items-center justify-center gap-1"><span class="text-4xl">▶</span><span class="text-xs text-gray-500">Video</span></div>`
+      else thumb = `<div class="w-full h-36 bg-gray-800 flex items-center justify-center text-5xl">${fileIcon(file.mime)}</div>`
+
+      const actionLabel = isVideo ? '▶ Reproducir' : isPdf ? '📄 Ver PDF' : isImage ? '🖼 Ver' : '⬇ Descargar'
+
+      card.innerHTML = `
+        ${thumb}
+        <div class="p-3">
+          <p class="text-sm font-medium text-gray-200 truncate" title="${file.name}">${file.name}</p>
+          <p class="text-xs text-gray-500 mt-0.5">${formatBytes(file.size)} · ${(file.mime || 'file').split('/')[1]?.toUpperCase()}</p>
+          <div class="flex gap-2 mt-3">
+            <button onclick='openPreview(${JSON.stringify(file)})'
+              class="flex-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-2 py-1.5 transition-colors">
+              ${actionLabel}
+            </button>
+            <button onclick='deleteFile("${file.name}")'
+              class="text-xs bg-gray-800 hover:bg-red-900 hover:text-red-400 text-gray-500 rounded-lg px-2 py-1.5 transition-colors">
+              ✕
+            </button>
+          </div>
+        </div>
+      `
+      return card
+    }
+
+    // ── Modal de previsualización ─────────────────────────────────────────────
+    function openPreview(file) {
+      document.getElementById('modal-title').textContent = file.name
+      const body = document.getElementById('modal-body')
+
+      if (file.mime?.startsWith('video/')) {
+        body.innerHTML = `
+          <video controls autoplay class="w-full rounded-lg max-h-[72vh]">
+            <source src="${file.url}" type="${file.mime}" />
+          </video>
+          <p class="text-xs text-gray-600 mt-2 break-all">↳ ${file.url}</p>
+        `
+      } else if (file.mime === 'application/pdf') {
+        body.innerHTML = `
+          <iframe src="${file.url}" class="w-full rounded-lg" style="height:72vh"></iframe>
+          <p class="text-xs text-gray-600 mt-2 break-all">↳ ${file.url}</p>
+        `
+      } else if (file.mime?.startsWith('image/')) {
+        body.innerHTML = `
+          <img src="${file.url}" class="max-w-full mx-auto rounded-lg max-h-[72vh] object-contain" />
+          <p class="text-xs text-gray-600 mt-2 break-all">↳ ${file.url}</p>
+        `
+      } else {
+        body.innerHTML = `
+          <div class="text-center py-10">
+            <div class="text-6xl mb-4">${fileIcon(file.mime)}</div>
+            <p class="text-gray-400 mb-4">Vista previa no disponible</p>
+            <a href="${file.url}" download="${file.name}"
+               class="inline-block bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-5 py-2 text-sm">
+              ⬇ Descargar
+            </a>
+          </div>
+          <p class="text-xs text-gray-600 mt-2 break-all">↳ ${file.url}</p>
+        `
+      }
+
+      document.getElementById('modal').classList.remove('hidden')
+    }
+
+    function closeModal(e) {
+      if (e.target === document.getElementById('modal')) {
+        document.getElementById('modal').classList.add('hidden')
+        document.querySelectorAll('#modal-body video').forEach(v => v.pause())
+      }
+    }
+
+    // ── Eliminar ──────────────────────────────────────────────────────────────
+    async function deleteFile(filename) {
+      if (!confirm(`¿Eliminar "${filename}"?`)) return
+      const r = await fetch(`${API_BASE}/files/${encodeURIComponent(filename)}`, { method: 'DELETE' })
+      if (r.ok || r.status === 204) { showMsg('success', `✓ "${filename}" eliminado`); loadFiles() }
+      else showMsg('error', '✗ Error al eliminar')
+    }
+
+    // ── Utilidades ────────────────────────────────────────────────────────────
+    function formatBytes(b) {
+      if (!b) return '—'
+      if (b < 1024) return b + ' B'
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB'
+      if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB'
+      return (b / 1073741824).toFixed(2) + ' GB'
+    }
+
+    function formatDuration(s) {
+      const m = Math.floor(s / 60)
+      const sec = Math.round(s % 60)
+      return `${m}:${String(sec).padStart(2, '0')}`
+    }
+
+    function fileIcon(mime) {
+      if (!mime) return '📎'
+      if (mime.startsWith('video/'))  return '🎬'
+      if (mime.startsWith('image/'))  return '🖼'
+      if (mime === 'application/pdf') return '📄'
+      if (mime.includes('word'))      return '📝'
+      if (mime.includes('sheet') || mime.includes('excel')) return '📊'
+      if (mime.includes('presentation') || mime.includes('powerpoint')) return '📊'
+      if (mime.includes('zip'))       return '🗜'
+      return '📎'
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    checkBackend()
+    loadFiles()
+  </script>
+
+</body>
+</html>

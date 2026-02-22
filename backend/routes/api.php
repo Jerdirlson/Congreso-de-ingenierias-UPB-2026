@@ -3,8 +3,10 @@
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\RecordingController;
 use App\Http\Controllers\Api\SpeakerController;
 use App\Http\Controllers\Api\StreamController;
+use App\Http\Controllers\Api\UploadTestController;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +19,13 @@ use Illuminate\Support\Facades\Route;
 | Auth:   Laravel Sanctum (token-based)
 |
 */
+
+// ── Dev-only: pruebas de subida de archivos (solo en APP_ENV=local) ───────────
+if (app()->environment('local')) {
+    Route::get('/dev/files',              [UploadTestController::class, 'index']);
+    Route::post('/dev/upload',            [UploadTestController::class, 'store']);
+    Route::delete('/dev/files/{filename}', [UploadTestController::class, 'destroy']);
+}
 
 // ── Public ────────────────────────────────────────────────────────────────────
 
@@ -32,8 +41,9 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::get('/documents',        [DocumentController::class, 'index']);
     Route::get('/documents/{document}', [DocumentController::class, 'show']);
     Route::get('/documents/{document}/download', [DocumentController::class, 'download']);
-    Route::get('/streams',          [StreamController::class, 'index']);
-    Route::get('/streams/{stream}', [StreamController::class, 'show']);
+    Route::get('/streams',                        [StreamController::class, 'index']);
+    Route::get('/streams/{stream}',               [StreamController::class, 'show']);
+    Route::get('/recordings/{recording}',         [RecordingController::class, 'show']);
 });
 
 // ── Authenticated ─────────────────────────────────────────────────────────────
@@ -57,9 +67,13 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::delete('/documents/{document}',  [DocumentController::class, 'destroy']);
 
     // Streams
-    Route::post('/streams',                     [StreamController::class, 'store']);
-    Route::put('/streams/{stream}',             [StreamController::class, 'update']);
-    Route::delete('/streams/{stream}',          [StreamController::class, 'destroy']);
-    Route::post('/streams/{stream}/go-live',    [StreamController::class, 'goLive']);
-    Route::post('/streams/{stream}/end',        [StreamController::class, 'end']);
+    Route::post('/streams',                          [StreamController::class, 'store']);
+    Route::put('/streams/{stream}',                  [StreamController::class, 'update']);
+    Route::delete('/streams/{stream}',               [StreamController::class, 'destroy']);
+    Route::post('/streams/{stream}/go-live',         [StreamController::class, 'goLive']);
+    Route::post('/streams/{stream}/end',             [StreamController::class, 'end']);
+
+    // Recordings (subida y eliminación de videos)
+    Route::post('/streams/{stream}/recordings',      [RecordingController::class, 'store']);
+    Route::delete('/recordings/{recording}',         [RecordingController::class, 'destroy']);
 });
