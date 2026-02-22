@@ -54,6 +54,10 @@ services:
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-congreso2026.bucaramanga.upb.edu.co}
       # Habilita /api/dev/* para pruebas. Quitar cuando no se necesite.
       ALLOW_UPLOAD_TEST: ${ALLOW_UPLOAD_TEST:-false}
+      # Cloudflare Stream
+      CLOUDFLARE_ACCOUNT_ID:              ${CLOUDFLARE_ACCOUNT_ID}
+      CLOUDFLARE_API_TOKEN:               ${CLOUDFLARE_API_TOKEN}
+      CLOUDFLARE_STREAM_WEBHOOK_SECRET:   ${CLOUDFLARE_STREAM_WEBHOOK_SECRET:-}
     depends_on:
       mysql:
         condition: service_healthy
