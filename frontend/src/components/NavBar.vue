@@ -8,6 +8,7 @@ const links = [
   { label: 'Inicio',       href: '#inicio' },
   { label: 'Acerca de',    href: '#acerca' },
   { label: 'Ejes Temáticos', href: '#ejes' },
+  { label: 'En vivo',      href: '#envivo' },
   { label: 'Actividades',  href: '#actividades' },
   { label: 'Fechas',       href: '#fechas' },
   { label: 'Inscripción',  href: '#inscripcion' },

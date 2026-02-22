@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'cloudflare_stream' => [
+        'account_id'     => env('CLOUDFLARE_ACCOUNT_ID'),
+        'api_token'      => env('CLOUDFLARE_API_TOKEN'),
+        'webhook_secret' => env('CLOUDFLARE_STREAM_WEBHOOK_SECRET'),
+        'base_url'       => 'https://api.cloudflare.com/client/v4',
+    ],
+
 ];

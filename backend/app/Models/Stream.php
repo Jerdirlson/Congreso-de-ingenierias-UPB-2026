@@ -21,15 +21,22 @@ class Stream extends Model
         'platform', 'platform_url', 'type',
         'peak_viewers', 'total_views', 'chat_enabled',
         'thumbnail',
+        'cloudflare_uid', 'cloudflare_video_uid', 'cloudflare_meta',
     ];
 
     protected $casts = [
-        'scheduled_at' => 'datetime',
-        'started_at'   => 'datetime',
-        'ended_at'     => 'datetime',
-        'chat_enabled' => 'boolean',
-        'peak_viewers' => 'integer',
-        'total_views'  => 'integer',
+        'scheduled_at'   => 'datetime',
+        'started_at'     => 'datetime',
+        'ended_at'       => 'datetime',
+        'chat_enabled'   => 'boolean',
+        'peak_viewers'   => 'integer',
+        'total_views'    => 'integer',
+        'cloudflare_meta' => 'array',
+    ];
+
+    protected $hidden = [
+        'stream_key',
+        'cloudflare_meta',
     ];
 
     // ── Relationships ──────────────────────────────────────────────────────
@@ -96,5 +103,19 @@ class Stream extends Model
     public static function generateStreamKey(): string
     {
         return Str::upper(Str::random(4)) . '-' . Str::upper(Str::random(4));
+    }
+
+    public function isCloudflare(): bool
+    {
+        return $this->platform === 'cloudflare' && $this->cloudflare_uid !== null;
+    }
+
+    public function getPlaybackUrlAttribute(): ?string
+    {
+        if ($this->isCloudflare() && $this->cloudflare_video_uid) {
+            return "https://iframe.videodelivery.net/{$this->cloudflare_video_uid}";
+        }
+
+        return $this->hls_url ?? $this->platform_url;
     }
 }

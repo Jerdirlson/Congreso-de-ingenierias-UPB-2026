@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CloudflareWebhookController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\HealthController;
@@ -75,8 +76,13 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::delete('/streams/{stream}',               [StreamController::class, 'destroy']);
     Route::post('/streams/{stream}/go-live',         [StreamController::class, 'goLive']);
     Route::post('/streams/{stream}/end',             [StreamController::class, 'end']);
+    Route::get('/streams/{stream}/credentials',      [StreamController::class, 'credentials']);
 
     // Recordings (subida y eliminación de videos)
     Route::post('/streams/{stream}/recordings',      [RecordingController::class, 'store']);
     Route::delete('/recordings/{recording}',         [RecordingController::class, 'destroy']);
 });
+
+// ── Webhooks (sin auth, con verificación de firma) ──────────────────────────
+Route::post('/webhooks/cloudflare-stream', [CloudflareWebhookController::class, 'handle'])
+    ->withoutMiddleware([ThrottleRequests::class]);
