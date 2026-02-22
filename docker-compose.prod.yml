@@ -52,6 +52,8 @@ services:
       FILESYSTEM_DISK:   public
       LOG_CHANNEL:       stderr
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-congreso2026.bucaramanga.upb.edu.co}
+      # Habilita /api/dev/* para pruebas. Quitar cuando no se necesite.
+      ALLOW_UPLOAD_TEST: ${ALLOW_UPLOAD_TEST:-false}
     depends_on:
       mysql:
         condition: service_healthy
