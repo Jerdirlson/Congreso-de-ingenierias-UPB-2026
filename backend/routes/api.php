@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CloudflareWebhookController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EventController;
@@ -30,6 +31,14 @@ if (app()->environment('local') || config('app.allow_upload_test')) {
     Route::get('/dev/files/{filename}/download',      [UploadTestController::class, 'download']);
     Route::delete('/dev/files/{filename}',            [UploadTestController::class, 'destroy']);
 }
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/login',  [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('/me',      [AuthController::class, 'me'])->middleware('auth:sanctum');
+});
 
 // ── Public ────────────────────────────────────────────────────────────────────
 
