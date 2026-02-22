@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useScrollReveal } from '../composables/useScrollReveal'
+
+const { setRef } = useScrollReveal()
+
 const activities = [
   {
     title: 'Conferencias Centrales',
@@ -49,9 +53,10 @@ const activities = [
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          v-for="activity in activities"
+          v-for="(activity, i) in activities"
           :key="activity.title"
-          class="bg-cgr-card border border-cgr-border rounded-2xl p-8 hover:border-cgr-purple-dark transition-colors group"
+          :ref="(el) => setRef(el as Element, i)"
+          class="animate-reveal bg-cgr-card border border-cgr-border rounded-2xl p-8 hover:border-cgr-purple-dark hover:scale-[1.02] hover:shadow-lg hover:shadow-cgr-purple/10 transition-all duration-300 group"
         >
           <div class="w-12 h-12 rounded-xl bg-cgr-purple/10 flex items-center justify-center mb-6 group-hover:bg-cgr-purple/20 transition-colors">
             <!-- Mic -->

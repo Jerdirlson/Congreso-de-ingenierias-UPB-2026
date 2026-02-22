@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useScrollReveal } from '../composables/useScrollReveal'
+
+const { setRef } = useScrollReveal()
+
 const milestones = [
   { date: '16 de marzo', label: 'Apertura de recepción de resúmenes', status: 'active' },
   { date: '22 de mayo', label: 'Cierre de recepción de resúmenes', status: 'upcoming' },
@@ -45,7 +49,10 @@ const milestones = [
             </div>
 
             <!-- Content -->
-            <div class="bg-cgr-card border border-cgr-border rounded-xl p-5 flex-1 hover:border-cgr-purple-dark transition-colors">
+            <div
+              :ref="(el) => setRef(el as Element, i)"
+              class="animate-reveal bg-cgr-card border border-cgr-border rounded-xl p-5 flex-1 hover:border-cgr-purple-dark hover:scale-[1.01] hover:shadow-md hover:shadow-cgr-purple/5 transition-all duration-300"
+            >
               <span class="text-cgr-purple text-xs font-bold uppercase tracking-wider">{{ milestone.date }}</span>
               <p class="text-white text-sm font-semibold mt-1">{{ milestone.label }}</p>
             </div>

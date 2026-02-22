@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useScrollReveal } from '../composables/useScrollReveal'
+
+const { setRef } = useScrollReveal()
+
 const tracks = [
   {
     number: '01',
@@ -59,9 +63,10 @@ const tracks = [
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
-          v-for="track in tracks"
+          v-for="(track, i) in tracks"
           :key="track.number"
-          class="bg-cgr-card border border-cgr-border rounded-2xl p-7 hover:border-cgr-purple-dark transition-colors group"
+          :ref="(el) => setRef(el as Element, i)"
+          class="animate-reveal bg-cgr-card border border-cgr-border rounded-2xl p-7 hover:border-cgr-purple-dark hover:scale-[1.02] hover:shadow-lg hover:shadow-cgr-purple/10 transition-all duration-300 group"
         >
           <span class="text-cgr-purple text-3xl font-black opacity-30 group-hover:opacity-60 transition-opacity">
             {{ track.number }}

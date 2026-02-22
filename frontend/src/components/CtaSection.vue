@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useScrollReveal } from '../composables/useScrollReveal'
+
+const { setRef } = useScrollReveal()
+
 const modalities = [
   {
     title: 'Presencial',
@@ -49,9 +53,10 @@ const modalities = [
       <!-- Modalidades -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
         <div
-          v-for="mod in modalities"
+          v-for="(mod, i) in modalities"
           :key="mod.title"
-          class="bg-cgr-card border border-cgr-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:-translate-y-1 transition-transform"
+          :ref="(el) => setRef(el as Element, i)"
+          class="animate-reveal bg-cgr-card border border-cgr-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:-translate-y-2 hover:border-cgr-purple-dark/50 hover:shadow-lg hover:shadow-cgr-purple/10 transition-all duration-300"
         >
           <!-- Building -->
           <div class="w-12 h-12 rounded-xl bg-cgr-purple/10 flex items-center justify-center">
@@ -73,7 +78,10 @@ const modalities = [
       </div>
 
       <!-- Certificaciones destacadas -->
-      <div class="bg-cgr-card border border-cgr-border rounded-2xl p-8 mb-12 text-left max-w-3xl mx-auto">
+      <div
+        :ref="(el) => setRef(el as Element, 3)"
+        class="animate-reveal bg-cgr-card border border-cgr-border rounded-2xl p-8 mb-12 text-left max-w-3xl mx-auto hover:border-cgr-purple-dark/30 transition-colors duration-300"
+      >
         <h3 class="text-white font-bold text-base mb-4 text-center">Publicación y Certificaciones</h3>
         <ul class="flex flex-col gap-3">
           <li class="flex gap-3 items-start">
