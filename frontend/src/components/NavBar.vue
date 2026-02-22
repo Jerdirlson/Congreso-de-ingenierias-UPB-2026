@@ -5,11 +5,12 @@ import LogoUpb from './LogoUpb.vue'
 const menuOpen = ref(false)
 
 const links = [
-  { label: 'Inicio',    href: '#inicio' },
-  { label: 'Ponentes',  href: '#ponentes' },
-  { label: 'Programa',  href: '#programa' },
-  { label: 'Talleres',  href: '#talleres' },
-  { label: 'Contacto',  href: '#contacto' },
+  { label: 'Inicio',       href: '#inicio' },
+  { label: 'Acerca de',    href: '#acerca' },
+  { label: 'Ejes Temáticos', href: '#ejes' },
+  { label: 'Actividades',  href: '#actividades' },
+  { label: 'Fechas',       href: '#fechas' },
+  { label: 'Inscripción',  href: '#inscripcion' },
 ]
 </script>
 
@@ -17,16 +18,14 @@ const links = [
   <header class="fixed top-0 left-0 right-0 z-50 bg-cgr-bg/90 backdrop-blur-md border-b border-cgr-border">
     <div class="max-w-7xl mx-auto px-5 lg:px-20 h-16 flex items-center justify-between">
 
-      <!-- Logo UPB (colores oficiales) -->
       <a href="#inicio" class="flex items-center gap-4 shrink-0">
         <LogoUpb class="h-7 w-auto" />
         <div class="hidden sm:block border-l border-cgr-border pl-4">
           <p class="text-white font-semibold text-xs leading-tight">Congreso Internacional</p>
-          <p class="text-cgr-purple text-xs font-normal">de Ingeniería · 2025</p>
+          <p class="text-cgr-purple text-xs font-normal">de Ingeniería · 2026</p>
         </div>
       </a>
 
-      <!-- Links desktop -->
       <nav class="hidden lg:flex items-center gap-8">
         <a
           v-for="link in links"
@@ -38,7 +37,6 @@ const links = [
         </a>
       </nav>
 
-      <!-- CTA + hamburger -->
       <div class="flex items-center gap-3">
         <a
           href="#inscripcion"
@@ -47,7 +45,6 @@ const links = [
           Inscríbete
         </a>
 
-        <!-- Hamburger (mobile) -->
         <button
           class="lg:hidden text-cgr-muted hover:text-white p-1"
           @click="menuOpen = !menuOpen"
@@ -63,7 +60,6 @@ const links = [
       </div>
     </div>
 
-    <!-- Mobile menu -->
     <div v-if="menuOpen" class="lg:hidden border-t border-cgr-border bg-cgr-bg px-5 py-4 flex flex-col gap-4">
       <a
         v-for="link in links"

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 const stats = [
-  { value: '+50',   label: 'Ponentes Internacionales' },
   { value: '5',     label: 'Días de Congreso' },
-  { value: '12',    label: 'Líneas Temáticas' },
-  { value: '+1000', label: 'Asistentes Esperados' },
+  { value: '8',     label: 'Ejes Temáticos' },
+  { value: '6',     label: 'Facultades de Ingeniería' },
+  { value: 'Híbrido', label: 'Presencial + Virtual' },
 ]
 </script>
 

@@ -3,8 +3,9 @@ import NavBar from './components/NavBar.vue'
 import StatsBar from './components/StatsBar.vue'
 import HeroSection from './components/HeroSection.vue'
 import AboutSection from './components/AboutSection.vue'
+import TracksSection from './components/TracksSection.vue'
 import SpeakersSection from './components/SpeakersSection.vue'
-import ScheduleSection from './components/ScheduleSection.vue'
+import TimelineSection from './components/TimelineSection.vue'
 import CtaSection from './components/CtaSection.vue'
 import FooterSection from './components/FooterSection.vue'
 </script>
@@ -16,8 +17,9 @@ import FooterSection from './components/FooterSection.vue'
       <HeroSection />
       <StatsBar />
       <AboutSection />
+      <TracksSection />
       <SpeakersSection />
-      <ScheduleSection />
+      <TimelineSection />
       <CtaSection />
     </main>
     <FooterSection />

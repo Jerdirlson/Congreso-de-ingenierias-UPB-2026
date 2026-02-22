@@ -1,103 +1,89 @@
-<script setup lang="ts">
-const areas = [
-  {
-    title: 'Inteligencia Artificial',
-    description: 'Machine learning, deep learning, visión computacional y procesamiento del lenguaje natural aplicados a la ingeniería.',
-    icon: 'cpu',
-  },
-  {
-    title: 'Energías Renovables',
-    description: 'Solar, eólica, hidrógeno verde y sistemas de almacenamiento para la transición energética.',
-    icon: 'zap',
-  },
-  {
-    title: 'Robótica e Industria 4.0',
-    description: 'Automatización industrial, robótica colaborativa, gemelos digitales e IoT en entornos de manufactura.',
-    icon: 'cog',
-  },
-  {
-    title: 'Ingeniería Civil y Construcción',
-    description: 'Infraestructura sostenible, materiales avanzados, BIM y resiliencia ante el cambio climático.',
-    icon: 'building',
-  },
-  {
-    title: 'Bioingeniería',
-    description: 'Dispositivos médicos, telemedicina, ingeniería de tejidos y biomecánica computacional.',
-    icon: 'heart',
-  },
-  {
-    title: 'Ciberseguridad',
-    description: 'Seguridad en sistemas críticos, criptografía, análisis forense digital y protección de infraestructuras.',
-    icon: 'shield',
-  },
-]
-</script>
-
 <template>
-  <section id="talleres" class="bg-cgr-bg py-24 px-5 lg:px-20">
+  <section id="acerca" class="bg-cgr-bg py-24 px-5 lg:px-20">
     <div class="max-w-7xl mx-auto">
 
-      <!-- Encabezado -->
       <div class="text-center mb-16">
-        <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Áreas temáticas</span>
+        <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Acerca del congreso</span>
         <h2 class="mt-3 text-3xl sm:text-4xl font-black text-white">
-          12 Líneas de investigación
+          De la Inteligencia Artificial al Bienestar Humano
         </h2>
-        <p class="mt-4 text-cgr-muted max-w-xl mx-auto text-base leading-relaxed">
-          Explora los ejes temáticos que guiarán las conferencias, talleres y paneles del congreso.
+        <p class="mt-4 text-cgr-muted max-w-3xl mx-auto text-base leading-relaxed">
+          En 2024, pusimos nuestra mirada en la frontera del conocimiento con el primer congreso sobre
+          "Avances en Inteligencia Artificial y Tecnologías Emergentes". Para 2026, proponemos una visión
+          más ambiciosa: la Quinta Revolución Industrial (Industria 5.0), donde la tecnología deja de ser
+          un fin en sí misma para convertirse en la herramienta definitiva al servicio del bienestar,
+          la sostenibilidad y la equidad.
         </p>
       </div>
 
-      <!-- Grid de cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
-          v-for="area in areas"
-          :key="area.title"
-          class="bg-cgr-card border border-cgr-border rounded-2xl p-8 hover:border-cgr-purple-dark transition-colors group"
-        >
-          <!-- Icono -->
-          <div class="w-12 h-12 rounded-xl bg-cgr-purple/10 flex items-center justify-center mb-6 group-hover:bg-cgr-purple/20 transition-colors">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
 
-            <!-- CPU -->
-            <svg v-if="area.icon === 'cpu'" class="w-6 h-6 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <rect x="4" y="4" width="16" height="16" rx="2" />
-              <rect x="9" y="9" width="6" height="6" />
-              <path d="M15 2v2M9 2v2M2 15h2M2 9h2M15 22v-2M9 22v-2M22 15h-2M22 9h-2" stroke-linecap="round"/>
-            </svg>
-
-            <!-- Zap -->
-            <svg v-else-if="area.icon === 'zap'" class="w-6 h-6 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-
-            <!-- Cog -->
-            <svg v-else-if="area.icon === 'cog'" class="w-6 h-6 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3"/>
-              <path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-            </svg>
-
-            <!-- Building -->
-            <svg v-else-if="area.icon === 'building'" class="w-6 h-6 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18H6zM6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
-              <path stroke-linecap="round" d="M10 6h4M10 10h4M10 14h4M10 18h4"/>
-            </svg>
-
-            <!-- Heart pulse -->
-            <svg v-else-if="area.icon === 'heart'" class="w-6 h-6 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-              <path stroke-linecap="round" d="M3.22 12H9.5l.94-2.07 1.07 4.14 2.13-6.16L15 12h5.78"/>
-            </svg>
-
-            <!-- Shield check -->
-            <svg v-else-if="area.icon === 'shield'" class="w-6 h-6 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="m9 12 2 2 4-4"/>
+        <div class="bg-cgr-card border border-cgr-border rounded-2xl p-8 self-center">
+          <div class="w-12 h-12 rounded-xl bg-cgr-purple/10 flex items-center justify-center mb-6">
+            <svg class="w-6 h-6 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"/>
             </svg>
           </div>
-
-          <h3 class="text-white font-bold text-lg mb-3">{{ area.title }}</h3>
-          <p class="text-cgr-muted text-sm leading-relaxed">{{ area.description }}</p>
+          <h3 class="text-white font-bold text-lg mb-3">Objetivo General</h3>
+          <p class="text-cgr-muted text-sm leading-relaxed">
+            Consolidar un espacio de intercambio internacional que permita analizar cómo la ingeniería
+            trasciende los límites técnicos para integrarse con la dimensión humana, promoviendo el
+            bienestar social a través de la innovación, la sostenibilidad y las tecnologías habilitadoras 5.0.
+          </p>
         </div>
+
+        <div class="flex flex-col gap-6">
+          <div class="bg-cgr-card border border-cgr-border rounded-2xl p-6 flex gap-5">
+            <div class="w-10 h-10 rounded-xl bg-cgr-purple/10 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-white font-semibold text-sm mb-1">Para la Academia</h4>
+              <p class="text-cgr-muted text-xs leading-relaxed">
+                Publicar en un entorno de alto impacto que valora la intersección entre tecnología y sociedad.
+                Libro de Memorias con ISSN y posibilidad de publicación en revista indexada.
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-cgr-card border border-cgr-border rounded-2xl p-6 flex gap-5">
+            <div class="w-10 h-10 rounded-xl bg-cgr-purple/10 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-white font-semibold text-sm mb-1">Para la Industria</h4>
+              <p class="text-cgr-muted text-xs leading-relaxed">
+                Descubrir cómo adaptar procesos a la visión 5.0, aumentando la competitividad
+                mediante el valor humano y la innovación tecnológica.
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-cgr-card border border-cgr-border rounded-2xl p-6 flex gap-5">
+            <div class="w-10 h-10 rounded-xl bg-cgr-purple/10 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-white font-semibold text-sm mb-1">Para las Ciencias Humanas y Sociales</h4>
+              <p class="text-cgr-muted text-xs leading-relaxed">
+                Un punto de encuentro entre la tecnología y las ciencias sociales y humanas.
+                Un llamado a la colaboración radical y transdisciplinar.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-16 text-center">
+        <blockquote class="text-cgr-accent text-lg sm:text-xl font-semibold italic max-w-2xl mx-auto">
+          "La ingeniería diseña el cómo, pero la humanidad define el para qué."
+        </blockquote>
       </div>
     </div>
   </section>
