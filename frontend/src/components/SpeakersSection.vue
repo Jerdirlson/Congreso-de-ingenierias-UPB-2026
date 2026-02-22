@@ -4,29 +4,25 @@ const speakers = [
     name: 'Dra. María González',
     role: 'IA & Machine Learning',
     bio: 'Investigadora principal en el MIT Media Lab. Pionera en modelos de IA aplicados a sistemas de ingeniería críticos.',
-    gradient: 'from-violet-600 to-purple-800',
-    initials: 'MG',
+    image: '/ponente1.png',
   },
   {
     name: 'Dr. Carlos Ramírez',
     role: 'Energías Renovables',
     bio: 'Director del Centro de Transición Energética de la Universidad de Chile. Asesor del Ministerio de Energía.',
-    gradient: 'from-blue-600 to-violet-700',
-    initials: 'CR',
+    image: '/ponente2.png',
   },
   {
     name: 'Ing. Sofía Herrera',
     role: 'Robótica Industrial',
     bio: 'Líder de innovación en Boston Dynamics LATAM. Especialista en robots colaborativos para manufactura.',
-    gradient: 'from-purple-700 to-pink-700',
-    initials: 'SH',
+    image: '/ponente3.png',
   },
   {
     name: 'Dr. Andrés Mora',
     role: 'Ciberseguridad',
     bio: 'Ex-director de seguridad en el Banco Interamericano de Desarrollo. Experto en infraestructuras críticas.',
-    gradient: 'from-indigo-600 to-purple-700',
-    initials: 'AM',
+    image: '/ponente4.png',
   },
 ]
 </script>
@@ -53,12 +49,13 @@ const speakers = [
           :key="speaker.name"
           class="bg-cgr-card border border-cgr-border rounded-2xl overflow-hidden hover:border-cgr-purple-dark transition-colors group"
         >
-          <!-- Avatar con gradiente -->
-          <div
-            class="h-[200px] flex items-center justify-center bg-gradient-to-br"
-            :class="speaker.gradient"
-          >
-            <span class="text-5xl font-black text-white/90">{{ speaker.initials }}</span>
+          <!-- Foto del ponente -->
+          <div class="h-[200px] overflow-hidden bg-cgr-card">
+            <img
+              :src="speaker.image"
+              :alt="speaker.name"
+              class="w-full h-full object-cover"
+            />
           </div>
 
           <!-- Info -->
