@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Route;
 // ── Upload test: activo en local O cuando ALLOW_UPLOAD_TEST=true en .env ───────
 // Para habilitar en producción temporalmente: agregar ALLOW_UPLOAD_TEST=true al .env
 // y correr: docker exec cgr-backend php artisan route:clear
-if (app()->environment('local') || env('ALLOW_UPLOAD_TEST') === 'true') {
+if (app()->environment('local') || config('app.allow_upload_test')) {
     Route::get('/dev/files',               [UploadTestController::class, 'index']);
     Route::post('/dev/upload',             [UploadTestController::class, 'store']);
     Route::delete('/dev/files/{filename}', [UploadTestController::class, 'destroy']);

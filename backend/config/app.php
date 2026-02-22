@@ -41,6 +41,10 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    // Habilita rutas /api/dev/* para pruebas de subida de archivos
+    // Activar: ALLOW_UPLOAD_TEST=true en .env (raíz del proyecto)
+    'allow_upload_test' => (bool) env('ALLOW_UPLOAD_TEST', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL
