@@ -18,22 +18,27 @@ const password     = ref('')
 const loginError   = ref('')
 const loginLoading = ref(false)
 
-const isLoggedIn     = computed(() => !!token.value && !!user.value)
-const canManage      = computed(() => user.value?.role === 'admin' || user.value?.role === 'administrativo')
-const isPonente      = computed(() => user.value?.role === 'ponente')
-const roleLabel      = computed(() => ({
-  admin: 'Administrador',
-  administrativo: 'Administrativo',
-  ponente: 'Ponente',
-  viewer: 'Asistente',
-}[user.value?.role ?? ''] ?? 'Sin rol')
+const isLoggedIn = computed(() => !!token.value && !!user.value)
+const canManage  = computed(() => user.value?.role === 'admin' || user.value?.role === 'administrativo')
+const isPonente  = computed(() => user.value?.role === 'ponente')
 
-const roleBadgeColor = computed(() => ({
-  admin:          'bg-red-500/10 text-red-400 border border-red-500/30',
-  administrativo: 'bg-purple-500/10 text-purple-400 border border-purple-500/30',
-  ponente:        'bg-blue-500/10 text-blue-400 border border-blue-500/30',
-  viewer:         'bg-gray-500/10 text-gray-400 border border-gray-500/30',
-}[user.value?.role ?? ''] ?? 'bg-gray-700 text-gray-400'))
+const roleLabel = computed(() => {
+  const labels: Record<string, string> = {
+    admin: 'Administrador', administrativo: 'Administrativo',
+    ponente: 'Ponente', viewer: 'Asistente',
+  }
+  return labels[user.value?.role ?? ''] ?? 'Sin rol'
+})
+
+const roleBadgeColor = computed(() => {
+  const colors: Record<string, string> = {
+    admin:          'bg-red-500/10 text-red-400 border border-red-500/30',
+    administrativo: 'bg-purple-500/10 text-purple-400 border border-purple-500/30',
+    ponente:        'bg-blue-500/10 text-blue-400 border border-blue-500/30',
+    viewer:         'bg-gray-500/10 text-gray-400 border border-gray-500/30',
+  }
+  return colors[user.value?.role ?? ''] ?? 'bg-gray-700 text-gray-400'
+})
 
 // ── API helper ───────────────────────────────────────────────────────────────
 async function authFetch(url: string, options: RequestInit = {}) {

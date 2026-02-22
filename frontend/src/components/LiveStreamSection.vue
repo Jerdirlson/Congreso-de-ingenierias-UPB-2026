@@ -41,7 +41,7 @@ async function fetchStreams() {
 
   if (live.length > 0) {
     streams.value = live
-    activeStream.value = live[0]
+    activeStream.value = live[0] ?? null
   } else {
     const scheduled = await get<PaginatedResponse>('/streams?status=scheduled')
     const upcoming = scheduled?.data ?? []
