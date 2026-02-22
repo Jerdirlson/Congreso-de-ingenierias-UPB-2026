@@ -1,1 +1,36 @@
 @import "tailwindcss";
+
+/*
+ * ── Tokens de diseño — Congreso Internacional de Ingeniería UPB ─────────────
+ *
+ * Para cambiar colores o fuentes edita SOLO esta sección.
+ * Los cambios se propagan automáticamente a todo el sitio via clases Tailwind.
+ *
+ * Uso:
+ *   bg-cgr-bg       text-cgr-purple    border-cgr-border
+ *   bg-cgr-card     text-cgr-muted     bg-cgr-section
+ *   etc.
+ */
+@theme {
+  /* ── Fuente ───────────────────────────────────────────────────────────────── */
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* ── Fondos ───────────────────────────────────────────────────────────────── */
+  --color-cgr-bg:      #0A0A1A;   /* Fondo principal */
+  --color-cgr-section: #0F0F24;   /* Fondo de secciones alternas */
+  --color-cgr-card:    #12122A;   /* Fondo de cards */
+  --color-cgr-footer:  #06060F;   /* Fondo del footer */
+
+  /* ── Bordes ───────────────────────────────────────────────────────────────── */
+  --color-cgr-border:  #1E1E3A;
+
+  /* ── Púrpura ──────────────────────────────────────────────────────────────── */
+  --color-cgr-purple:      #A855F7;   /* Púrpura primario */
+  --color-cgr-purple-dark: #7C3AED;   /* Púrpura oscuro (gradiente inicio) */
+  --color-cgr-purple-deep: #2E1065;   /* Púrpura muy oscuro (CTA background) */
+  --color-cgr-accent:      #A78BFA;   /* Púrpura claro / roles de ponentes */
+
+  /* ── Textos ───────────────────────────────────────────────────────────────── */
+  --color-cgr-muted:   #94A3B8;   /* Texto secundario */
+  --color-cgr-subtle:  #64748B;   /* Texto terciario */
+}
