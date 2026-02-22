@@ -1,0 +1,21 @@
+# Datos persistentes del VPS — nunca van al build context
+data/
+
+# Git
+.git
+.gitignore
+
+# Node
+frontend/node_modules
+frontend/.nuxt
+frontend/dist
+
+# Vendor PHP (se instala en el build)
+backend/vendor
+
+# Entornos y secretos
+.env
+*.env.local
+
+# Logs
+backend/storage/logs/*.log
