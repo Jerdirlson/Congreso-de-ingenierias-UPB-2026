@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { useScrollReveal } from '../composables/useScrollReveal'
+
+const { setRef } = useScrollReveal()
+
 const stats = [
-  { value: '+50',   label: 'Ponentes Internacionales' },
   { value: '5',     label: 'Días de Congreso' },
-  { value: '12',    label: 'Líneas Temáticas' },
-  { value: '+1000', label: 'Asistentes Esperados' },
+  { value: '8',     label: 'Ejes Temáticos' },
+  { value: '6',     label: 'Facultades de Ingeniería' },
+  { value: 'Híbrido', label: 'Presencial + Virtual' },
 ]
 </script>
 
@@ -14,7 +18,8 @@ const stats = [
         <div
           v-for="(stat, i) in stats"
           :key="stat.label"
-          class="flex flex-col items-center justify-center py-8 px-6 text-center"
+          :ref="(el) => setRef(el as Element, i)"
+          class="animate-reveal flex flex-col items-center justify-center py-8 px-6 text-center hover:scale-105 transition-transform duration-300"
           :class="i < stats.length - 1 ? 'border-r border-cgr-border' : ''"
         >
           <span class="text-3xl lg:text-4xl font-black text-cgr-purple">{{ stat.value }}</span>
