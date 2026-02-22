@@ -51,6 +51,18 @@ class UploadTestController extends Controller
         ], 201);
     }
 
+    /** GET /api/dev/files/{filename}/download — Descarga un archivo con headers correctos */
+    public function download(string $filename): mixed
+    {
+        $path = 'uploads/' . basename($filename);
+
+        if (! Storage::disk('public')->exists($path)) {
+            return response()->json(['message' => 'Archivo no encontrado'], 404);
+        }
+
+        return Storage::disk('public')->download($path, $filename);
+    }
+
     /** DELETE /api/dev/files/{filename} — Elimina un archivo */
     public function destroy(string $filename): JsonResponse
     {

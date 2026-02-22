@@ -373,9 +373,8 @@
         </div>
         <div class="flex gap-2 flex-shrink-0">
           <a
-            href="${file.url}"
+            href="/api/dev/files/${encodeURIComponent(file.name)}/download"
             download="${file.name}"
-            id="dl-${file.name}"
             onclick="trackDownload('${file.name}', ${file.size}, this)"
             class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-3 py-1.5 transition-colors"
           >⬇ Descargar</a>
