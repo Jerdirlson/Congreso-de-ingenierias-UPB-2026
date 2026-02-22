@@ -79,17 +79,21 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::put('/documents/{document}',     [DocumentController::class, 'update']);
     Route::delete('/documents/{document}',  [DocumentController::class, 'destroy']);
 
-    // Streams
-    Route::post('/streams',                          [StreamController::class, 'store']);
-    Route::put('/streams/{stream}',                  [StreamController::class, 'update']);
-    Route::delete('/streams/{stream}',               [StreamController::class, 'destroy']);
-    Route::post('/streams/{stream}/go-live',         [StreamController::class, 'goLive']);
-    Route::post('/streams/{stream}/end',             [StreamController::class, 'end']);
-    Route::get('/streams/{stream}/credentials',      [StreamController::class, 'credentials']);
+    // Streams — solo admin y administrativo
+    Route::middleware('role:admin|administrativo')->group(function () {
+        Route::post('/streams',                          [StreamController::class, 'store']);
+        Route::put('/streams/{stream}',                  [StreamController::class, 'update']);
+        Route::delete('/streams/{stream}',               [StreamController::class, 'destroy']);
+        Route::post('/streams/{stream}/go-live',         [StreamController::class, 'goLive']);
+        Route::post('/streams/{stream}/end',             [StreamController::class, 'end']);
+        Route::get('/streams/{stream}/credentials',      [StreamController::class, 'credentials']);
+    });
 
-    // Recordings (subida y eliminación de videos)
-    Route::post('/streams/{stream}/recordings',      [RecordingController::class, 'store']);
-    Route::delete('/recordings/{recording}',         [RecordingController::class, 'destroy']);
+    // Recordings — solo admin y administrativo
+    Route::middleware('role:admin|administrativo')->group(function () {
+        Route::post('/streams/{stream}/recordings',      [RecordingController::class, 'store']);
+        Route::delete('/recordings/{recording}',         [RecordingController::class, 'destroy']);
+    });
 });
 
 // ── Webhooks (sin auth, con verificación de firma) ──────────────────────────

@@ -13,7 +13,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Admin user ─────────────────────────────────────────────────────
+        $this->call(RoleSeeder::class);
+
+        // ── Admin user (legacy) ────────────────────────────────────────────
         User::firstOrCreate(
             ['email' => 'admin@congreso.edu.co'],
             [

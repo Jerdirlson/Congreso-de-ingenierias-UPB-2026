@@ -35,6 +35,7 @@ class AuthController extends Controller
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
+                'role'  => $user->getRoleNames()->first(),
             ],
         ]);
     }
@@ -50,6 +51,12 @@ class AuthController extends Controller
     /** GET /api/me */
     public function me(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        return response()->json([
+            'id'    => $user->id,
+            'name'  => $user->name,
+            'email' => $user->email,
+            'role'  => $user->getRoleNames()->first(),
+        ]);
     }
 }
