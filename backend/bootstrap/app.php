@@ -12,10 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Confiar en proxies (Docker: frontend → nginx → backend)
+        // Confiar en proxies (Docker: nginx → backend)
         $middleware->trustProxies(at: '*');
-        // Permitir Host "nginx" cuando el proxy envía requests desde el contenedor frontend
-        $middleware->trustHosts(at: ['localhost', 'nginx', '127.0.0.1']);
+        // Aceptar requests por IP directa, por dominio y desde contenedores internos
+        $middleware->trustHosts(at: [
+            '207.248.81.83',
+            'congreso2026.bucaramanga.upb.edu.co',
+            'localhost',
+            'nginx',
+            '127.0.0.1',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
