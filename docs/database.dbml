@@ -1,0 +1,123 @@
+// Congreso Ingenierías 2026 — Database Schema
+// Pegar en: dbdiagram.io
+
+Table users {
+  id bigint [pk, increment]
+  name varchar(255)
+  email varchar(255) [unique]
+  password varchar(255)
+  phone varchar(20)
+  document_type enum('cedula', 'pasaporte', 'cc_extranjera')
+  document_number varchar(50)
+  institution varchar(255)
+  country varchar(100)
+  city varchar(100)
+  email_verified_at timestamp
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table thematic_axes {
+  id bigint [pk, increment]
+  name varchar(255)
+  description text
+  keywords text
+  is_active boolean [default: true]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table submissions {
+  id bigint [pk, increment]
+  user_id bigint [ref: > users.id]
+  thematic_axis_id bigint [ref: > thematic_axes.id, null, note: 'Asignado por LLM']
+  title varchar(500)
+  status varchar(30) [note: 'draft → abstract_submitted → abstract_rejected → abstract_approved → under_review → revision_requested → document_approved → modality_selected → video_pending → video_ready → payment_pending → confirmed']
+  modality enum('presencial_oral', 'presencial_poster', 'virtual', 'proyecto_aula') [null, note: 'Nullable hasta que el ponente elija']
+  abstract_attempts int [default: 0]
+  document_version int [default: 0]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table submission_abstracts {
+  id bigint [pk, increment]
+  submission_id bigint [ref: > submissions.id]
+  llm_axis_id bigint [ref: > thematic_axes.id, null, note: 'Eje sugerido por LLM']
+  content text
+  version int
+  llm_status enum('pending', 'approved', 'rejected')
+  llm_confidence_score decimal(5,2) [null, note: '0.00 a 100.00']
+  llm_justification text [null]
+  llm_raw_response json [null]
+  processed_at timestamp [null]
+  created_at timestamp
+}
+
+Table submission_documents {
+  id bigint [pk, increment]
+  submission_id bigint [ref: > submissions.id]
+  version int
+  original_filename varchar(255)
+  stored_path varchar(500)
+  file_size bigint
+  mime_type varchar(100)
+  status enum('pending_review', 'under_review', 'revision_requested', 'approved')
+  submitted_at timestamp
+}
+
+Table reviews {
+  id bigint [pk, increment]
+  submission_document_id bigint [ref: > submission_documents.id]
+  submission_id bigint [ref: > submissions.id]
+  reviewer_id bigint [ref: > users.id]
+  assigned_by bigint [ref: > users.id, note: 'Admin que asignó']
+  status enum('pending', 'in_progress', 'completed')
+  decision enum('approved', 'rejected') [null, note: 'Null hasta completar la revisión']
+  comments text [null]
+  assigned_at timestamp
+  started_at timestamp [null]
+  completed_at timestamp [null]
+}
+
+Table submission_videos {
+  id bigint [pk, increment]
+  submission_id bigint [ref: - submissions.id, note: 'Solo ponencias virtuales']
+  cloudflare_uid varchar(255)
+  cloudflare_playback_url varchar(500)
+  cloudflare_thumbnail_url varchar(500) [null]
+  duration_seconds int [null]
+  status enum('pending', 'processing', 'ready', 'error')
+  error_message text [null]
+  uploaded_at timestamp [null]
+  ready_at timestamp [null]
+}
+
+Table payments {
+  id bigint [pk, increment]
+  user_id bigint [ref: > users.id]
+  submission_id bigint [ref: > submissions.id, null, note: 'Null si es solo participante']
+  registration_type enum('participant', 'speaker')
+  amount decimal(10,2)
+  currency varchar(3) [default: 'COP']
+  status enum('pending', 'completed', 'failed', 'refunded')
+  external_payment_url varchar(500) [null, note: 'Link externo de pasarela']
+  gateway_transaction_id varchar(255) [null]
+  gateway_response json [null]
+  paid_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table registrations {
+  id bigint [pk, increment]
+  user_id bigint [ref: > users.id]
+  payment_id bigint [ref: - payments.id]
+  submission_id bigint [ref: > submissions.id, null, note: 'Null si es solo participante']
+  registration_type enum('participant', 'speaker')
+  modality enum('presencial', 'virtual', 'proyecto_aula') [null]
+  ticket_code varchar(50) [unique]
+  confirmed_at timestamp
+  attended boolean [default: false]
+  created_at timestamp
+}
