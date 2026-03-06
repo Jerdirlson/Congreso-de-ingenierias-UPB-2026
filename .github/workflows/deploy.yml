@@ -53,12 +53,18 @@ jobs:
 
     steps:
       - name: Actualizar código
-        run: git -C ~/congreso pull origin main
+        run: |
+          git -C ~/congreso fetch origin main
+          git -C ~/congreso clean -fd
+          git -C ~/congreso reset --hard origin/main
 
       - name: Reconstruir y reiniciar servicios
         run: docker compose -f ~/congreso/docker-compose.prod.yml up --build -d
 
-      - name: Verificar despliegue
+      - name: Correr migraciones
         run: |
-          sleep 10
-          docker compose -f ~/congreso/docker-compose.prod.yml ps
+          sleep 15
+          docker compose -f ~/congreso/docker-compose.prod.yml exec -T backend php artisan migrate --force
+
+      - name: Verificar despliegue
+        run: docker compose -f ~/congreso/docker-compose.prod.yml ps
