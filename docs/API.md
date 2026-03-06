@@ -1,7 +1,7 @@
 # API Reference
 
-**Base URL:** `http://congreso2026.bucaramanga.upb.edu.co/api`
-**Autenticación:** Laravel Sanctum (Bearer token)
+**Base URL:** `http://congreso2026.bucaramanga.upb.edu.co/api`  
+**Autenticación:** Laravel Sanctum (Bearer token)  
 **Formato:** JSON
 
 ---
@@ -12,93 +12,116 @@
 |--------|----------|------|-------------|
 | GET | `/health` | No | Estado del sistema |
 
-**Respuesta exitosa:**
+---
+
+## Autenticación
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| POST | `/register` | No | Registro (ponente o participante) |
+| POST | `/login` | No | Iniciar sesión |
+| POST | `/logout` | Sí | Cerrar sesión |
+| GET | `/me` | Sí | Usuario actual |
+
+**Registro (POST /register):**
 ```json
 {
-  "status": "ok",
-  "service": "congreso-ingenierias-2026-api",
-  "timestamp": "2026-02-21T18:00:00.000Z",
-  "checks": {
-    "database": { "status": "ok" },
-    "redis": { "status": "ok" }
-  }
+  "name": "Juan Pérez",
+  "email": "juan@example.com",
+  "password": "secret123",
+  "password_confirmation": "secret123",
+  "registration_type": "ponente",
+  "phone": "+57 300 123 4567",
+  "document_type": "cedula",
+  "document_number": "12345678",
+  "institution": "UPB",
+  "country": "Colombia",
+  "city": "Bucaramanga"
 }
 ```
 
 ---
 
-## Eventos
+## Ejes temáticos (público)
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| GET | `/events` | No | Listar todos los eventos |
-| GET | `/events/{id}` | No | Ver un evento |
-| POST | `/events` | Sí | Crear evento |
-| PUT | `/events/{id}` | Sí | Actualizar evento |
-| DELETE | `/events/{id}` | Sí | Eliminar evento |
+| GET | `/thematic-axes` | No | Listar ejes temáticos activos |
 
 ---
 
-## Ponentes
+## Ponencia (rol: ponente)
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| GET | `/speakers` | No | Listar ponentes |
-| GET | `/speakers/{id}` | No | Ver un ponente |
-| POST | `/speakers` | Sí | Crear ponente |
-| PUT | `/speakers/{id}` | Sí | Actualizar ponente |
-| DELETE | `/speakers/{id}` | Sí | Eliminar ponente |
+| GET | `/submissions` | Sí | Mis ponencias |
+| POST | `/submissions` | Sí | Crear ponencia |
+| GET | `/submissions/{id}` | Sí | Ver ponencia |
+| PATCH | `/submissions/{id}` | Sí | Actualizar título (solo draft) |
+| POST | `/submissions/{id}/abstracts` | Sí | Subir resumen (dispara clasificación LLM) |
+| POST | `/submissions/{id}/documents` | Sí | Subir documento PDF |
+| PATCH | `/submissions/{id}/modality` | Sí | Elegir modalidad |
+| POST | `/submissions/{id}/videos` | Sí | Iniciar subida de videoponencia |
 
 ---
 
-## Documentos
+## Revisión (rol: revisor)
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| GET | `/documents` | No | Listar documentos |
-| GET | `/documents/{id}` | No | Ver un documento |
-| GET | `/documents/{id}/download` | No | Descargar documento |
-| POST | `/documents` | Sí | Subir documento |
-| PUT | `/documents/{id}` | Sí | Actualizar documento |
-| DELETE | `/documents/{id}` | Sí | Eliminar documento |
-
-**Tipos de archivo permitidos:** `pdf`, `docx`, `pptx`, `xlsx`, `zip`
-**Tamaño máximo:** 100 MB
+| GET | `/reviews` | Sí | Revisiones asignadas |
+| GET | `/reviews/{id}` | Sí | Ver revisión |
+| PATCH | `/reviews/{id}` | Sí | Iniciar o completar revisión (decision, comments) |
 
 ---
 
-## Transmisiones (Streams)
+## Admin (rol: admin | administrativo)
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| GET | `/streams` | No | Listar transmisiones |
-| GET | `/streams/{id}` | No | Ver una transmisión |
-| POST | `/streams` | Sí | Crear transmisión |
-| PUT | `/streams/{id}` | Sí | Actualizar transmisión |
-| DELETE | `/streams/{id}` | Sí | Eliminar transmisión |
-| POST | `/streams/{id}/go-live` | Sí | Iniciar transmisión en vivo |
-| POST | `/streams/{id}/end` | Sí | Terminar transmisión |
+| GET | `/admin/submissions` | Sí | Listar todas las ponencias |
+| GET | `/admin/submissions/{id}` | Sí | Ver ponencia |
+| POST | `/admin/submissions/{id}/assign-reviewer` | Sí | Asignar revisor |
+| GET | `/admin/thematic-axes` | Sí | Listar ejes |
+| POST | `/admin/thematic-axes` | Sí | Crear eje |
+| GET | `/admin/thematic-axes/{id}` | Sí | Ver eje |
+| PUT | `/admin/thematic-axes/{id}` | Sí | Actualizar eje |
+| DELETE | `/admin/thematic-axes/{id}` | Sí | Eliminar eje |
 
 ---
 
-## Rate Limiting
+## Pagos e inscripciones (rol: ponente | participante)
 
-| Tipo de ruta | Límite |
-|-------------|--------|
-| Rutas públicas (GET) | 120 requests / minuto por IP |
-| Rutas autenticadas | 60 requests / minuto por usuario |
-| Nginx (todas) | 30 req/s por IP (burst: 60) |
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| POST | `/payments` | Sí | Iniciar pago (retorna checkout_url) |
+| GET | `/registrations` | Sí | Mis inscripciones (incluye ticket_code si ya pagó) |
 
-Cuando se supera el límite se devuelve `HTTP 429 Too Many Requests`.
+**Body para pagos:** `{ "registration_type": "participant" }` (solo asistencia) o `{ "registration_type": "speaker", "submission_id": 1 }` (ponente)
 
 ---
 
-## Autenticación
+## Webhooks
 
-Las rutas protegidas requieren un Bearer token en el header:
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| POST | `/webhooks/cloudflare-video` | No | Callback cuando video está listo |
+| POST | `/webhooks/payment` | No | Callback de pasarela de pago |
+
+---
+
+## Rate limiting
+
+| Tipo | Límite |
+|------|--------|
+| Auth (login/register) | 10 req/min |
+| Rutas públicas | 120 req/min por IP |
+| Rutas autenticadas | 60 req/min por usuario |
+
+---
+
+## Header de autenticación
 
 ```
 Authorization: Bearer {token}
 ```
-
-El token se obtiene al iniciar sesión. Consultar la documentación de Laravel Sanctum para el flujo completo de autenticación SPA.

@@ -1,14 +1,21 @@
 <?php
 
+use App\Http\Controllers\Api\AbstractController;
+use App\Http\Controllers\Api\AdminSubmissionController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\CloudflareWebhookController;
-use App\Http\Controllers\Api\DocumentController;
-use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\CloudflareVideoWebhookController;
+use App\Http\Controllers\Api\CongressEventController;
+use App\Http\Controllers\Api\DocumentSubmissionController;
 use App\Http\Controllers\Api\HealthController;
-use App\Http\Controllers\Api\RecordingController;
-use App\Http\Controllers\Api\SpeakerController;
-use App\Http\Controllers\Api\StreamController;
+use App\Http\Controllers\Api\ModalityController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\RegistrationController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SubmissionController;
+use App\Http\Controllers\Api\ThematicAxisController;
 use App\Http\Controllers\Api\UploadTestController;
+use App\Http\Controllers\Api\VideoController;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 
@@ -22,80 +29,90 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// ── Upload test: activo en local O cuando ALLOW_UPLOAD_TEST=true en .env ───────
-// Para habilitar en producción temporalmente: agregar ALLOW_UPLOAD_TEST=true al .env
-// y correr: docker exec cgr-backend php artisan route:clear
+// ── Upload test (solo local) ─────────────────────────────────────────────
 if (app()->environment('local') || config('app.allow_upload_test')) {
-    Route::get('/dev/files',                          [UploadTestController::class, 'index']);
-    Route::post('/dev/upload',                        [UploadTestController::class, 'store']);
-    Route::get('/dev/files/{filename}/download',      [UploadTestController::class, 'download']);
-    Route::delete('/dev/files/{filename}',            [UploadTestController::class, 'destroy']);
+    Route::get('/dev/files',                     [UploadTestController::class, 'index']);
+    Route::post('/dev/upload',                  [UploadTestController::class, 'store']);
+    Route::get('/dev/files/{filename}/download', [UploadTestController::class, 'download']);
+    Route::delete('/dev/files/{filename}',      [UploadTestController::class, 'destroy']);
 }
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+// ── Public ────────────────────────────────────────────────────────────────
 
-Route::middleware('throttle:10,1')->group(function () {
-    Route::post('/login',  [AuthController::class, 'login']);
-    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-    Route::get('/me',      [AuthController::class, 'me'])->middleware('auth:sanctum');
-});
-
-// ── Public ────────────────────────────────────────────────────────────────────
-
-/** GET /api/health — Sin throttle ni auth; siempre responde aunque Redis/cache fallen */
 Route::get('/health', HealthController::class)->withoutMiddleware([ThrottleRequests::class]);
 
-/** Public read-only resources — 120 requests/minute por IP */
 Route::middleware('throttle:120,1')->group(function () {
-    Route::get('/events',           [EventController::class, 'index']);
-    Route::get('/events/{event}',   [EventController::class, 'show']);
-    Route::get('/speakers',         [SpeakerController::class, 'index']);
-    Route::get('/speakers/{speaker}', [SpeakerController::class, 'show']);
-    Route::get('/documents',        [DocumentController::class, 'index']);
-    Route::get('/documents/{document}', [DocumentController::class, 'show']);
-    Route::get('/documents/{document}/download', [DocumentController::class, 'download']);
-    Route::get('/streams',                        [StreamController::class, 'index']);
-    Route::get('/streams/{stream}',               [StreamController::class, 'show']);
-    Route::get('/recordings/{recording}',         [RecordingController::class, 'show']);
+    Route::get('/thematic-axes', [ThematicAxisController::class, 'index']);
+    Route::get('/events',        [CongressEventController::class, 'index']);
 });
 
-// ── Authenticated ─────────────────────────────────────────────────────────────
+// ── Auth (público) ────────────────────────────────────────────────────────
 
-/** Rutas autenticadas — 60 requests/minute por usuario */
-Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
-
-    // Events (admin)
-    Route::post('/events',              [EventController::class, 'store']);
-    Route::put('/events/{event}',       [EventController::class, 'update']);
-    Route::delete('/events/{event}',    [EventController::class, 'destroy']);
-
-    // Speakers
-    Route::post('/speakers',             [SpeakerController::class, 'store']);
-    Route::put('/speakers/{speaker}',    [SpeakerController::class, 'update']);
-    Route::delete('/speakers/{speaker}', [SpeakerController::class, 'destroy']);
-
-    // Documents
-    Route::post('/documents',               [DocumentController::class, 'store']);
-    Route::put('/documents/{document}',     [DocumentController::class, 'update']);
-    Route::delete('/documents/{document}',  [DocumentController::class, 'destroy']);
-
-    // Streams — solo admin y administrativo
-    Route::middleware('role:admin|administrativo')->group(function () {
-        Route::post('/streams',                          [StreamController::class, 'store']);
-        Route::put('/streams/{stream}',                  [StreamController::class, 'update']);
-        Route::delete('/streams/{stream}',               [StreamController::class, 'destroy']);
-        Route::post('/streams/{stream}/go-live',         [StreamController::class, 'goLive']);
-        Route::post('/streams/{stream}/end',             [StreamController::class, 'end']);
-        Route::get('/streams/{stream}/credentials',      [StreamController::class, 'credentials']);
-    });
-
-    // Recordings — solo admin y administrativo
-    Route::middleware('role:admin|administrativo')->group(function () {
-        Route::post('/streams/{stream}/recordings',      [RecordingController::class, 'store']);
-        Route::delete('/recordings/{recording}',         [RecordingController::class, 'destroy']);
-    });
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login',    [AuthController::class, 'login']);
+    Route::post('/logout',  [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('/me',       [AuthController::class, 'me'])->middleware('auth:sanctum');
 });
 
-// ── Webhooks (sin auth, con verificación de firma) ──────────────────────────
-Route::post('/webhooks/cloudflare-stream', [CloudflareWebhookController::class, 'handle'])
+// ── Verificación de correo (sin auth para el enlace del email) ─────────────
+
+Route::middleware('throttle:6,1')->group(function () {
+    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware('signed')
+        ->name('verification.verify');
+    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+        ->name('verification.send');
+});
+
+// ── Ponente (auth + role + email verificado) ──────────────────────────────
+
+Route::middleware(['auth:sanctum', 'role:ponente', 'throttle:60,1'])->group(function () {
+    Route::get('/submissions',                    [SubmissionController::class, 'index']);
+    Route::post('/submissions',                   [SubmissionController::class, 'store']);
+    Route::get('/submissions/{submission}',       [SubmissionController::class, 'show']);
+    Route::patch('/submissions/{submission}',     [SubmissionController::class, 'update']);
+    Route::delete('/submissions/{submission}',    [SubmissionController::class, 'destroy']);
+    Route::post('/submissions/{submission}/abstracts', [AbstractController::class, 'store']);
+    Route::post('/submissions/{submission}/documents', [DocumentSubmissionController::class, 'store']);
+    Route::get('/submissions/{submission}/documents/{document}/download', [DocumentSubmissionController::class, 'download']);
+    Route::patch('/submissions/{submission}/modality', [ModalityController::class, 'update']);
+    Route::post('/submissions/{submission}/videos',        [VideoController::class, 'store']);
+    Route::get('/submissions/{submission}/videos/status',  [VideoController::class, 'status']);
+});
+
+// ── Ponente + Participante (pagos e inscripciones) ────────────────────────
+
+Route::middleware(['auth:sanctum', 'role:ponente|participante', 'throttle:60,1'])->group(function () {
+    Route::post('/payments', [PaymentController::class, 'store']);
+    Route::get('/registrations', [RegistrationController::class, 'index']);
+});
+
+// ── Revisor (auth + role + email verificado) ────────────────────────────────
+
+Route::middleware(['auth:sanctum', 'role:revisor', 'throttle:60,1'])->group(function () {
+    Route::get('/reviews',                              [ReviewController::class, 'index']);
+    Route::get('/reviews/{review}',                     [ReviewController::class, 'show']);
+    Route::patch('/reviews/{review}',                   [ReviewController::class, 'update']);
+    Route::get('/reviews/{review}/document',            [ReviewController::class, 'downloadDocument']);
+});
+
+// ── Admin / Administrativo ───────────────────────────────────────────────
+
+Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1'])->prefix('admin')->group(function () {
+    Route::get('/submissions',                          [AdminSubmissionController::class, 'index']);
+    Route::get('/reviewers',                            [AdminSubmissionController::class, 'reviewers']);
+    Route::get('/submissions/{submission}',             [AdminSubmissionController::class, 'show']);
+    Route::post('/submissions/{submission}/assign-reviewer',    [AdminSubmissionController::class, 'assignReviewer']);
+    Route::get('/submissions/{submission}/video/stream',         [AdminSubmissionController::class, 'streamVideo']);
+    Route::patch('/submissions/{submission}/video/approve',      [AdminSubmissionController::class, 'approveVideo']);
+    Route::patch('/submissions/{submission}/video/reject',       [AdminSubmissionController::class, 'rejectVideo']);
+    Route::apiResource('thematic-axes', ThematicAxisController::class);
+});
+
+// ── Webhooks (sin auth) ───────────────────────────────────────────────────
+
+Route::post('/webhooks/cloudflare-video', [CloudflareVideoWebhookController::class, 'handle'])
+    ->withoutMiddleware([ThrottleRequests::class]);
+Route::post('/webhooks/payment', [PaymentController::class, 'webhook'])
     ->withoutMiddleware([ThrottleRequests::class]);

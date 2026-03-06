@@ -69,22 +69,28 @@ Internet
 
 ```
 users
- ├── speakers (1:1)
- ├── documents (1:N, uploaded_by)
- └── streams (1:N, created_by)
+ ├── submissions (1:N)
+ ├── reviews (1:N, reviewer_id)
+ ├── payments (1:N)
+ └── registrations (1:N)
 
-events ──── speakers (M:M via event_speaker)
-  ├── documents (1:N)
-  └── streams (1:N)
+thematic_axes
+ ├── submissions (1:N)
+ └── submission_abstracts (1:N, llm_axis_id)
 
-documents
-  ├── document_versions (1:N)
-  ├── document_tags (M:M)
-  ├── document_authors (1:N)
-  └── document_categories (N:1, self-referencing parent)
+submissions
+ ├── submission_abstracts (1:N)
+ ├── submission_documents (1:N)
+ ├── submission_videos (1:1)
+ ├── reviews (1:N)
+ ├── payments (1:N)
+ └── registrations (1:N)
 
-streams
-  └── stream_recordings (1:N)
+submission_documents
+ └── reviews (1:N)
+
+payments
+ └── registrations (1:1)
 ```
 
 ## Estructura del repositorio

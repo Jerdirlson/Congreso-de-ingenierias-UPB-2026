@@ -67,6 +67,43 @@ services:
     networks:
       - cgr-network
 
+
+  # ── Queue worker (procesa videos y otros jobs) ────────────────────────────
+  queue-worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: cgr-queue-worker
+    command: ['php', 'artisan', 'queue:work', 'redis', '--sleep=3', '--tries=2', '--timeout=300', '--max-time=3600']
+    volumes:
+      - ./backend:/var/www/html
+      - cgr-vendor:/var/www/html/vendor
+      - ./data/storage:/var/www/html/storage
+      - ./docker/php/php.prod.ini:/usr/local/etc/php/conf.d/app.ini:ro
+    environment:
+      APP_ENV:    production
+      APP_DEBUG:  "false"
+      APP_URL:    https://congreso2026.bucaramanga.upb.edu.co
+      APP_KEY:          DB_CONNECTION: mysql
+      DB_HOST:    mysql
+      DB_PORT:    "3306"
+      DB_DATABASE: congreso_db
+      DB_USERNAME: congreso
+      DB_PASSWORD:       REDIS_HOST:  redis
+      REDIS_PORT:  "6379"
+      CACHE_DRIVER:     redis
+      SESSION_DRIVER:   redis
+      QUEUE_CONNECTION: redis
+      LOG_CHANNEL:      stderr
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cgr-network
+
   # ── MySQL 8.0 ─────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0

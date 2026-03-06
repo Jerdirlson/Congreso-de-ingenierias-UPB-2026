@@ -68,8 +68,12 @@ artisan: ## Ejecutar comando artisan (uso: make artisan CMD="migrate")
 migrate: ## Ejecutar migraciones
 	docker compose exec backend php artisan migrate --force
 
-fresh: ## Migración fresca con seeders
+fresh: ## Migración fresca con seeders (borra todos los datos y re-siembra)
+	docker compose exec backend rm -f /var/www/html/.docker-seeded
 	docker compose exec backend php artisan migrate:fresh --seed --force
+	@echo ""
+	@echo "  Base de datos reiniciada y sembrada correctamente."
+	@echo ""
 
 composer: ## Ejecutar composer (uso: make composer CMD="install")
 	docker compose exec backend composer $(CMD)

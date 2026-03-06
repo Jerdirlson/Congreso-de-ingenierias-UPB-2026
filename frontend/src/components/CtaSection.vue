@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import { useScrollReveal } from '../composables/useScrollReveal'
 
 const { setRef } = useScrollReveal()
@@ -104,12 +105,12 @@ const modalities = [
       </div>
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a
-          href="#"
-          class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-10 py-3.5 rounded-xl hover:opacity-90 transition-opacity"
+        <RouterLink
+          to="/login"
+          class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-10 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-center"
         >
-          Enviar ponencia
-        </a>
+          Inscríbete ahora
+        </RouterLink>
         <a
           href="#ejes"
           class="w-full sm:w-auto border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple font-semibold px-10 py-3.5 rounded-xl transition-colors"

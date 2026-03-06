@@ -4,13 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
@@ -18,6 +18,13 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'document_type',
+        'document_number',
+        'institution',
+        'country',
+        'city',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -33,20 +40,23 @@ class User extends Authenticatable
         ];
     }
 
-    // ── Relationships ──────────────────────────────────────────────────────
-
-    public function speaker(): HasOne
+    public function submissions(): HasMany
     {
-        return $this->hasOne(Speaker::class);
+        return $this->hasMany(Submission::class);
     }
 
-    public function uploadedDocuments(): HasMany
+    public function reviews(): HasMany
     {
-        return $this->hasMany(Document::class, 'uploaded_by');
+        return $this->hasMany(Review::class, 'reviewer_id');
     }
 
-    public function createdStreams(): HasMany
+    public function payments(): HasMany
     {
-        return $this->hasMany(Stream::class, 'created_by');
+        return $this->hasMany(Payment::class);
+    }
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(Registration::class);
     }
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import LogoUpb from './LogoUpb.vue'
 
 const menuOpen = ref(false)
@@ -19,13 +20,13 @@ const links = [
   <header class="fixed top-0 left-0 right-0 z-50 bg-cgr-bg/90 backdrop-blur-md border-b border-cgr-border">
     <div class="max-w-7xl mx-auto px-5 lg:px-20 h-16 flex items-center justify-between">
 
-      <a href="#inicio" class="flex items-center gap-4 shrink-0">
+      <RouterLink to="/" class="flex items-center gap-4 shrink-0">
         <LogoUpb class="h-7 w-auto" />
         <div class="hidden sm:block border-l border-cgr-border pl-4">
           <p class="text-white font-semibold text-xs leading-tight">Congreso Internacional</p>
           <p class="text-cgr-purple text-xs font-normal">de Ingeniería · 2026</p>
         </div>
-      </a>
+      </RouterLink>
 
       <nav class="hidden lg:flex items-center gap-8">
         <a
@@ -39,12 +40,12 @@ const links = [
       </nav>
 
       <div class="flex items-center gap-3">
-        <a
-          href="#inscripcion"
+        <RouterLink
+          to="/login"
           class="bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white text-sm font-semibold px-5 py-2 rounded-lg hover:opacity-90 transition-opacity"
         >
           Inscríbete
-        </a>
+        </RouterLink>
 
         <button
           class="lg:hidden text-cgr-muted hover:text-white p-1"

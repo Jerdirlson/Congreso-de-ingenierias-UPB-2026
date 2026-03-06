@@ -39,6 +39,9 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       CACHE_DRIVER: redis
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
     depends_on:
@@ -50,6 +53,41 @@ services:
     networks:
       - cgr-network
 
+
+  # ── Queue worker (procesa jobs como videos) ───────────────────────────────
+  queue-worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: cgr-queue-worker
+    command: ['php', 'artisan', 'queue:work', 'redis', '--sleep=3', '--tries=2', '--timeout=300']
+    volumes:
+      - ./backend:/var/www/html
+      - cgr-vendor:/var/www/html/vendor
+      - cgr-storage:/var/www/html/storage
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: congreso_db
+      DB_USERNAME: congreso
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cgr-network
   # ── MySQL 8.0 ─────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
@@ -85,6 +123,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+    networks:
+      - cgr-network
+
+  # ── Mailpit (captura correos en dev, UI en :8025) ─────────────────────────
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: cgr-mailpit
+    ports:
+      - "8025:8025"   # Web UI: http://localhost:8025
+      - "1025:1025"   # SMTP (para que Laravel envíe aquí)
     restart: unless-stopped
     networks:
       - cgr-network

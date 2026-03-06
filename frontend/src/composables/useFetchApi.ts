@@ -115,14 +115,52 @@ export function useFetchApi() {
     return data
   }
 
+  async function postForm<T>(path: string, formData: FormData): Promise<T | null> {
+    loading.value = true
+    error.value   = null
+
+    const headers: Record<string, string> = { Accept: 'application/json' }
+    if (_token.value) headers['Authorization'] = `Bearer ${_token.value}`
+
+    try {
+      const res = await fetch(`/api${path}`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      })
+
+      if (res.status === 204) return null as T
+      const json = await res.json()
+
+      if (!res.ok) {
+        error.value = {
+          message: json.message ?? `Error ${res.status}`,
+          status:  res.status,
+          errors:  json.errors ?? undefined,
+        }
+        return null
+      }
+      return json as T
+    } catch (e) {
+      error.value = {
+        message: e instanceof Error ? e.message : 'No se pudo conectar con el servidor',
+        status:  undefined,
+      }
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     loading,
     error,
 
-    get:    <T>(path: string)                    => call<T>('GET',    path),
-    post:   <T>(path: string, body: unknown)     => call<T>('POST',   path, body),
-    put:    <T>(path: string, body: unknown)     => call<T>('PUT',    path, body),
-    patch:  <T>(path: string, body: unknown)     => call<T>('PATCH',  path, body),
-    delete: <T>(path: string)                    => call<T>('DELETE', path),
+    get:      <T>(path: string)                    => call<T>('GET',    path),
+    post:     <T>(path: string, body: unknown)       => call<T>('POST',   path, body),
+    postForm: <T>(path: string, formData: FormData) => postForm<T>(path, formData),
+    put:      <T>(path: string, body: unknown)      => call<T>('PUT',    path, body),
+    patch:    <T>(path: string, body: unknown)      => call<T>('PATCH',  path, body),
+    delete:   <T>(path: string)                     => call<T>('DELETE', path),
   }
 }

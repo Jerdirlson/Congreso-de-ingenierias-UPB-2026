@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { RouterLink } from 'vue-router'
+</script>
+
 <template>
   <section
     id="inicio"
@@ -35,12 +39,12 @@
       </p>
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-        <a
-          href="#inscripcion"
-          class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
+        <RouterLink
+          to="/login"
+          class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm text-center"
         >
           Inscríbete ahora
-        </a>
+        </RouterLink>
         <a
           href="#programa"
           class="w-full sm:w-auto border border-cgr-border text-white font-semibold px-8 py-3.5 rounded-xl hover:border-cgr-purple transition-colors text-sm"

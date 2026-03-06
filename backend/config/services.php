@@ -42,4 +42,16 @@ return [
         'base_url'       => 'https://api.cloudflare.com/client/v4',
     ],
 
+    'anthropic' => [
+        'key'                   => env('ANTHROPIC_API_KEY'),
+        'model'                 => env('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514'),
+        'confidence_threshold'  => env('LLM_CONFIDENCE_THRESHOLD', 70),
+    ],
+
+    'gemini' => [
+        'key'                  => env('GEMINI_API_KEY'),
+        'model'                => env('GEMINI_MODEL', 'gemini-1.5-flash'),
+        'confidence_threshold' => env('LLM_CONFIDENCE_THRESHOLD', 70),
+    ],
+
 ];

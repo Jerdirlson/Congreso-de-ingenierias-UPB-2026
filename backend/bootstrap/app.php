@@ -12,6 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'verified'    => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'role'        => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission'  => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        ]);
         // Confiar en proxies (Docker: nginx → backend)
         $middleware->trustProxies(at: '*');
         // Aceptar requests por IP directa, por dominio y desde contenedores internos
