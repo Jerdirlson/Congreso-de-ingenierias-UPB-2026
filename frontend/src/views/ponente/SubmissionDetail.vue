@@ -19,7 +19,7 @@ const submission = ref<{
   thematic_axis?: { id: number; name: string }
   abstracts?: { id: number; content: string; llm_status: string; llm_axis?: { name: string }; llm_justification?: string }[]
   documents?: { id: number; original_filename: string; version: number; status: string }[]
-  video?: { id: number; status: string; error_message?: string | null } | null
+  video?: { id: number; status: string; error_message?: string | null; original_filename?: string | null } | null
   reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; reviewer?: { name: string } }[]
 } | null>(null)
 

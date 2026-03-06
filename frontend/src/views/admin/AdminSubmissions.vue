@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useFetchApi } from '../../composables/useFetchApi'
 import UiCard from '../../components/ui/UiCard.vue'
 import UiBadge from '../../components/ui/UiBadge.vue'
-import UiButton from '../../components/ui/UiButton.vue'
 
 const router = useRouter()
 

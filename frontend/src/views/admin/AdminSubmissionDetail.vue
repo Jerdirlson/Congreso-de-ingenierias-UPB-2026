@@ -38,7 +38,6 @@ const assignError = ref('')
 const assigning = ref(false)
 const downloading = ref<number | null>(null)
 const downloadingVideo = ref(false)
-const approvingVideo = ref(false)
 const rejectingVideo = ref(false)
 const showRejectVideoModal = ref(false)
 const videoRejectReason = ref('')
@@ -150,15 +149,6 @@ async function downloadVideo() {
     document.body.removeChild(a); URL.revokeObjectURL(url)
   } finally { downloadingVideo.value = false }
 }
-
-async function approveVideo() {
-  approvingVideo.value = true
-  const a = useFetchApi()
-  await a.patch(`/admin/submissions/${route.params.id}/video/approve`, {})
-  approvingVideo.value = false
-  await load()
-}
-
 async function rejectVideo() {
   if (!videoRejectReason.value.trim()) {
     videoRejectError.value = 'Indica el motivo del rechazo.'
@@ -235,7 +225,7 @@ onMounted(load)
     <UiCard v-if="submission?.abstracts?.length" class="p-5 mb-4">
       <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide mb-3">Resumen</h2>
       <div class="bg-cgr-section rounded-lg p-4 text-sm text-cgr-muted leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
-        {{ submission.abstracts[0].content }}
+        {{ submission.abstracts[0]?.content }}
       </div>
     </UiCard>
 

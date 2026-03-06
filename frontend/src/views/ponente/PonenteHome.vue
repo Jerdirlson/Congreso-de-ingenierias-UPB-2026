@@ -81,8 +81,6 @@ const statusVariants: Record<string, 'default' | 'warning' | 'danger' | 'success
   confirmed: 'success',
 }
 
-const deletableStatuses = ['draft', 'abstract_rejected', 'abstract_submitted']
-
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-CO', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
