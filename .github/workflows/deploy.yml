@@ -55,6 +55,7 @@ jobs:
       - name: Actualizar código
         run: |
           git -C ~/congreso fetch origin main
+          sudo chown -R $(whoami):$(whoami) ~/congreso/backend/bootstrap/cache/ ~/congreso/backend/storage/ || true
           git -C ~/congreso clean -fd -e data/ -e .env -e docker-compose.prod.yml
           git -C ~/congreso reset --hard origin/main
 
