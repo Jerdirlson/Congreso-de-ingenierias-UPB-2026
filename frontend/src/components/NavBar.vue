@@ -53,7 +53,6 @@ const links = [
 
       <!-- Acciones -->
       <div class="flex items-center gap-3">
-        <ThemeControls />
         <RouterLink
           to="/login"
           class="bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white text-sm font-semibold px-5 py-2 rounded-lg hover:opacity-90 transition-opacity"
@@ -73,13 +72,7 @@ const links = [
   >
     <!-- Header del drawer -->
     <div class="h-16 shrink-0 flex items-center justify-between border-b border-cgr-border px-5">
-      <RouterLink to="/" class="flex items-center gap-3" @click="menuOpen = false">
-        <LogoUpb class="h-7 w-auto" />
-        <div class="border-l border-cgr-border pl-3">
-          <p class="text-white font-semibold text-xs leading-tight">Congreso Internacional</p>
-          <p class="text-cgr-purple text-xs font-normal">de Ingeniería · 2026</p>
-        </div>
-      </RouterLink>
+      <p class="text-white font-semibold text-sm">Navegación</p>
       <button
         @click="menuOpen = false"
         class="p-1.5 rounded-lg text-cgr-muted hover:text-white hover:bg-cgr-card transition-colors"
