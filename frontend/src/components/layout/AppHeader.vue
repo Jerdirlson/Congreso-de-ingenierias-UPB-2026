@@ -3,7 +3,13 @@ import { computed } from 'vue'
 import type { AuthUser, UserRole } from '../../stores/auth'
 import ThemeControls from '../ThemeControls.vue'
 
-const props = defineProps<{ user: AuthUser | null; role: UserRole | null }>()
+const props = defineProps<{
+  user: AuthUser | null
+  role: UserRole | null
+  sidebarOpen: boolean
+}>()
+
+defineEmits<{ logout: []; toggleSidebar: [] }>()
 
 const roleLabel = computed(() => {
   const labels: Record<string, string> = {
@@ -29,10 +35,28 @@ const roleBadgeClass = computed(() => {
 </script>
 
 <template>
-  <header class="h-16 shrink-0 border-b border-cgr-border bg-cgr-bg/90 backdrop-blur-md px-6 flex items-center justify-between">
-    <div class="flex items-center gap-4">
-      <h1 class="text-sm font-semibold text-white">Panel de gestión</h1>
+  <header class="h-16 shrink-0 border-b border-cgr-border bg-cgr-bg/90 backdrop-blur-md px-4 flex items-center justify-between gap-3">
+
+    <div class="flex items-center gap-3">
+      <!-- Toggle sidebar -->
+      <button
+        @click="$emit('toggleSidebar')"
+        class="p-1.5 rounded-lg border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple/50 transition-colors"
+        :aria-label="sidebarOpen ? 'Colapsar menú' : 'Expandir menú'"
+      >
+        <!-- Barras → colapsar -->
+        <svg v-if="sidebarOpen" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <!-- Flecha → expandir -->
+        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      <h1 class="text-sm font-semibold text-white hidden sm:block">Panel de gestión</h1>
     </div>
+
     <div class="flex items-center gap-3">
       <ThemeControls />
       <div class="text-right hidden sm:block">
@@ -40,16 +64,16 @@ const roleBadgeClass = computed(() => {
         <p class="text-xs text-cgr-muted">{{ user?.email }}</p>
       </div>
       <span
-        class="text-xs px-2.5 py-1 rounded-full font-medium border"
+        class="text-xs px-2.5 py-1 rounded-full font-medium border hidden sm:inline-flex"
         :class="roleBadgeClass"
       >
         {{ roleLabel }}
       </span>
       <RouterLink
         to="/"
-        class="text-xs px-3 py-1.5 rounded-lg border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple transition-colors"
+        class="text-xs px-3 py-1.5 rounded-lg border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple transition-colors hidden sm:inline-flex"
       >
-        Ir a inicio
+        Inicio
       </RouterLink>
       <button
         type="button"
