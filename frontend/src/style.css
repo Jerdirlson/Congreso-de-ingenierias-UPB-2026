@@ -42,6 +42,10 @@
   --gradient-hero-via:  #0A0A1A;
   --gradient-hero-to:   #1a0a2e;
 
+  /* Gradiente CTA (sección inscripción) */
+  --gradient-cta-from: #2E1065;
+  --gradient-cta-to:   #0A0A1A;
+
   /* Escala de fuente — controlada por useTheme (accesibilidad) */
   font-size: calc(var(--font-scale, 1) * 16px);
 }
@@ -68,6 +72,9 @@
   --gradient-hero-from: #EDE9FE;
   --gradient-hero-via:  #F8F7FF;
   --gradient-hero-to:   #F0EEF9;
+
+  --gradient-cta-from: #EDE9FE;
+  --gradient-cta-to:   #F8F7FF;
 }
 
 /*
@@ -87,6 +94,11 @@
     var(--gradient-hero-via)  40%,
     var(--gradient-hero-to)   100%
   );
+}
+
+/* ── CTA gradient (sección inscripción) ─────────────────────────────────────── */
+.cta-gradient {
+  background: radial-gradient(ellipse at center, var(--gradient-cta-from) 0%, var(--gradient-cta-to) 70%);
 }
 
 /* ── Animaciones scroll reveal ──────────────────────────────────────────────── */

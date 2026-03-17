@@ -26,8 +26,7 @@ const modalities = [
 <template>
   <section
     id="inscripcion"
-    class="relative py-24 px-5 lg:px-20 overflow-hidden"
-    style="background: radial-gradient(ellipse at center, #2E1065 0%, #0A0A1A 70%);"
+    class="cta-gradient relative py-24 px-5 lg:px-20 overflow-hidden"
   >
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-cgr-purple/5 rounded-full blur-3xl pointer-events-none" />
 
