@@ -78,11 +78,14 @@
 }
 
 /*
- * text-white en elementos sin fondo de gradiente → texto oscuro en modo claro.
- * Los botones con bg-gradient-to-r mantienen text-white porque el fondo púrpura
- * proporciona contraste suficiente.
+ * text-white y hover:text-white en elementos sin fondo de gradiente →
+ * texto oscuro en modo claro. Los botones con bg-gradient-to-r mantienen
+ * text-white porque el fondo púrpura proporciona contraste suficiente.
  */
 [data-theme="light"] .text-white:not([class*="bg-gradient"]) {
+  color: #1E1B4B !important;
+}
+[data-theme="light"] [class*="hover:text-white"]:not([class*="bg-gradient"]):hover {
   color: #1E1B4B !important;
 }
 
