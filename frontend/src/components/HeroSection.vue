@@ -5,8 +5,8 @@ import { RouterLink } from 'vue-router'
 <template>
   <section
     id="inicio"
-    class="relative flex items-center justify-center overflow-hidden"
-    style="height: 700px; background: linear-gradient(135deg, #1a1035 0%, #0A0A1A 40%, #1a0a2e 100%);"
+    class="hero-gradient relative flex items-center justify-center overflow-hidden"
+    style="height: 700px;"
   >
     <div class="absolute inset-0 bg-cgr-bg/80" />
 

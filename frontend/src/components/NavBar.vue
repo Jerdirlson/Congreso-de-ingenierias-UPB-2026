@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import LogoUpb from './LogoUpb.vue'
+import ThemeControls from './ThemeControls.vue'
 
 const menuOpen = ref(false)
 
@@ -40,6 +41,7 @@ const links = [
       </nav>
 
       <div class="flex items-center gap-3">
+        <ThemeControls />
         <RouterLink
           to="/login"
           class="bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white text-sm font-semibold px-5 py-2 rounded-lg hover:opacity-90 transition-opacity"
@@ -72,6 +74,9 @@ const links = [
       >
         {{ link.label }}
       </a>
+      <div class="pt-2 border-t border-cgr-border">
+        <ThemeControls />
+      </div>
     </div>
   </header>
 </template>

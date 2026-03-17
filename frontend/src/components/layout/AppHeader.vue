@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { AuthUser, UserRole } from '../../stores/auth'
+import ThemeControls from '../ThemeControls.vue'
 
 const props = defineProps<{ user: AuthUser | null; role: UserRole | null }>()
 
@@ -33,6 +34,7 @@ const roleBadgeClass = computed(() => {
       <h1 class="text-sm font-semibold text-white">Panel de gestión</h1>
     </div>
     <div class="flex items-center gap-3">
+      <ThemeControls />
       <div class="text-right hidden sm:block">
         <p class="text-xs text-white font-medium">{{ user?.name }}</p>
         <p class="text-xs text-cgr-muted">{{ user?.email }}</p>

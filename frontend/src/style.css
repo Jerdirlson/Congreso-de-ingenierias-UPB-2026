@@ -15,7 +15,7 @@
   /* ── Fuente ───────────────────────────────────────────────────────────────── */
   --font-sans: 'Inter', system-ui, sans-serif;
 
-  /* ── Fondos ───────────────────────────────────────────────────────────────── */
+  /* ── Fondos (modo oscuro — por defecto) ──────────────────────────────────── */
   --color-cgr-bg:      #0A0A1A;   /* Fondo principal */
   --color-cgr-section: #0F0F24;   /* Fondo de secciones alternas */
   --color-cgr-card:    #12122A;   /* Fondo de cards */
@@ -33,6 +33,60 @@
   /* ── Textos ───────────────────────────────────────────────────────────────── */
   --color-cgr-muted:   #94A3B8;   /* Texto secundario */
   --color-cgr-subtle:  #64748B;   /* Texto terciario */
+}
+
+/* ── Variables de runtime (no generan clases Tailwind) ──────────────────────── */
+:root {
+  /* Gradiente hero — sobreescrito por el tema claro */
+  --gradient-hero-from: #1a1035;
+  --gradient-hero-via:  #0A0A1A;
+  --gradient-hero-to:   #1a0a2e;
+
+  /* Escala de fuente — controlada por useTheme (accesibilidad) */
+  font-size: calc(var(--font-scale, 1) * 16px);
+}
+
+/* ── Tema claro ─────────────────────────────────────────────────────────────── */
+/*
+ * Sobreescribe los tokens de color cuando data-theme="light" está en <html>.
+ * Todas las clases Tailwind (bg-cgr-*, text-cgr-*, border-cgr-*) se actualizan
+ * automáticamente sin tocar ningún componente.
+ */
+[data-theme="light"] {
+  --color-cgr-bg:          #F8F7FF;   /* Blanco con tinte lavanda */
+  --color-cgr-section:     #F0EEF9;   /* Lavanda suave para secciones alternas */
+  --color-cgr-card:        #FFFFFF;   /* Cards blancas puras */
+  --color-cgr-footer:      #E8E5F5;   /* Lavanda más profunda para footer */
+  --color-cgr-border:      #D4CFF0;   /* Borde púrpura-gris suave */
+  --color-cgr-purple:      #7C3AED;   /* Púrpura más oscuro para contraste sobre blanco */
+  --color-cgr-purple-dark: #6D28D9;
+  --color-cgr-purple-deep: #EDE9FE;   /* Invertido: lavanda muy claro para fondos CTA */
+  --color-cgr-accent:      #7C3AED;
+  --color-cgr-muted:       #475569;   /* Slate-600 — legible sobre fondo claro */
+  --color-cgr-subtle:      #64748B;
+
+  --gradient-hero-from: #EDE9FE;
+  --gradient-hero-via:  #F8F7FF;
+  --gradient-hero-to:   #F0EEF9;
+}
+
+/*
+ * text-white en elementos sin fondo de gradiente → texto oscuro en modo claro.
+ * Los botones con bg-gradient-to-r mantienen text-white porque el fondo púrpura
+ * proporciona contraste suficiente.
+ */
+[data-theme="light"] .text-white:not([class*="bg-gradient"]) {
+  color: #1E1B4B !important;
+}
+
+/* ── Gradiente hero (usado en HeroSection y GuestLayout) ────────────────────── */
+.hero-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--gradient-hero-from) 0%,
+    var(--gradient-hero-via)  40%,
+    var(--gradient-hero-to)   100%
+  );
 }
 
 /* ── Animaciones scroll reveal ──────────────────────────────────────────────── */
