@@ -55,7 +55,7 @@ jobs:
       - name: Actualizar código
         run: |
           git -C ~/congreso fetch origin main
-          git -C ~/congreso clean -fd
+          git -C ~/congreso clean -fd -e data/ -e .env -e docker-compose.prod.yml
           git -C ~/congreso reset --hard origin/main
 
       - name: Reconstruir y reiniciar servicios
