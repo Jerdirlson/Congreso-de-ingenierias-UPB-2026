@@ -19,7 +19,7 @@ class AbstractController extends Controller
 
         $allowed = [
             Submission::STATUS_DRAFT,
-            Submission::STATUS_ABSTRACT_REJECTED,
+            Submission::STATUS_ABSTRACT_SUBMITTED,
         ];
         abort_if(! in_array($submission->status, $allowed), 422, 'No puede subir resumen en el estado actual.');
 
@@ -51,28 +51,24 @@ class AbstractController extends Controller
                 'llm_justification' => 'No hay ejes temáticos activos configurados.',
                 'processed_at'      => now(),
             ]);
-            $submission->advanceTo(Submission::STATUS_ABSTRACT_REJECTED);
         } else {
-            $result   = $llm->classify($validated['content'], $axes);
-            $approved = $llm->isApproved($result['confidence_score']) && $result['axis_id'] !== null;
+            $result         = $llm->classify($validated['content'], $axes);
+            $highConfidence = $llm->isApproved($result['confidence_score']) && $result['axis_id'] !== null;
 
             $abstract->update([
-                'llm_status'           => $approved ? SubmissionAbstract::LLM_STATUS_APPROVED : SubmissionAbstract::LLM_STATUS_REJECTED,
+                'llm_status'           => $highConfidence
+                    ? SubmissionAbstract::LLM_STATUS_APPROVED
+                    : SubmissionAbstract::LLM_STATUS_REJECTED,
                 'llm_axis_id'          => $result['axis_id'],
                 'llm_confidence_score' => $result['confidence_score'],
                 'llm_justification'    => $result['justification'],
                 'llm_raw_response'     => $result['raw_response'],
                 'processed_at'         => now(),
             ]);
-
-            $submission->advanceTo(
-                $approved ? Submission::STATUS_ABSTRACT_APPROVED : Submission::STATUS_ABSTRACT_REJECTED
-            );
-
-            if ($approved && $result['axis_id']) {
-                $submission->update(['thematic_axis_id' => $result['axis_id']]);
-            }
         }
+
+        // Siempre pasa a abstract_submitted: el ponente elige/confirma el eje
+        $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
 
         } catch (RuntimeException $e) {
             // Revertir estado a draft para permitir reintento

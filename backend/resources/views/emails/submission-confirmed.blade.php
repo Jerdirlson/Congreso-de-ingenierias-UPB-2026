@@ -43,10 +43,9 @@
         <p><strong>Modalidad:</strong>
           @php
             $labels = [
-              'presencial_oral'   => 'Presencial oral',
-              'presencial_poster' => 'Presencial póster',
-              'virtual'           => 'Virtual',
-              'proyecto_aula'     => 'Proyecto de aula',
+              'presencial_oral'   => 'Ponencia Oral Presencial',
+              'presencial_poster' => 'Ponencia Póster',
+              'virtual'           => 'Ponencia Oral Virtual',
             ];
           @endphp
           {{ $labels[$submission->modality] ?? $submission->modality }}

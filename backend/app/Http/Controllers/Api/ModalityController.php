@@ -17,7 +17,7 @@ class ModalityController extends Controller
         abort_if($submission->status !== Submission::STATUS_DOCUMENT_APPROVED, 422, 'Debe tener documento aprobado para elegir modalidad.');
 
         $validated = $request->validate([
-            'modality' => 'required|in:presencial_oral,presencial_poster,virtual,proyecto_aula',
+            'modality' => 'required|in:presencial_oral,presencial_poster,virtual',
         ]);
 
         $submission->update(['modality' => $validated['modality']]);

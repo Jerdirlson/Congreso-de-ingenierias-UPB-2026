@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AbstractController;
 use App\Http\Controllers\Api\AdminSubmissionController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AxisConfirmationController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\CloudflareVideoWebhookController;
 use App\Http\Controllers\Api\CongressEventController;
@@ -73,7 +74,8 @@ Route::middleware(['auth:sanctum', 'role:ponente', 'throttle:60,1'])->group(func
     Route::get('/submissions/{submission}',       [SubmissionController::class, 'show']);
     Route::patch('/submissions/{submission}',     [SubmissionController::class, 'update']);
     Route::delete('/submissions/{submission}',    [SubmissionController::class, 'destroy']);
-    Route::post('/submissions/{submission}/abstracts', [AbstractController::class, 'store']);
+    Route::post('/submissions/{submission}/abstracts',  [AbstractController::class, 'store']);
+    Route::patch('/submissions/{submission}/axis',      [AxisConfirmationController::class, 'update']);
     Route::post('/submissions/{submission}/documents', [DocumentSubmissionController::class, 'store']);
     Route::get('/submissions/{submission}/documents/{document}/download', [DocumentSubmissionController::class, 'download']);
     Route::patch('/submissions/{submission}/modality', [ModalityController::class, 'update']);

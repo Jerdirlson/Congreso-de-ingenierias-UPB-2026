@@ -10,6 +10,7 @@ import UiSteps from '../../components/ui/UiSteps.vue'
 const route = useRoute()
 const router = useRouter()
 const api = useFetchApi()
+const confirmAxisApi = useFetchApi()
 
 const submission = ref<{
   id: number
@@ -17,7 +18,7 @@ const submission = ref<{
   status: string
   modality: string | null
   thematic_axis?: { id: number; name: string }
-  abstracts?: { id: number; content: string; llm_status: string; llm_axis?: { name: string }; llm_justification?: string }[]
+  abstracts?: { id: number; content: string; llm_status: string; llm_axis?: { id: number; name: string }; llm_justification?: string; llm_confidence_score?: number }[]
   documents?: { id: number; original_filename: string; version: number; status: string }[]
   video?: { id: number; status: string; error_message?: string | null; original_filename?: string | null } | null
   reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; reviewer?: { name: string } }[]
@@ -35,7 +36,11 @@ const uploading = ref(false)
 const videoValidationError = ref('')
 let videoPolling: ReturnType<typeof setInterval> | null = null
 
-const deletableStatuses = ['draft', 'abstract_rejected', 'abstract_submitted']
+const axes = ref<{ id: number; name: string; description?: string }[]>([])
+const selectedAxisId = ref<number | null>(null)
+const showResubmitForm = ref(false)
+
+const deletableStatuses = ['draft', 'abstract_submitted']
 const canDelete = computed(() => deletableStatuses.includes(submission.value?.status ?? ''))
 
 // Flujo: Resumen → Documento → Modalidad → (Video si virtual) → Confirmado
@@ -47,10 +52,9 @@ const STEPS = [
 ]
 
 const MODALITIES = [
-  { value: 'presencial_oral',   label: 'Presencial oral' },
-  { value: 'presencial_poster', label: 'Presencial póster' },
-  { value: 'virtual',           label: 'Virtual (requiere video)' },
-  { value: 'proyecto_aula',     label: 'Proyecto de aula' },
+  { value: 'presencial_oral',   label: 'Ponencia Oral Presencial' },
+  { value: 'presencial_poster', label: 'Ponencia Póster' },
+  { value: 'virtual',           label: 'Ponencia Oral Virtual (requiere video)' },
 ]
 
 const currentStepIndex = computed(() => {
@@ -65,10 +69,8 @@ const currentStepIndex = computed(() => {
   return 0
 })
 
-const canSubmitAbstract = computed(() => {
-  const s = submission.value?.status
-  return s === 'draft' || s === 'abstract_rejected'
-})
+const canSubmitAbstract = computed(() => submission.value?.status === 'draft')
+const canConfirmAxis = computed(() => submission.value?.status === 'abstract_submitted')
 
 const canSubmitDocument = computed(() => {
   const s = submission.value?.status
@@ -115,12 +117,33 @@ async function loadSubmission() {
 
 async function submitAbstract() {
   errorMessage.value = ''
-  const data = await api.post<unknown>(`/submissions/${route.params.id}/abstracts`, { content: abstractContent.value })
+  const data = await api.post<{ abstract: { llm_axis?: { id: number } } }>(
+    `/submissions/${route.params.id}/abstracts`,
+    { content: abstractContent.value }
+  )
   if (data) {
     abstractContent.value = ''
+    showResubmitForm.value = false
+    const recommendedId = data.abstract?.llm_axis?.id
+    if (recommendedId) selectedAxisId.value = recommendedId
     await loadSubmission()
   } else {
     errorMessage.value = api.error.value?.message ?? 'Error al enviar el resumen'
+  }
+}
+
+async function confirmAxis() {
+  if (!selectedAxisId.value) return
+  errorMessage.value = ''
+  const data = await confirmAxisApi.patch<unknown>(
+    `/submissions/${route.params.id}/axis`,
+    { thematic_axis_id: selectedAxisId.value }
+  )
+  if (data) {
+    showResubmitForm.value = false
+    await loadSubmission()
+  } else {
+    errorMessage.value = confirmAxisApi.error.value?.message ?? 'Error al confirmar el eje temático'
   }
 }
 
@@ -297,7 +320,16 @@ function stopVideoPolling() {
   if (videoPolling) { clearInterval(videoPolling); videoPolling = null }
 }
 
-onMounted(loadSubmission)
+onMounted(async () => {
+  const axisData = await useFetchApi().get<{ data: typeof axes.value } | typeof axes.value>('/thematic-axes')
+  if (axisData) axes.value = Array.isArray(axisData) ? axisData : axisData.data
+  await loadSubmission()
+  // Pre-seleccionar eje recomendado por la IA si ya hay resumen pendiente de confirmación
+  if (submission.value?.status === 'abstract_submitted') {
+    const axisId = submission.value?.abstracts?.[0]?.llm_axis?.id
+    if (axisId) selectedAxisId.value = axisId
+  }
+})
 watch(() => route.params.id, () => {
   stopVideoPolling()
   loadSubmission()
@@ -343,24 +375,21 @@ watch(() => route.params.id, () => {
     <UiCard class="p-6 mb-4">
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
         1. Resumen
-        <UiBadge v-if="latestAbstract?.llm_status === 'approved'" variant="success">Aprobado por IA</UiBadge>
-        <UiBadge v-else-if="latestAbstract?.llm_status === 'rejected'" variant="danger">Rechazado por IA</UiBadge>
+        <UiBadge v-if="canConfirmAxis" variant="info">Pendiente de confirmación</UiBadge>
+        <UiBadge v-else-if="latestAbstract?.llm_status === 'approved' && !canConfirmAxis" variant="success">Eje confirmado</UiBadge>
         <UiBadge v-else-if="llmClassifying" variant="info">Clasificando…</UiBadge>
       </h2>
 
-      <!-- Puede enviar resumen -->
+      <!-- Formulario de envío inicial (draft) -->
       <div v-if="canSubmitAbstract">
-        <p v-if="latestAbstract?.llm_status === 'rejected'" class="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-3">
-          <strong>Motivo del rechazo:</strong> {{ latestAbstract?.llm_justification ?? 'Sin justificación disponible' }}
-        </p>
         <textarea
           v-model="abstractContent"
           rows="6"
-          placeholder="Escribe el resumen de tu ponencia (mínimo 150 palabras)…"
+          placeholder="Escribe el resumen de tu ponencia (mínimo 100 caracteres)…"
           class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple resize-y"
         />
         <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractContent.trim()" @click="submitAbstract">
-          Enviar resumen
+          Analizar con IA
         </UiButton>
       </div>
 
@@ -370,11 +399,102 @@ watch(() => route.params.id, () => {
         Clasificando con IA… esto puede tomar unos segundos.
       </div>
 
-      <!-- Resumen aprobado -->
+      <!-- Pendiente de confirmación de eje (abstract_submitted) -->
+      <div v-else-if="canConfirmAxis">
+
+        <!-- Recomendación de la IA -->
+        <div v-if="!showResubmitForm">
+          <div v-if="latestAbstract?.llm_axis" :class="[
+            'flex items-start gap-3 rounded-lg px-4 py-3 mb-4',
+            latestAbstract.llm_status === 'approved'
+              ? 'bg-green-500/10 border border-green-500/30'
+              : 'bg-amber-500/10 border border-amber-500/30'
+          ]">
+            <svg v-if="latestAbstract.llm_status === 'approved'" class="w-4 h-4 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <svg v-else class="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 3h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <div>
+              <p :class="latestAbstract.llm_status === 'approved' ? 'text-green-400 text-sm font-semibold' : 'text-amber-400 text-sm font-semibold'">
+                {{ latestAbstract.llm_status === 'approved' ? 'Alta confianza' : 'Confianza moderada' }} — eje sugerido:
+              </p>
+              <p class="text-white font-bold mt-0.5">{{ latestAbstract.llm_axis.name }}</p>
+              <p v-if="latestAbstract.llm_justification" class="text-xs text-cgr-subtle italic mt-1">
+                "{{ latestAbstract.llm_justification }}"
+              </p>
+            </div>
+          </div>
+
+          <div v-else class="flex items-start gap-3 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3 mb-4">
+            <svg class="w-4 h-4 text-cgr-muted shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-cgr-muted text-sm">La IA no pudo determinar un eje con certeza. Selecciona el que mejor corresponda.</p>
+          </div>
+
+          <!-- Selector de eje -->
+          <p class="text-xs text-cgr-muted mb-2">Selecciona el eje temático de tu ponencia:</p>
+          <div class="space-y-2 mb-4">
+            <label
+              v-for="axis in axes"
+              :key="axis.id"
+              :class="[
+                'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+                selectedAxisId === axis.id
+                  ? 'border-cgr-purple bg-cgr-purple/10 text-white'
+                  : 'border-cgr-border bg-cgr-section text-cgr-muted hover:border-cgr-purple/50'
+              ]"
+            >
+              <input type="radio" :value="axis.id" v-model="selectedAxisId" class="hidden" />
+              <span class="flex-1">
+                <span class="block text-sm font-medium" :class="selectedAxisId === axis.id ? 'text-white' : 'text-cgr-muted'">
+                  {{ axis.name }}
+                  <span v-if="latestAbstract?.llm_axis?.id === axis.id" class="ml-2 text-xs font-normal text-cgr-purple">
+                    ← IA recomienda
+                  </span>
+                </span>
+                <span v-if="axis.description" class="block text-xs text-cgr-subtle mt-0.5">{{ axis.description }}</span>
+              </span>
+            </label>
+          </div>
+
+          <div class="flex gap-3 flex-wrap">
+            <UiButton :disabled="!selectedAxisId" :loading="confirmAxisApi.loading.value" @click="confirmAxis">
+              Confirmar eje temático
+            </UiButton>
+            <UiButton variant="secondary" @click="showResubmitForm = true">
+              Cambiar resumen
+            </UiButton>
+          </div>
+        </div>
+
+        <!-- Formulario de reenvío de resumen -->
+        <div v-else>
+          <p class="text-xs text-cgr-muted mb-3">Escribe un nuevo resumen para obtener una nueva recomendación de la IA.</p>
+          <textarea
+            v-model="abstractContent"
+            rows="6"
+            placeholder="Escribe el nuevo resumen de tu ponencia…"
+            class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple resize-y"
+          />
+          <div class="flex gap-3 mt-4">
+            <UiButton :loading="api.loading.value" :disabled="!abstractContent.trim()" @click="submitAbstract">
+              Analizar con IA
+            </UiButton>
+            <UiButton variant="secondary" @click="showResubmitForm = false">
+              Cancelar
+            </UiButton>
+          </div>
+        </div>
+      </div>
+
+      <!-- Eje confirmado (abstract_approved y más allá) -->
       <div v-else-if="latestAbstract" class="text-sm text-cgr-muted space-y-1">
         <p>Resumen enviado correctamente.</p>
-        <p v-if="latestAbstract.llm_axis" class="text-cgr-purple">
-          Eje temático asignado: <strong>{{ latestAbstract.llm_axis.name }}</strong>
+        <p v-if="submission?.thematic_axis" class="text-cgr-purple">
+          Eje temático: <strong>{{ submission.thematic_axis.name }}</strong>
         </p>
       </div>
     </UiCard>
@@ -471,6 +591,10 @@ watch(() => route.params.id, () => {
       <h2 class="font-semibold text-white mb-4">3. Modalidad de presentación</h2>
 
       <div v-if="canSelectModality">
+        <div class="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-4 text-amber-300 text-sm">
+          <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 3h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          <span>La presentación en el congreso <strong>no implica publicación automática en la revista</strong>. La publicación es un proceso independiente y opcional.</span>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <label
             v-for="m in MODALITIES"

@@ -12,6 +12,11 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    watch: {
+      // Necesario en Docker sobre Windows: los eventos de inotify no se propagan
+      usePolling: true,
+      interval: 500,
+    },
     proxy: {
       '/api': {
         target: apiTarget,
