@@ -7,21 +7,41 @@ import ThemeControls from './ThemeControls.vue'
 const menuOpen = ref(false)
 
 const links = [
-  { label: 'Inicio',       href: '#inicio' },
-  { label: 'Acerca de',    href: '#acerca' },
-  { label: 'Ejes Temáticos', href: '#ejes' },
-  { label: 'En vivo',      href: '#envivo' },
-  { label: 'Actividades',  href: '#actividades' },
-  { label: 'Fechas',       href: '#fechas' },
-  { label: 'Inscripción',  href: '#inscripcion' },
+  { label: 'Inicio',          href: '#inicio' },
+  { label: 'Acerca de',       href: '#acerca' },
+  { label: 'Ejes Temáticos',  href: '#ejes' },
+  { label: 'En vivo',         href: '#envivo' },
+  { label: 'Actividades',     href: '#actividades' },
+  { label: 'Fechas',          href: '#fechas' },
+  { label: 'Inscripción',     href: '#inscripcion' },
 ]
 </script>
 
 <template>
-  <header class="fixed top-0 left-0 right-0 z-50 bg-cgr-bg/90 backdrop-blur-md border-b border-cgr-border">
-    <div class="max-w-7xl mx-auto px-5 lg:px-20 h-16 flex items-center justify-between">
+  <!-- Overlay -->
+  <div
+    v-if="menuOpen"
+    class="fixed inset-0 z-40 bg-black/50"
+    @click="menuOpen = false"
+  />
 
-      <RouterLink to="/" class="flex items-center gap-4 shrink-0">
+  <header class="fixed top-0 left-0 right-0 z-50 bg-cgr-bg/90 backdrop-blur-md border-b border-cgr-border">
+    <div class="max-w-7xl mx-auto px-5 lg:px-20 h-16 flex items-center justify-between gap-4">
+
+      <!-- Hamburger — siempre visible -->
+      <button
+        class="p-1.5 rounded-lg border border-cgr-border text-cgr-muted hover:text-cgr-purple hover:border-cgr-purple/50 transition-colors shrink-0"
+        @click="menuOpen = !menuOpen"
+        :aria-label="menuOpen ? 'Cerrar menú' : 'Abrir menú'"
+        :aria-expanded="menuOpen"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <!-- Logo -->
+      <RouterLink to="/" class="flex items-center gap-3 shrink-0">
         <LogoUpb class="h-7 w-auto" />
         <div class="hidden sm:block border-l border-cgr-border pl-4">
           <p class="text-white font-semibold text-xs leading-tight">Congreso Internacional</p>
@@ -29,17 +49,9 @@ const links = [
         </div>
       </RouterLink>
 
-      <nav class="hidden lg:flex items-center gap-8">
-        <a
-          v-for="link in links"
-          :key="link.href"
-          :href="link.href"
-          class="text-cgr-muted hover:text-white text-sm font-medium transition-colors"
-        >
-          {{ link.label }}
-        </a>
-      </nav>
+      <div class="flex-1" />
 
+      <!-- Acciones -->
       <div class="flex items-center gap-3">
         <ThemeControls />
         <RouterLink
@@ -48,35 +60,60 @@ const links = [
         >
           Inscríbete
         </RouterLink>
-
-        <button
-          class="lg:hidden text-cgr-muted hover:text-white p-1"
-          @click="menuOpen = !menuOpen"
-          aria-label="Menú"
-        >
-          <svg v-if="!menuOpen" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
     </div>
+  </header>
 
-    <div v-if="menuOpen" class="lg:hidden border-t border-cgr-border bg-cgr-bg px-5 py-4 flex flex-col gap-4">
+  <!-- Sidebar drawer -->
+  <aside
+    :class="[
+      'fixed top-0 left-0 h-full w-72 z-50 bg-cgr-section border-r border-cgr-border flex flex-col transition-transform duration-300 ease-in-out',
+      menuOpen ? 'translate-x-0' : '-translate-x-full',
+    ]"
+  >
+    <!-- Header del drawer -->
+    <div class="h-16 shrink-0 flex items-center justify-between border-b border-cgr-border px-5">
+      <RouterLink to="/" class="flex items-center gap-3" @click="menuOpen = false">
+        <LogoUpb class="h-7 w-auto" />
+        <div class="border-l border-cgr-border pl-3">
+          <p class="text-white font-semibold text-xs leading-tight">Congreso Internacional</p>
+          <p class="text-cgr-purple text-xs font-normal">de Ingeniería · 2026</p>
+        </div>
+      </RouterLink>
+      <button
+        @click="menuOpen = false"
+        class="p-1.5 rounded-lg text-cgr-muted hover:text-white hover:bg-cgr-card transition-colors"
+        aria-label="Cerrar menú"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Links de navegación -->
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
       <a
         v-for="link in links"
         :key="link.href"
         :href="link.href"
-        class="text-cgr-muted hover:text-white text-sm font-medium transition-colors"
+        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cgr-muted hover:text-white hover:bg-cgr-card transition-colors"
         @click="menuOpen = false"
       >
         {{ link.label }}
       </a>
-      <div class="pt-2 border-t border-cgr-border">
-        <ThemeControls />
-      </div>
+    </nav>
+
+    <!-- Footer del drawer -->
+    <div class="border-t border-cgr-border px-5 py-4 space-y-4">
+      <ThemeControls />
+      <RouterLink
+        to="/login"
+        class="block w-full text-center bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity"
+        @click="menuOpen = false"
+      >
+        Inscríbete al congreso
+      </RouterLink>
     </div>
-  </header>
+  </aside>
 </template>
