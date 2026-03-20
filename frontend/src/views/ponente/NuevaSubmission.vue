@@ -71,7 +71,8 @@ const isValid = computed(() => {
   if (!first?.name.trim() || !first?.affiliation.trim() || !first?.email.trim()) return false
   // Coautores: nombre y afiliación requeridos
   for (let i = 1; i < authors.value.length; i++) {
-    if (!authors.value[i].name.trim() || !authors.value[i].affiliation.trim()) return false
+    const co = authors.value[i]
+    if (!co || !co.name.trim() || !co.affiliation.trim()) return false
   }
   return true
 })
