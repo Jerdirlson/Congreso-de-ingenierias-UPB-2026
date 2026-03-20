@@ -4,12 +4,14 @@ import { useScrollReveal } from '../composables/useScrollReveal'
 const { setRef } = useScrollReveal()
 
 const milestones = [
-  { date: '16 de marzo', label: 'Apertura de recepción de resúmenes', status: 'active' },
-  { date: '22 de mayo', label: 'Cierre de recepción de resúmenes', status: 'upcoming' },
+  { date: '20 de marzo', label: 'Apertura de recepción de resúmenes', status: 'active' },
+  { date: '31 de mayo', label: 'Cierre de recepción de resúmenes', status: 'upcoming' },
   { date: '26 de junio', label: 'Notificación de resúmenes aceptados (ISSN)', status: 'upcoming' },
-  { date: '1 — 30 de julio', label: 'Envío de artículos completos y versiones finales', status: 'upcoming' },
-  { date: '1 — 30 de agosto', label: 'Contribuciones de estudiantes UPB y colegios', status: 'upcoming' },
-  { date: '28 de septiembre', label: 'Cierre de videoponencias y notificación editorial', status: 'upcoming' },
+  { date: '1 — 30 de julio', label: 'Envío de artículos completos (Solo invitados)', status: 'upcoming' },
+  { date: '1 — 30 de julio', label: 'Envío de versiones finales de resúmenes aceptados', status: 'upcoming' },
+  { date: '1 — 30 de agosto', label: 'Envío de contribuciones de estudiantes UPB y experiencias exitosas de colegios', status: 'upcoming' },
+  { date: '28 de septiembre', label: 'Notificación de artículos que inician proceso editorial en revista', status: 'upcoming' },
+  { date: '28 de septiembre', label: 'Cierre recepción de VIDEOPONENCIAS (Virtual)', status: 'upcoming' },
   { date: '13 — 17 de octubre', label: 'Celebración del Congreso', status: 'upcoming' },
 ]
 </script>

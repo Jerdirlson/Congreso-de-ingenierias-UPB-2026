@@ -7,6 +7,7 @@ import TracksSection from '../../components/TracksSection.vue'
 import LiveStreamSection from '../../components/LiveStreamSection.vue'
 import SpeakersSection from '../../components/SpeakersSection.vue'
 import TimelineSection from '../../components/TimelineSection.vue'
+import PricingSection from '../../components/PricingSection.vue'
 import CtaSection from '../../components/CtaSection.vue'
 import FooterSection from '../../components/FooterSection.vue'
 </script>
@@ -22,6 +23,7 @@ import FooterSection from '../../components/FooterSection.vue'
       <LiveStreamSection />
       <SpeakersSection />
       <TimelineSection />
+      <PricingSection />
       <CtaSection />
     </main>
     <FooterSection />

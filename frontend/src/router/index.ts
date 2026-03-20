@@ -8,11 +8,21 @@ import AppLayout from '../layouts/AppLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(_to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    return { top: 0, behavior: 'smooth' }
+  },
   routes: [
     {
       path: '/',
       name: 'landing',
       component: () => import('../views/public/LandingView.vue'),
+      meta: { public: true },
+    },
+    {
+      path: '/ponencias',
+      name: 'call-for-abstract',
+      component: () => import('../views/public/CallForAbstractView.vue'),
       meta: { public: true },
     },
     {

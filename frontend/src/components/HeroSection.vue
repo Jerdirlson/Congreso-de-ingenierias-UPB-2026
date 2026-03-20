@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { registrationOpen } from '../composables/useRegistration'
 </script>
 
 <template>
@@ -30,7 +31,7 @@ import { RouterLink } from 'vue-router'
       </h1>
 
       <p class="text-cgr-accent text-base sm:text-lg font-semibold mb-4 italic">
-        "Donde la ingeniería se encuentra con la humanidad"
+        "La ingeniería se encuentra con la humanidad"
       </p>
 
       <p class="text-cgr-muted text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -39,12 +40,23 @@ import { RouterLink } from 'vue-router'
       </p>
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-        <RouterLink
-          to="/login"
-          class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm text-center"
-        >
-          Inscríbete ahora
-        </RouterLink>
+        <div class="flex flex-col items-center gap-1 w-full sm:w-auto">
+          <RouterLink
+            v-if="registrationOpen"
+            to="/login"
+            class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm text-center"
+          >
+            Inscríbete ahora
+          </RouterLink>
+          <button
+            v-else
+            disabled
+            class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl opacity-50 cursor-not-allowed pointer-events-none text-sm"
+          >
+            Inscríbete ahora
+          </button>
+          <span v-if="!registrationOpen" class="text-cgr-muted text-[10px] leading-tight text-center">Pronto serán activadas las inscripciones</span>
+        </div>
         <a
           href="#programa"
           class="w-full sm:w-auto border border-cgr-border text-white font-semibold px-8 py-3.5 rounded-xl hover:border-cgr-purple transition-colors text-sm"

@@ -11,6 +11,12 @@ interface ThematicAxis {
   description?: string
 }
 
+interface Author {
+  name: string
+  affiliation: string
+  email: string
+}
+
 interface SubmissionAbstract {
   llm_status: 'approved' | 'rejected' | 'pending'
   llm_justification?: string
@@ -30,14 +36,45 @@ const api = useFetchApi()
 const axisApi = useFetchApi()
 const confirmApi = useFetchApi()
 
+// Campos existentes
 const abstractContent = ref('')
 const result = ref<SubmissionResult | null>(null)
 const errorMessage = ref('')
 const axes = ref<ThematicAxis[]>([])
 const selectedAxisId = ref<number | null>(null)
 
+// Nuevos campos
+const title = ref('')
+const authors = ref<Author[]>([{ name: '', affiliation: '', email: '' }])
+const keywords = ref('')
+const abstractFile = ref<File | null>(null)
+const abstractFileError = ref('')
+
+// Computados
 const charCount = computed(() => abstractContent.value.length)
-const isValid = computed(() => abstractContent.value.trim().length >= 100)
+
+const keywordList = computed(() =>
+  keywords.value.split(',').map(k => k.trim()).filter(Boolean)
+)
+
+const keywordsValid = computed(() =>
+  keywordList.value.length >= 3 && keywordList.value.length <= 6
+)
+
+const isValid = computed(() => {
+  if (!title.value.trim()) return false
+  if (abstractContent.value.trim().length < 100) return false
+  if (!keywordsValid.value) return false
+  if (!abstractFile.value) return false
+  // Autor principal: todos los campos requeridos
+  const first = authors.value[0]
+  if (!first?.name.trim() || !first?.affiliation.trim() || !first?.email.trim()) return false
+  // Coautores: nombre y afiliación requeridos
+  for (let i = 1; i < authors.value.length; i++) {
+    if (!authors.value[i].name.trim() || !authors.value[i].affiliation.trim()) return false
+  }
+  return true
+})
 
 const latestAbstract = computed(() => {
   const abs = result.value?.abstracts
@@ -59,17 +96,54 @@ onMounted(async () => {
   }
 })
 
+function addAuthor() {
+  authors.value.push({ name: '', affiliation: '', email: '' })
+}
+
+function removeAuthor(index: number) {
+  authors.value.splice(index, 1)
+}
+
+function onFileChange(e: Event) {
+  abstractFileError.value = ''
+  const file = (e.target as HTMLInputElement).files?.[0] ?? null
+  if (!file) { abstractFile.value = null; return }
+  if (!file.name.toLowerCase().endsWith('.docx')) {
+    abstractFileError.value = 'Solo se permiten archivos .docx'
+    abstractFile.value = null
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    abstractFileError.value = 'El archivo no debe superar 5 MB'
+    abstractFile.value = null
+    return
+  }
+  abstractFile.value = file
+}
+
 async function submit() {
   errorMessage.value = ''
   result.value = null
 
-  const data = await api.post<{ submission: SubmissionResult }>('/submissions', {
-    abstract: abstractContent.value,
+  const formData = new FormData()
+  formData.append('title', title.value.trim())
+  formData.append('abstract', abstractContent.value)
+  formData.append('keywords', keywords.value.trim())
+
+  authors.value.forEach((author, i) => {
+    formData.append(`authors[${i}][name]`, author.name.trim())
+    formData.append(`authors[${i}][affiliation]`, author.affiliation.trim())
+    if (author.email.trim()) formData.append(`authors[${i}][email]`, author.email.trim())
   })
+
+  if (abstractFile.value) {
+    formData.append('abstract_file', abstractFile.value)
+  }
+
+  const data = await api.postForm<{ submission: SubmissionResult }>('/submissions', formData)
 
   if (data) {
     result.value = data.submission
-    // Pre-seleccionar eje recomendado por la IA si existe
     const recommended = data.submission.abstracts?.[0]?.llm_axis
     if (recommended) {
       selectedAxisId.value = recommended.id ?? null
@@ -100,6 +174,11 @@ function retry() {
   abstractContent.value = ''
   selectedAxisId.value = null
   errorMessage.value = ''
+  title.value = ''
+  authors.value = [{ name: '', affiliation: '', email: '' }]
+  keywords.value = ''
+  abstractFile.value = null
+  abstractFileError.value = ''
 }
 </script>
 
@@ -111,7 +190,7 @@ function retry() {
       </RouterLink>
       <h1 class="text-2xl font-bold text-white">Nueva ponencia</h1>
       <p class="text-sm text-cgr-muted mt-1">
-        Escribe el resumen de tu ponencia. La IA lo analizará y recomendará un eje temático; puedes aceptarlo o elegir otro.
+        Completa el formulario con los datos de tu ponencia. La IA analizará el resumen y recomendará un eje temático.
       </p>
     </div>
 
@@ -199,24 +278,182 @@ function retry() {
       </UiCard>
     </template>
 
-    <!-- Paso 1: Formulario de resumen -->
+    <!-- Paso 1: Formulario completo de ponencia -->
     <UiCard v-else class="p-6">
-      <form @submit.prevent="submit" class="space-y-4">
+      <form @submit.prevent="submit" class="space-y-6">
+
+        <!-- Título de la ponencia -->
         <div>
           <label class="block text-xs font-medium text-cgr-muted mb-1.5">
-            Resumen de la ponencia
-            <span class="ml-2 text-cgr-subtle">({{ charCount }} / 10 000 caracteres · mínimo 100)</span>
+            Título de la ponencia <span class="text-red-400">*</span>
+          </label>
+          <input
+            v-model="title"
+            type="text"
+            placeholder="Ej: Diseño de un sistema robótico colaborativo para entornos industriales humanocéntricos"
+            class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple transition-colors"
+          />
+        </div>
+
+        <!-- Autores -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-xs font-medium text-cgr-muted">
+              Autores <span class="text-red-400">*</span>
+            </label>
+            <button
+              type="button"
+              @click="addAuthor"
+              class="text-xs text-cgr-purple hover:text-cgr-accent transition-colors flex items-center gap-1"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+              </svg>
+              Agregar coautor
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <div
+              v-for="(author, i) in authors"
+              :key="i"
+              class="bg-cgr-bg border border-cgr-border rounded-xl p-4 space-y-3"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-cgr-purple uppercase tracking-wider">
+                  {{ i === 0 ? 'Autor principal' : `Coautor ${i}` }}
+                </span>
+                <button
+                  v-if="i > 0"
+                  type="button"
+                  @click="removeAuthor(i)"
+                  class="text-cgr-subtle hover:text-red-400 transition-colors"
+                  aria-label="Eliminar coautor"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-cgr-subtle mb-1">
+                    Nombre completo <span class="text-red-400">*</span>
+                  </label>
+                  <input
+                    v-model="author.name"
+                    type="text"
+                    placeholder="Nombre y apellidos"
+                    class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple transition-colors"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs text-cgr-subtle mb-1">
+                    Afiliación <span class="text-red-400">*</span>
+                  </label>
+                  <input
+                    v-model="author.affiliation"
+                    type="text"
+                    placeholder="Universidad / Empresa / Institución"
+                    class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs text-cgr-subtle mb-1">
+                  Correo electrónico
+                  <span v-if="i === 0" class="text-red-400">*</span>
+                  <span v-else class="text-cgr-subtle ml-1">(opcional)</span>
+                </label>
+                <input
+                  v-model="author.email"
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Palabras clave -->
+        <div>
+          <label class="block text-xs font-medium text-cgr-muted mb-1.5">
+            Palabras clave <span class="text-red-400">*</span>
+            <span class="ml-2 text-cgr-subtle font-normal">(mínimo 3, máximo 6, separadas por coma)</span>
+          </label>
+          <input
+            v-model="keywords"
+            type="text"
+            placeholder="Ej: robótica colaborativa, cobots, manufactura avanzada"
+            class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple transition-colors"
+            :class="{ 'border-red-500/50': keywords.length > 0 && !keywordsValid }"
+          />
+          <div class="mt-1.5 flex items-start justify-between gap-2">
+            <p v-if="keywords.length > 0 && !keywordsValid" class="text-xs text-red-400">
+              {{ keywordList.length < 3 ? 'Ingresa al menos 3 palabras clave' : 'Máximo 6 palabras clave permitidas' }}
+            </p>
+            <p v-else-if="keywords.length > 0 && keywordsValid" class="text-xs text-green-400 shrink-0">
+              {{ keywordList.length }} palabras clave
+            </p>
+            <div v-if="keywordList.length > 0" class="flex gap-1.5 flex-wrap justify-end ml-auto">
+              <span
+                v-for="kw in keywordList"
+                :key="kw"
+                class="text-[10px] bg-cgr-purple/10 text-cgr-purple border border-cgr-purple/20 rounded-full px-2 py-0.5"
+              >
+                {{ kw }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen (texto para análisis IA) -->
+        <div>
+          <label class="block text-xs font-medium text-cgr-muted mb-1.5">
+            Resumen <span class="text-red-400">*</span>
+            <span class="ml-2 text-cgr-subtle">({{ charCount }} / 10 000 · mínimo 100 caracteres)</span>
           </label>
           <textarea
             v-model="abstractContent"
-            rows="10"
-            placeholder="Describe el contenido de tu ponencia: objetivos, metodología, resultados y conclusiones principales. Incluye palabras clave relacionadas con tu área de ingeniería..."
+            rows="8"
+            placeholder="Describe el contenido de tu ponencia: objetivos, metodología, resultados y conclusiones principales. Este texto será analizado por la IA para sugerir el eje temático..."
             class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple resize-y transition-colors"
-            :class="{ 'border-red-500/50': charCount > 0 && !isValid }"
+            :class="{ 'border-red-500/50': charCount > 0 && charCount < 100 }"
           />
-          <p v-if="charCount > 0 && !isValid" class="mt-1 text-xs text-red-400">
+          <p v-if="charCount > 0 && charCount < 100" class="mt-1 text-xs text-red-400">
             El resumen debe tener al menos 100 caracteres.
           </p>
+        </div>
+
+        <!-- Subir archivo .docx -->
+        <div>
+          <label class="block text-xs font-medium text-cgr-muted mb-1.5">
+            Archivo del resumen (.docx) <span class="text-red-400">*</span>
+            <span class="ml-2 text-cgr-subtle font-normal">Solo .docx · máximo 5 MB</span>
+          </label>
+          <label
+            class="flex items-center gap-3 w-full bg-cgr-section border rounded-lg px-3 py-2.5 cursor-pointer transition-colors"
+            :class="abstractFileError
+              ? 'border-red-500/50'
+              : abstractFile
+                ? 'border-cgr-purple/50 bg-cgr-purple/5 hover:border-cgr-purple'
+                : 'border-cgr-border hover:border-cgr-purple'"
+          >
+            <svg class="w-5 h-5 shrink-0" :class="abstractFile ? 'text-cgr-purple' : 'text-cgr-muted'" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+            </svg>
+            <span class="text-sm flex-1 truncate" :class="abstractFile ? 'text-white' : 'text-cgr-subtle'">
+              {{ abstractFile ? abstractFile.name : 'Seleccionar archivo .docx…' }}
+            </span>
+            <span v-if="abstractFile" class="text-xs text-cgr-muted shrink-0">
+              {{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB
+            </span>
+            <input type="file" accept=".docx" class="hidden" @change="onFileChange" />
+          </label>
+          <p v-if="abstractFileError" class="mt-1 text-xs text-red-400">{{ abstractFileError }}</p>
         </div>
 
         <p v-if="errorMessage" class="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">

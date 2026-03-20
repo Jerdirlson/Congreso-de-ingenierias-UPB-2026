@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { useScrollReveal } from '../composables/useScrollReveal'
+import { registrationOpen } from '../composables/useRegistration'
 
 const { setRef } = useScrollReveal()
 
@@ -104,12 +105,23 @@ const modalities = [
       </div>
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <RouterLink
-          to="/login"
-          class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-10 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-center"
-        >
-          Inscríbete ahora
-        </RouterLink>
+        <div class="flex flex-col items-center gap-1 w-full sm:w-auto">
+          <RouterLink
+            v-if="registrationOpen"
+            to="/login"
+            class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-10 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-center"
+          >
+            Inscríbete ahora
+          </RouterLink>
+          <button
+            v-else
+            disabled
+            class="w-full sm:w-auto bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-10 py-3.5 rounded-xl opacity-50 cursor-not-allowed pointer-events-none"
+          >
+            Inscríbete ahora
+          </button>
+          <span v-if="!registrationOpen" class="text-cgr-muted text-[10px] leading-tight text-center">Pronto serán activadas las inscripciones</span>
+        </div>
         <a
           href="#ejes"
           class="w-full sm:w-auto border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple font-semibold px-10 py-3.5 rounded-xl transition-colors"
