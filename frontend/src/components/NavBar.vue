@@ -8,15 +8,16 @@ import { registrationOpen } from '../composables/useRegistration'
 const menuOpen = ref(false)
 
 const links: { label: string; href?: string; to?: string }[] = [
-  { label: 'Inicio',               href: '#inicio' },
-  { label: 'Acerca de',            href: '#acerca' },
-  { label: 'Ejes Temáticos',       href: '#ejes' },
-  { label: 'En vivo',              href: '#envivo' },
-  { label: 'Actividades',          href: '#actividades' },
-  { label: 'Fechas',               href: '#fechas' },
-  { label: 'Precios',              href: '#precios' },
-  { label: 'Inscripción',          href: '#inscripcion' },
+  { label: 'Inicio',               to: '/#inicio' },
+  { label: 'Acerca de',            to: '/#acerca' },
+  { label: 'Ejes Temáticos',       to: '/#ejes' },
+  { label: 'En vivo',              to: '/#envivo' },
+  { label: 'Actividades',          to: '/#actividades' },
+  { label: 'Fechas',               to: '/#fechas' },
+  { label: 'Precios',              to: '/#precios' },
+  { label: 'Inscripción',          to: '/#inscripcion' },
   { label: 'Llamado a Ponencias',  to: '/ponencias' },
+  { label: 'Sitios de Interés',    to: '/sitios-de-interes' },
 ]
 </script>
 
@@ -109,24 +110,15 @@ const links: { label: string; href?: string; to?: string }[] = [
 
     <!-- Links de navegación -->
     <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-      <template v-for="link in links" :key="link.to ?? link.href">
-        <RouterLink
-          v-if="link.to"
-          :to="link.to"
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cgr-muted hover:text-white hover:bg-cgr-card transition-colors"
-          @click="menuOpen = false"
-        >
-          {{ link.label }}
-        </RouterLink>
-        <a
-          v-else
-          :href="link.href"
-          class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cgr-muted hover:text-white hover:bg-cgr-card transition-colors"
-          @click="menuOpen = false"
-        >
-          {{ link.label }}
-        </a>
-      </template>
+      <RouterLink
+        v-for="link in links"
+        :key="link.to"
+        :to="link.to!"
+        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cgr-muted hover:text-white hover:bg-cgr-card transition-colors"
+        @click="menuOpen = false"
+      >
+        {{ link.label }}
+      </RouterLink>
     </nav>
 
     <!-- Footer del drawer -->

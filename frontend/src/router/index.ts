@@ -20,6 +20,12 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/sitios-de-interes',
+      name: 'sitios-de-interes',
+      component: () => import('../views/public/SitiosDeInteresView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/ponencias',
       name: 'call-for-abstract',
       component: () => import('../views/public/CallForAbstractView.vue'),
