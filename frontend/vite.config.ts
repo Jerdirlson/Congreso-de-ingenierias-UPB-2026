@@ -12,6 +12,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    allowedHosts: ['congreso2026.bucaramanga.upb.edu.co'],
     watch: {
       // Necesario en Docker sobre Windows: los eventos de inotify no se propagan
       usePolling: true,
