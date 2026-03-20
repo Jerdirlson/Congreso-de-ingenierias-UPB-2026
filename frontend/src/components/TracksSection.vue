@@ -1,22 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
-import { useFetchApi } from '../composables/useFetchApi'
 
 const { setRef } = useScrollReveal()
-const api = useFetchApi()
 
-interface ThematicAxis {
-  id: number
-  name: string
-  description: string | null
-  keywords: string | null
-  is_active: boolean
-}
-
-const axesFromApi = ref<ThematicAxis[]>([])
-
-const defaultTracks = [
+const tracks = [
   {
     number: '01',
     title: 'Ingeniería Aplicada con propósito humano y bienestar',
@@ -58,21 +45,6 @@ const defaultTracks = [
     description: 'DevOps, DevSecOps y GitOps; MLOps; AIOps; Infraestructura como Código; Arquitecturas cloud-native y microservicios; Ingeniería de requisitos asistida por IA; Testing automatizado; Generación de código con IA; Gobierno de modelos; Platform Engineering. Modelado y Simulación.',
   },
 ]
-
-const tracks = computed(() => {
-  const active = axesFromApi.value.filter((a) => a.is_active)
-  if (active.length === 0) return defaultTracks
-  return active.map((a, i) => ({
-    number: String(i + 1).padStart(2, '0'),
-    title: a.name,
-    description: a.description ?? '',
-  }))
-})
-
-onMounted(async () => {
-  const data = await api.get<ThematicAxis[]>('/thematic-axes')
-  if (data && Array.isArray(data)) axesFromApi.value = data
-})
 </script>
 
 <template>
@@ -82,7 +54,7 @@ onMounted(async () => {
       <div class="text-center mb-16">
         <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Ejes temáticos</span>
         <h2 class="mt-3 text-3xl sm:text-4xl font-black text-white">
-          {{ tracks.length }} Tracks de Investigación
+          8 Tracks de Investigación
         </h2>
         <p class="mt-4 text-cgr-muted max-w-xl mx-auto text-base leading-relaxed">
           Nuestra agenda científica se articula en torno a ocho pilares fundamentales que guiarán las ponencias y mesas de trabajo.
