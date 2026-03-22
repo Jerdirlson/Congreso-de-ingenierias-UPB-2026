@@ -58,7 +58,7 @@ import { registrationOpen } from '../composables/useRegistration'
           <span v-if="!registrationOpen" class="text-cgr-muted text-[10px] leading-tight text-center">Pronto serán activadas las inscripciones</span>
         </div>
         <a
-          href="#programa"
+          href="#fechas"
           class="w-full sm:w-auto border border-cgr-border text-white font-semibold px-8 py-3.5 rounded-xl hover:border-cgr-purple transition-colors text-sm"
         >
           Ver programa
