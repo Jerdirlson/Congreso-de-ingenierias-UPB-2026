@@ -29,7 +29,7 @@ const links: { label: string; href?: string; to?: string }[] = [
     @click="menuOpen = false"
   />
 
-  <header class="fixed top-0 left-0 right-0 z-50 bg-cgr-bg/90 backdrop-blur-md border-b border-cgr-border">
+  <header class="fixed top-0 left-0 right-0 z-50 bg-cgr-bg border-b border-cgr-border">
     <div class="max-w-7xl mx-auto px-5 lg:px-20 h-16 flex items-center justify-between gap-4">
 
       <!-- Hamburger — siempre visible -->
