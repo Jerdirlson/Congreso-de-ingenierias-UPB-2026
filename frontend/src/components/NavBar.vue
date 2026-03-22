@@ -92,12 +92,12 @@ const links: { label: string; href?: string; to?: string }[] = [
   <aside
     :class="[
       'fixed left-0 w-72 z-40 bg-cgr-section border-r border-cgr-border flex flex-col transition-transform duration-300 ease-in-out',
-      'top-0 h-full lg:top-16 lg:h-[calc(100vh-4rem)] lg:translate-x-0',
+      'top-0 h-full lg:translate-x-0',
       menuOpen ? 'translate-x-0' : '-translate-x-full',
     ]"
   >
-    <!-- Header del drawer -->
-    <div class="h-16 shrink-0 flex items-center justify-between border-b border-cgr-border px-5">
+    <!-- Header del drawer (solo mobile) -->
+    <div class="lg:hidden h-16 shrink-0 flex items-center justify-between border-b border-cgr-border px-5">
       <p class="text-white font-semibold text-sm">Navegación</p>
       <button
         @click="menuOpen = false"
@@ -111,7 +111,7 @@ const links: { label: string; href?: string; to?: string }[] = [
     </div>
 
     <!-- Links de navegación -->
-    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    <nav class="flex-1 px-3 py-4 lg:pt-20 space-y-1 overflow-y-auto">
       <RouterLink
         v-for="link in links"
         :key="link.to"
