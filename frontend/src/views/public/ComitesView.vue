@@ -58,7 +58,20 @@ const cientifico: { nombre: string; pais: string; institucion: string }[] = [
 ]
 
 const organizador: { nombre: string; facultad: string }[] = [
-  // Agrega los miembros aquí
+  { nombre: 'Jacqueline Santamaría Valbuena',    facultad: 'Ingeniería Industrial' },
+  { nombre: 'Alba Soraya Aguilar Jiménez',       facultad: 'Ingeniería Industrial' },
+  { nombre: 'Mónica Rocío Ordóñez Rodríguez',    facultad: 'Ingeniería Eléctrica y Electrónica' },
+  { nombre: 'Luis Angel Silva',                  facultad: 'Ingeniería Eléctrica y Electrónica' },
+  { nombre: 'Juan Carlos Mantilla Saavedra',     facultad: 'Ingeniería Eléctrica y Electrónica' },
+  { nombre: 'Rolando Guzman Lopez',              facultad: 'Ingeniería Mecánica' },
+  { nombre: 'Gabriel Fernando García Sánchez',   facultad: 'Ingeniería Mecánica' },
+  { nombre: 'Claudia Patricia Retamoso Llamas',  facultad: 'Ingeniería Civil' },
+  { nombre: 'María Ximena García',               facultad: 'Ingeniería Civil' },
+  { nombre: 'Francisco Jesús Molina Bovea',      facultad: 'Ingeniería de Sistemas e Informática' },
+  { nombre: 'Diego Javier Parada',               facultad: 'Ingeniería de Sistemas e Informática' },
+  { nombre: 'Omar Pinzon Ardila',                facultad: 'Ingeniería de Sistemas e Informática' },
+  { nombre: 'Alexandra Cerón Vivas',             facultad: 'Ingeniería Ambiental' },
+  { nombre: 'Angélica Muskus',                   facultad: 'Ingeniería Ambiental' },
 ]
 </script>
 
