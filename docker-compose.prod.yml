@@ -115,7 +115,7 @@ services:
       MYSQL_DATABASE:      ${DB_DATABASE:-congreso_db}
       MYSQL_USER:          ${DB_USERNAME:-congreso}
       MYSQL_PASSWORD:      ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     volumes:
       # Bind mount → mysqldump / rsync funciona directo sobre ./data/mysql
       - ./data/mysql:/var/lib/mysql
