@@ -6,29 +6,40 @@ const { setRef } = useScrollReveal()
 
 const categories = [
   {
-    label: 'Estudiantes UPB presenciales',
-    early: '$280.000',
-    late: '$330.000',
+    label: 'Inscripciones Estudiantes UPB',
+    obs: 'Presencial con Ponencia o sin Ponencia',
+    early: '$300.000',
+    late: '$350.000',
   },
   {
-    label: 'Estudiantes externos con o sin ponencia',
-    early: '$400.000',
-    late: '$450.000',
+    label: 'Inscripciones Estudiantes Externos',
+    obs: 'Estudiantes externos con o sin ponencia',
+    early: '$370.000',
+    late: '$420.000',
   },
   {
-    label: 'Profesionales — ponencia presencial',
-    early: '$650.000',
-    late: '$700.000',
+    label: 'Inscripciones Profesionales',
+    obs: 'Ponencia Presencial',
+    early: '$670.000',
+    late: '$720.000',
   },
   {
-    label: 'Profesionales — ponencia virtual',
-    early: '$650.000',
-    late: '$700.000',
+    label: 'Inscripciones Profesionales',
+    obs: 'Ponencia Virtual',
+    early: '$670.000',
+    late: '$720.000',
   },
   {
-    label: 'Estudiantes UPB — asistencia virtual',
-    early: '$380.000',
-    late: '$430.000',
+    label: 'Inscripciones Estudiantes UPB',
+    obs: 'Asistencias virtuales',
+    early: '$350.000',
+    late: '$400.000',
+  },
+  {
+    label: 'Egresados',
+    obs: 'Evento del viernes',
+    early: '$50.000',
+    late: '$50.000',
   },
 ]
 </script>
@@ -54,9 +65,10 @@ const categories = [
         class="animate-reveal bg-cgr-card border border-cgr-border rounded-2xl overflow-hidden mb-6"
       >
         <!-- Cabecera tabla -->
-        <div class="grid grid-cols-[1fr_auto_auto] gap-x-4 px-6 py-3 bg-cgr-bg border-b border-cgr-border">
+        <div class="grid grid-cols-[1fr_1fr_auto_auto] gap-x-4 px-6 py-3 bg-cgr-bg border-b border-cgr-border">
           <span class="text-xs font-semibold text-cgr-muted uppercase tracking-wider">Categoría</span>
-          <span class="text-xs font-semibold text-green-400 uppercase tracking-wider text-right whitespace-nowrap">Hasta 9 jul</span>
+          <span class="text-xs font-semibold text-cgr-muted uppercase tracking-wider">Observación</span>
+          <span class="text-xs font-semibold text-green-400 uppercase tracking-wider text-right whitespace-nowrap">Hasta 10 jul</span>
           <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider text-right whitespace-nowrap">Desde 10 jul</span>
         </div>
 
@@ -65,9 +77,10 @@ const categories = [
           v-for="(cat, i) in categories"
           :key="i"
           :ref="(el) => setRef(el as Element, i + 1)"
-          class="animate-reveal grid grid-cols-[1fr_auto_auto] gap-x-4 items-center px-6 py-4 border-b border-cgr-border last:border-b-0 hover:bg-cgr-section transition-colors duration-150"
+          class="animate-reveal grid grid-cols-[1fr_1fr_auto_auto] gap-x-4 items-center px-6 py-4 border-b border-cgr-border last:border-b-0 hover:bg-cgr-section transition-colors duration-150"
         >
-          <span class="text-white text-sm font-medium leading-snug pr-2">{{ cat.label }}</span>
+          <span class="text-white text-sm font-medium leading-snug">{{ cat.label }}</span>
+          <span class="text-cgr-muted text-sm leading-snug">{{ cat.obs }}</span>
           <span class="text-green-400 text-sm font-bold text-right whitespace-nowrap">{{ cat.early }}</span>
           <span class="text-amber-400 text-sm font-bold text-right whitespace-nowrap">{{ cat.late }}</span>
         </div>
