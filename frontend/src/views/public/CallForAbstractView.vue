@@ -100,7 +100,7 @@ const steps = [
 <template>
   <div class="bg-cgr-bg font-sans text-white">
     <NavBar />
-    <main class="pt-16">
+    <main class="pt-16 lg:pl-72">
 
       <!-- ── 1. HERO ──────────────────────────────────────────────────────── -->
       <section class="hero-gradient relative py-28 px-5 lg:px-20 overflow-hidden">

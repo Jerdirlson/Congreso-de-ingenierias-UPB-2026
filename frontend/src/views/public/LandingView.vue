@@ -15,7 +15,7 @@ import FooterSection from '../../components/FooterSection.vue'
 <template>
   <div class="bg-cgr-bg font-sans text-white">
     <NavBar />
-    <main>
+    <main class="lg:pl-72">
       <HeroSection />
       <StatsBar />
       <AboutSection />

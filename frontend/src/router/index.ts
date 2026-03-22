@@ -37,6 +37,12 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/comites',
+      name: 'comites',
+      component: () => import('../views/public/ComitesView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/public/LoginView.vue'),

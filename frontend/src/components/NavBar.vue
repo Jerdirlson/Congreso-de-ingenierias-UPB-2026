@@ -11,30 +11,31 @@ const links: { label: string; href?: string; to?: string }[] = [
   { label: 'Inicio',               to: '/#inicio' },
   { label: 'Acerca de',            to: '/#acerca' },
   { label: 'Ejes Temáticos',       to: '/#ejes' },
+  { label: 'Llamado a Ponencias',  to: '/ponencias' },
+  { label: 'Comités',              to: '/comites' },
   { label: 'En vivo',              to: '/#envivo' },
   { label: 'Actividades',          to: '/#actividades' },
   { label: 'Fechas',               to: '/#fechas' },
   { label: 'Precios',              to: '/#precios' },
   { label: 'Inscripción',          to: '/#inscripcion' },
-  { label: 'Llamado a Ponencias',  to: '/ponencias' },
   { label: 'Sitios de Interés',    to: '/sitios-de-interes' },
 ]
 </script>
 
 <template>
-  <!-- Overlay -->
+  <!-- Overlay (solo mobile) -->
   <div
     v-if="menuOpen"
-    class="fixed inset-0 z-40 bg-black/50"
+    class="fixed inset-0 z-40 bg-black/50 lg:hidden"
     @click="menuOpen = false"
   />
 
   <header class="fixed top-0 left-0 right-0 z-50 bg-cgr-bg border-b border-cgr-border">
     <div class="max-w-7xl mx-auto px-5 lg:px-20 h-16 flex items-center justify-between gap-4">
 
-      <!-- Hamburger — siempre visible -->
+      <!-- Hamburger — solo mobile -->
       <button
-        class="p-1.5 rounded-lg border border-cgr-border text-cgr-muted hover:text-cgr-purple hover:border-cgr-purple/50 transition-colors shrink-0"
+        class="lg:hidden p-1.5 rounded-lg border border-cgr-border text-cgr-muted hover:text-cgr-purple hover:border-cgr-purple/50 transition-colors shrink-0"
         @click="menuOpen = !menuOpen"
         :aria-label="menuOpen ? 'Cerrar menú' : 'Abrir menú'"
         :aria-expanded="menuOpen"
@@ -87,10 +88,11 @@ const links: { label: string; href?: string; to?: string }[] = [
     </div>
   </header>
 
-  <!-- Sidebar drawer -->
+  <!-- Sidebar: toggle en mobile, fijo en desktop -->
   <aside
     :class="[
-      'fixed top-0 left-0 h-full w-72 z-50 bg-cgr-section border-r border-cgr-border flex flex-col transition-transform duration-300 ease-in-out',
+      'fixed left-0 w-72 z-40 bg-cgr-section border-r border-cgr-border flex flex-col transition-transform duration-300 ease-in-out',
+      'top-0 h-full lg:top-16 lg:h-[calc(100vh-4rem)] lg:translate-x-0',
       menuOpen ? 'translate-x-0' : '-translate-x-full',
     ]"
   >
