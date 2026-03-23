@@ -125,6 +125,24 @@
   animation: fade-in-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* ── Carousel — siempre modo oscuro ─────────────────────────────────────────── */
+[data-theme="light"] .carousel-dark {
+  --color-cgr-bg:      #0A0A1A;
+  --color-cgr-section: #0F0F24;
+  --color-cgr-card:    #12122A;
+  --color-cgr-border:  #1E1E3A;
+  --color-cgr-muted:   #94A3B8;
+  --color-cgr-purple:  #A855F7;
+}
+
+[data-theme="light"] .carousel-dark .text-white:not([class*="bg-gradient"]) {
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .carousel-dark [class*="hover:text-white"]:not([class*="bg-gradient"]):hover {
+  color: #ffffff !important;
+}
+
 /* ── Scrollbar personalizado ───────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
