@@ -320,7 +320,7 @@ const hoteles = [
           </p>
 
           <a
-            href="/storage/docs/Location.docx"
+            href="/api/docs/Location.docx"
             download="Location.docx"
             class="inline-flex items-center gap-2 bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
           >

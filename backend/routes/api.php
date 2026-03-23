@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CloudflareVideoWebhookController;
 use App\Http\Controllers\Api\CongressEventController;
 use App\Http\Controllers\Api\DocumentSubmissionController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\PublicDocController;
 use App\Http\Controllers\Api\ModalityController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RegistrationController;
@@ -41,6 +42,8 @@ if (app()->environment('local') || config('app.allow_upload_test')) {
 // ── Public ────────────────────────────────────────────────────────────────
 
 Route::get('/health', HealthController::class)->withoutMiddleware([ThrottleRequests::class]);
+
+Route::get('/docs/{filename}', [PublicDocController::class, 'download'])->middleware('throttle:30,1');
 
 Route::middleware('throttle:120,1')->group(function () {
     Route::get('/thematic-axes', [ThematicAxisController::class, 'index']);
