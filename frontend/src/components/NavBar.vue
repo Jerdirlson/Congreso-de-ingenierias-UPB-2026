@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import LogoUpb from './LogoUpb.vue'
 import ThemeControls from './ThemeControls.vue'
@@ -7,13 +7,44 @@ import { registrationOpen } from '../composables/useRegistration'
 
 const menuOpen = ref(false)
 const route = useRoute()
+const activeHash = ref(route.hash)
+
+const sectionIds = ['inicio', 'acerca', 'ejes', 'actividades', 'fechas', 'precios', 'inscripcion']
+let observer: IntersectionObserver | null = null
+
+function setupObserver() {
+  observer?.disconnect()
+  if (route.path !== '/') return
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          activeHash.value = `#${entry.target.id}`
+        }
+      }
+    },
+    { rootMargin: '-20% 0px -60% 0px', threshold: 0 }
+  )
+
+  sectionIds.forEach(id => {
+    const el = document.getElementById(id)
+    if (el) observer!.observe(el)
+  })
+}
+
+onMounted(() => nextTick(setupObserver))
+onUnmounted(() => observer?.disconnect())
+watch(() => route.path, () => nextTick(setupObserver))
+watch(() => route.hash, (hash) => { if (hash) activeHash.value = hash })
 
 function isActive(to: string): boolean {
   const [path, hash] = to.split('#')
   const linkPath = path || '/'
   const linkHash = hash ? `#${hash}` : ''
   if (linkHash) {
-    return route.path === linkPath && route.hash === linkHash
+    if (route.path !== linkPath) return false
+    return activeHash.value === linkHash
   }
   return route.path === linkPath
 }
