@@ -120,7 +120,7 @@ const hoteles = [
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
                 </svg>
-                <span class="text-cgr-muted text-sm">Km. 7 vía a Piedecuesta, Floridablanca, Santander</span>
+                <span class="text-cgr-muted text-sm">Autopista Piedecuesta Kilómetro 7, Floridablanca, Santander</span>
               </div>
               <p class="text-cgr-muted text-sm leading-relaxed mb-6">
                 Campus moderno rodeado de naturaleza, propicio para la investigación e intercambio académico.
@@ -151,19 +151,9 @@ const hoteles = [
               loading="lazy"
               title="Ubicación UPB Bucaramanga"
             />
-            <div class="bg-cgr-card px-5 py-3 flex items-center justify-between gap-4">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-cgr-purple shrink-0" />
-                <span class="text-cgr-muted text-xs">Km. 7 vía a Piedecuesta, Floridablanca, Santander</span>
-              </div>
-              <a
-                href="https://www.openstreetmap.org/?mlat=7.0037&mlon=-73.0324#map=15/7.0037/-73.0324"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-cgr-purple hover:text-cgr-accent text-xs font-semibold shrink-0 transition-colors"
-              >
-                Abrir mapa →
-              </a>
+            <div class="bg-cgr-card px-5 py-3 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-cgr-purple shrink-0" />
+              <span class="text-cgr-muted text-xs">Autopista Piedecuesta Kilómetro 7, Floridablanca, Santander</span>
             </div>
           </div>
         </div>
