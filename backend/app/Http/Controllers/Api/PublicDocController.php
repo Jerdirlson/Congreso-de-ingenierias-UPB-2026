@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PublicDocController extends Controller
 {
@@ -13,15 +13,15 @@ class PublicDocController extends Controller
         'Location.docx'           => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
 
-    public function download(string $filename): StreamedResponse
+    public function download(string $filename): BinaryFileResponse
     {
         abort_unless(isset(self::ALLOWED[$filename]), 404, 'Documento no encontrado.');
 
-        $path = 'docs/' . $filename;
+        $path = public_path('docs/' . $filename);
 
-        abort_unless(Storage::disk('public')->exists($path), 404, 'Archivo no disponible.');
+        abort_unless(file_exists($path), 404, 'Archivo no disponible.');
 
-        return Storage::disk('public')->download($path, $filename, [
+        return response()->download($path, $filename, [
             'Content-Type' => self::ALLOWED[$filename],
         ]);
     }
