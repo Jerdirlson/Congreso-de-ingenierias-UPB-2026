@@ -41,7 +41,7 @@ onUnmounted(stopAutoplay)
 </script>
 
 <template>
-  <section class="bg-cgr-bg py-20 px-5 lg:px-20">
+  <section id="galeria" class="bg-cgr-bg py-20 px-5 lg:px-20">
     <div class="max-w-5xl mx-auto">
 
       <!-- Header -->
