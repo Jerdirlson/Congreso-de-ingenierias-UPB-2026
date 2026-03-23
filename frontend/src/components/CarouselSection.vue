@@ -62,28 +62,40 @@ onUnmounted(stopAutoplay)
         <!-- Slides -->
         <div class="relative h-[420px] sm:h-[520px]">
           <transition-group name="fade">
-            <img
+            <div
               v-for="(slide, i) in slides"
               v-show="i === current"
               :key="slide.src"
-              :src="slide.src"
-              :alt="slide.alt"
-              class="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-            />
+              class="absolute inset-0"
+            >
+              <!-- Fondo desenfocado (rellena el espacio sobrante) -->
+              <img
+                :src="slide.src"
+                :alt="''"
+                aria-hidden="true"
+                class="absolute inset-0 w-full h-full object-cover scale-110 blur-xl brightness-50"
+              />
+              <!-- Imagen completa centrada encima -->
+              <img
+                :src="slide.src"
+                :alt="slide.alt"
+                class="relative w-full h-full object-contain z-10"
+                loading="lazy"
+              />
+            </div>
           </transition-group>
 
           <!-- Gradient overlay bottom -->
-          <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+          <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none z-20" />
 
           <!-- Caption -->
-          <p class="absolute bottom-4 left-5 right-16 text-white text-sm font-medium drop-shadow">
+          <p class="absolute bottom-4 left-5 right-16 text-white text-sm font-medium drop-shadow z-20">
             {{ slides[current]?.alt }}
           </p>
 
           <!-- Flechas -->
           <button
-            class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-cgr-purple/80 border border-white/10 flex items-center justify-center transition-colors"
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-cgr-purple/80 border border-white/10 flex items-center justify-center transition-colors z-20"
             @click="prev"
             aria-label="Anterior"
           >
@@ -92,7 +104,7 @@ onUnmounted(stopAutoplay)
             </svg>
           </button>
           <button
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-cgr-purple/80 border border-white/10 flex items-center justify-center transition-colors"
+            class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-cgr-purple/80 border border-white/10 flex items-center justify-center transition-colors z-20"
             @click="next"
             aria-label="Siguiente"
           >
