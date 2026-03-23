@@ -127,7 +127,7 @@ const hoteles = [
                 Un entorno privilegiado que combina la excelencia académica con la riqueza natural de Santander.
               </p>
               <a
-                href="https://maps.google.com/?q=Universidad+Pontificia+Bolivariana+Bucaramanga"
+                href="https://maps.google.com/?q=7.03859,-73.07112"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-2 border border-cgr-purple/50 text-cgr-purple hover:bg-cgr-purple/10 text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
@@ -144,7 +144,7 @@ const hoteles = [
           <!-- Mapa -->
           <div class="mt-6 rounded-2xl overflow-hidden border border-cgr-border">
             <iframe
-              src="https://www.openstreetmap.org/export/embed.html?bbox=-73.0524%2C6.9837%2C-73.0124%2C7.0237&layer=mapnik&marker=7.0037%2C-73.0324"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=-73.0911%2C7.0186%2C-73.0511%2C7.0586&layer=mapnik&marker=7.03859%2C-73.07112"
               width="100%"
               height="340"
               style="border:0; display:block;"
