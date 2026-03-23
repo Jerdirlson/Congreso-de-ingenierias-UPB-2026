@@ -140,6 +140,32 @@ const hoteles = [
               </a>
             </div>
           </div>
+
+          <!-- Mapa -->
+          <div class="mt-6 rounded-2xl overflow-hidden border border-cgr-border">
+            <iframe
+              src="https://www.openstreetmap.org/export/embed.html?bbox=-73.0524%2C6.9837%2C-73.0124%2C7.0237&layer=mapnik&marker=7.0037%2C-73.0324"
+              width="100%"
+              height="340"
+              style="border:0; display:block;"
+              loading="lazy"
+              title="Ubicación UPB Bucaramanga"
+            />
+            <div class="bg-cgr-card px-5 py-3 flex items-center justify-between gap-4">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-cgr-purple shrink-0" />
+                <span class="text-cgr-muted text-xs">Km. 7 vía a Piedecuesta, Floridablanca, Santander</span>
+              </div>
+              <a
+                href="https://www.openstreetmap.org/?mlat=7.0037&mlon=-73.0324#map=15/7.0037/-73.0324"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-cgr-purple hover:text-cgr-accent text-xs font-semibold shrink-0 transition-colors"
+              >
+                Abrir mapa →
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
