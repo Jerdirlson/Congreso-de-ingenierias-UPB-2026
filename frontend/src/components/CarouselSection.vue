@@ -41,7 +41,7 @@ onUnmounted(stopAutoplay)
 </script>
 
 <template>
-  <section class="carousel-dark bg-cgr-bg py-20 px-5 lg:px-20">
+  <section class="bg-cgr-bg py-20 px-5 lg:px-20">
     <div class="max-w-5xl mx-auto">
 
       <!-- Header -->
@@ -55,7 +55,7 @@ onUnmounted(stopAutoplay)
 
       <!-- Carousel -->
       <div
-        class="relative rounded-2xl overflow-hidden border border-cgr-border bg-cgr-card"
+        class="carousel-dark relative rounded-2xl overflow-hidden border border-cgr-border bg-cgr-card"
         @mouseenter="stopAutoplay"
         @mouseleave="startAutoplay"
       >
