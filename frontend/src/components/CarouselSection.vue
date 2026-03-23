@@ -29,11 +29,14 @@ function prev() { goTo(current.value - 1) }
 function next() { goTo(current.value + 1) }
 
 function startAutoplay() {
-  autoplayTimer = setInterval(() => goTo(current.value + 1), 5000)
+  clearInterval(autoplayTimer ?? undefined)
+  autoplayTimer = setInterval(() => {
+    if (!isTransitioning.value) goTo(current.value + 1)
+  }, 5000)
 }
 
 function stopAutoplay() {
-  if (autoplayTimer) clearInterval(autoplayTimer)
+  clearInterval(autoplayTimer ?? undefined)
 }
 
 onMounted(startAutoplay)
@@ -64,7 +67,7 @@ onUnmounted(stopAutoplay)
           <transition-group name="fade">
             <div
               v-for="(slide, i) in slides"
-              v-show="i === current"
+              v-if="i === current"
               :key="slide.src"
               class="absolute inset-0"
             >

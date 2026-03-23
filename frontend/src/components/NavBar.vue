@@ -9,7 +9,21 @@ const menuOpen = ref(false)
 const route = useRoute()
 const activeHash = ref(route.hash)
 
-const sectionIds = ['inicio', 'acerca', 'ejes', 'actividades', 'fechas', 'precios', 'inscripcion', 'galeria']
+const links: { label: string; href?: string; to?: string }[] = [
+  { label: 'Inicio',               to: '/#inicio' },
+  { label: 'Acerca de',            to: '/#acerca' },
+  { label: 'Ejes Temáticos',       to: '/#ejes' },
+  { label: 'Llamado a Ponencias',  to: '/ponencias' },
+  { label: 'Comités',              to: '/comites' },
+  { label: 'Actividades',          to: '/#actividades' },
+  { label: 'Fechas',               to: '/#fechas' },
+  { label: 'Precios',              to: '/#precios' },
+  { label: 'Inscripción',          to: '/#inscripcion' },
+  { label: 'Galería',              to: '/#galeria' },
+  { label: 'Sitios de Interés',    to: '/sitios-de-interes' },
+]
+
+const sectionIds = links.filter(l => l.to?.startsWith('/#')).map(l => l.to!.split('#')[1])
 let observer: IntersectionObserver | null = null
 
 function setupObserver() {
@@ -48,20 +62,6 @@ function isActive(to: string): boolean {
   }
   return route.path === linkPath
 }
-
-const links: { label: string; href?: string; to?: string }[] = [
-  { label: 'Inicio',               to: '/#inicio' },
-  { label: 'Acerca de',            to: '/#acerca' },
-  { label: 'Ejes Temáticos',       to: '/#ejes' },
-  { label: 'Llamado a Ponencias',  to: '/ponencias' },
-  { label: 'Comités',              to: '/comites' },
-  { label: 'Actividades',          to: '/#actividades' },
-  { label: 'Fechas',               to: '/#fechas' },
-  { label: 'Precios',              to: '/#precios' },
-  { label: 'Inscripción',          to: '/#inscripcion' },
-  { label: 'Galería',              to: '/#galeria' },
-  { label: 'Sitios de Interés',    to: '/sitios-de-interes' },
-]
 </script>
 
 <template>
