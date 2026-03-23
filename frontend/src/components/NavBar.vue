@@ -24,7 +24,6 @@ const links: { label: string; href?: string; to?: string }[] = [
   { label: 'Ejes Temáticos',       to: '/#ejes' },
   { label: 'Llamado a Ponencias',  to: '/ponencias' },
   { label: 'Comités',              to: '/comites' },
-  { label: 'En vivo',              to: '/#envivo' },
   { label: 'Actividades',          to: '/#actividades' },
   { label: 'Fechas',               to: '/#fechas' },
   { label: 'Precios',              to: '/#precios' },
