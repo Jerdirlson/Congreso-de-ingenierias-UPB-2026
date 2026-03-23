@@ -1,11 +1,22 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import LogoUpb from './LogoUpb.vue'
 import ThemeControls from './ThemeControls.vue'
 import { registrationOpen } from '../composables/useRegistration'
 
 const menuOpen = ref(false)
+const route = useRoute()
+
+function isActive(to: string): boolean {
+  const [path, hash] = to.split('#')
+  const linkPath = path || '/'
+  const linkHash = hash ? `#${hash}` : ''
+  if (linkHash) {
+    return route.path === linkPath && route.hash === linkHash
+  }
+  return route.path === linkPath
+}
 
 const links: { label: string; href?: string; to?: string }[] = [
   { label: 'Inicio',               to: '/#inicio' },
@@ -116,7 +127,12 @@ const links: { label: string; href?: string; to?: string }[] = [
         v-for="link in links"
         :key="link.to"
         :to="link.to!"
-        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cgr-muted hover:text-white hover:bg-cgr-card transition-colors"
+        :class="[
+          'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors',
+          isActive(link.to!)
+            ? 'text-white bg-cgr-card border-l-2 border-cgr-purple'
+            : 'text-cgr-muted hover:text-white hover:bg-cgr-card'
+        ]"
         @click="menuOpen = false"
       >
         {{ link.label }}
