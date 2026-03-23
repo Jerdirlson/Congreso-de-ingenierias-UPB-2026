@@ -78,7 +78,7 @@ onUnmounted(stopAutoplay)
 
           <!-- Caption -->
           <p class="absolute bottom-4 left-5 right-16 text-white text-sm font-medium drop-shadow">
-            {{ slides[current].alt }}
+            {{ slides[current]?.alt }}
           </p>
 
           <!-- Flechas -->
