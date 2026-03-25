@@ -74,6 +74,8 @@ const organizador: { nombre: string; facultad: string }[] = [
   { nombre: 'Omar Pinzon Ardila',                facultad: 'Ingeniería de Sistemas e Informática' },
   { nombre: 'Alexandra Cerón Vivas',             facultad: 'Ingeniería Ambiental' },
   { nombre: 'Angélica Muskus',                   facultad: 'Ingeniería Ambiental' },
+  { nombre: 'Olga Lucía Duarte Duarte Bolivar',  facultad: 'Ciencias Básicas' },
+  { nombre: 'Claudia Sofía Quintero',            facultad: 'Ciencias Básicas' },
 ]
 </script>
 
