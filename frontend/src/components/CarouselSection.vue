@@ -65,9 +65,10 @@ onUnmounted(stopAutoplay)
         <!-- Slides -->
         <div class="relative h-[420px] sm:h-[520px]">
           <transition-group name="fade">
-            <template v-for="(slide, i) in slides" :key="slide.src">
             <div
-              v-if="i === current"
+              v-for="(slide, i) in slides"
+              v-show="i === current"
+              :key="slide.src"
               class="absolute inset-0"
             >
               <!-- Fondo desenfocado (rellena el espacio sobrante) -->
@@ -85,7 +86,6 @@ onUnmounted(stopAutoplay)
                 loading="lazy"
               />
             </div>
-            </template>
           </transition-group>
 
           <!-- Gradient overlay bottom -->
