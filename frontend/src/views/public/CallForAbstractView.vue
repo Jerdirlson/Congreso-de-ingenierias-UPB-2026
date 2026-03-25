@@ -146,7 +146,7 @@ const steps = [
             </div>
 
             <a
-              href="/api/docs/Call_for_papers_V2.docx"
+              href="/api/docs/Call_for_abstract.pdf"
               download
               class="border border-cgr-border text-white font-semibold px-8 py-3.5 rounded-xl hover:border-cgr-purple transition-colors text-sm flex items-center gap-2"
             >
@@ -371,7 +371,7 @@ const steps = [
 
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="/api/docs/Call_for_papers_V2.docx"
+              href="/api/docs/Call_for_abstract.pdf"
               download
               class="inline-flex items-center gap-2 bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
             >

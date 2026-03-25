@@ -8,10 +8,11 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class PublicDocController extends Controller
 {
     private const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    private const PDF_MIME  = 'application/pdf';
 
     private const ALLOWED = [
         'Call_for_papers_V1.docx' => self::DOCX_MIME,
-        'Call_for_papers_V2.docx' => self::DOCX_MIME,
+        'Call_for_abstract.pdf'   => self::PDF_MIME,
         'Plantilla_Resumen.docx'  => self::DOCX_MIME,
         'Location.docx'           => self::DOCX_MIME,
     ];
