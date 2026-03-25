@@ -13,7 +13,7 @@ services:
       # Bind mount al host (read-only) — Nginx sirve archivos directamente
       - ./data/storage/app/public:/var/www/html/storage/app/public:ro
       # Certificados SSL del CTIC
-      - /etc/ssl/congreso:/etc/ssl/congreso:ro
+      - /etc/ssh/congreso:/etc/ssl/congreso:ro
     depends_on:
       - backend
     restart: unless-stopped
