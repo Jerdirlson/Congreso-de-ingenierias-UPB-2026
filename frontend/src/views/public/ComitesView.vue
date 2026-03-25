@@ -22,7 +22,7 @@ const cientifico: { nombre: string; pais: string; institucion: string }[] = [
   { nombre: 'Sebastian Alberto Pelaez',           pais: 'Colombia',        institucion: 'Politécnico Grancolombiano' },
   { nombre: 'Johan Leandro Téllez Garzón',        pais: 'Colombia',        institucion: 'Unidades Tecnológicas de Santander' },
   { nombre: 'Hernan Gonzalez Acuña',              pais: 'Colombia',        institucion: 'Universidad Autónoma de Bucaramanga' },
-  { nombre: 'Marcela Villa Marulanda',            pais: 'Colombia',        institucion: '' },
+  { nombre: 'Marcela Villa Marulanda',            pais: 'Colombia',        institucion: 'Galápago Agroconsultores' },
   { nombre: 'Neila Mantilla Barbosa',             pais: 'Colombia',        institucion: 'Universidad de la Costa' },
   { nombre: 'Marianela Luzardo',                  pais: 'Colombia',        institucion: 'Universidad de Medellín' },
   { nombre: 'Yanyn Aurora Rincón Quintero',       pais: 'Colombia',        institucion: 'Universidad del Atlántico' },
@@ -55,6 +55,8 @@ const cientifico: { nombre: string; pais: string; institucion: string }[] = [
   { nombre: 'Omar Pinzon Ardila',                 pais: 'Colombia',        institucion: 'Universidad Pontificia Bolivariana' },
   { nombre: 'Rolando Guzman Lopez',               pais: 'Colombia',        institucion: 'Universidad Pontificia Bolivariana' },
   { nombre: 'Sergio Andrés Gómez',                pais: 'Colombia',        institucion: 'Universidad Pontificia Bolivariana' },
+  { nombre: 'Olga Lucía Duarte Duarte Bolivar',   pais: 'Colombia',        institucion: 'Universidad Pontificia Bolivariana' },
+  { nombre: 'Claudia Sofía Quintero',             pais: 'Colombia',        institucion: 'Universidad Pontificia Bolivariana' },
 ]
 
 const organizador: { nombre: string; facultad: string }[] = [
