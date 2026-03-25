@@ -23,7 +23,7 @@ const links: { label: string; href?: string; to?: string }[] = [
   { label: 'Sitios de Interés',    to: '/sitios-de-interes' },
 ]
 
-const sectionIds = links.filter(l => l.to?.startsWith('/#')).map(l => l.to!.split('#')[1])
+const sectionIds = links.filter(l => l.to?.startsWith('/#')).map(l => l.to!.split('#')[1]!)
 let observer: IntersectionObserver | null = null
 
 function setupObserver() {
