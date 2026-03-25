@@ -126,7 +126,7 @@ const steps = [
             <span class="text-white font-semibold">II Congreso Internacional de Ingeniería 2026</span>.
           </p>
 
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
             <div class="flex flex-col items-center gap-1">
               <RouterLink
                 v-if="registrationOpen"
@@ -146,7 +146,7 @@ const steps = [
             </div>
 
             <a
-              href="/api/docs/Call_for_papers_V1.docx"
+              href="/api/docs/Call_for_papers_V2.docx"
               download
               class="border border-cgr-border text-white font-semibold px-8 py-3.5 rounded-xl hover:border-cgr-purple transition-colors text-sm flex items-center gap-2"
             >
@@ -154,6 +154,17 @@ const steps = [
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
               </svg>
               Descargar convocatoria
+            </a>
+
+            <a
+              href="/api/docs/Plantilla_Resumen.docx"
+              download
+              class="border border-cgr-border text-cgr-muted font-semibold px-8 py-3.5 rounded-xl hover:border-cgr-purple hover:text-white transition-colors text-sm flex items-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+              </svg>
+              Descargar plantilla
             </a>
           </div>
         </div>
@@ -352,26 +363,113 @@ const steps = [
             </svg>
           </div>
 
-          <h2 class="text-2xl sm:text-3xl font-black text-white mb-3">Convocatoria completa</h2>
+          <h2 class="text-2xl sm:text-3xl font-black text-white mb-3">Documentos oficiales</h2>
           <p class="text-cgr-muted text-base mb-8 leading-relaxed">
-            ¿Quieres conocer todos los detalles, subtemas y condiciones de publicación?
-            Descarga el documento oficial de la convocatoria.
+            Descarga la convocatoria completa con todos los detalles, subtemas y condiciones,
+            y la plantilla oficial para preparar tu resumen.
           </p>
 
-          <a
-            href="/api/docs/Call_for_papers_V1.docx"
-            download="Call_for_papers_V1.docx"
-            class="inline-flex items-center gap-2 bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-            </svg>
-            Descargar Call for Abstract (V1)
-          </a>
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="/api/docs/Call_for_papers_V2.docx"
+              download
+              class="inline-flex items-center gap-2 bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              Descargar convocatoria
+            </a>
+            <a
+              href="/api/docs/Plantilla_Resumen.docx"
+              download
+              class="inline-flex items-center gap-2 border border-white/20 text-white font-semibold px-8 py-3.5 rounded-xl hover:border-white/50 transition-colors text-sm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+              </svg>
+              Descargar plantilla (Word)
+            </a>
+          </div>
         </div>
       </section>
 
-      <!-- ── 9. CTA FINAL ───────────────────────────────────────────────── -->
+      <!-- ── 9. REVISTAS INDEXADAS ─────────────────────────────────────── -->
+      <section class="bg-cgr-section py-20 px-5 lg:px-20">
+        <div class="max-w-5xl mx-auto">
+          <div class="text-center mb-12">
+            <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Publicaciones científicas</span>
+            <h2 class="mt-3 text-3xl font-black text-white">Revistas indexadas asociadas</h2>
+            <p class="mt-3 text-cgr-muted text-sm max-w-2xl mx-auto leading-relaxed">
+              Los mejores trabajos del congreso tendrán la oportunidad de ser publicados en las siguientes revistas científicas internacionales.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+            <!-- Revista UdeA -->
+            <div class="bg-cgr-card border border-cgr-border rounded-2xl p-7 flex flex-col gap-5 hover:border-cgr-purple-dark/50 hover:shadow-lg hover:shadow-cgr-purple/10 transition-all duration-300">
+              <div class="flex items-start gap-4">
+                <div class="w-11 h-11 rounded-xl bg-cgr-purple/10 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-cgr-purple text-xs font-semibold uppercase tracking-wider mb-1">Colombia · UdeA</p>
+                  <h3 class="text-white font-bold text-sm leading-snug">Revista Facultad de Ingeniería — Universidad de Antioquia</h3>
+                </div>
+              </div>
+              <p class="text-cgr-muted text-xs leading-relaxed flex-1">
+                Los trabajos con las valoraciones más altas serán seleccionados por el comité para enviar su artículo completo. La selección de su artículo no garantiza la publicación, dado que los trabajos se someterán al proceso editorial de la Revista de la Facultad de Ingeniería de la Universidad de Antioquia para un número especial.
+              </p>
+              <a
+                href="https://revistas.udea.edu.co/index.php/ingenieria/about/submissions"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-cgr-purple hover:text-cgr-accent text-xs font-semibold transition-colors"
+              >
+                Ver revista
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+                </svg>
+              </a>
+            </div>
+
+            <!-- Revista Uruguay -->
+            <div class="bg-cgr-card border border-cgr-border rounded-2xl p-7 flex flex-col gap-5 hover:border-cgr-purple-dark/50 hover:shadow-lg hover:shadow-cgr-purple/10 transition-all duration-300">
+              <div class="flex items-start gap-4">
+                <div class="w-11 h-11 rounded-xl bg-cgr-purple/10 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-cgr-purple text-xs font-semibold uppercase tracking-wider mb-1">Uruguay · UM</p>
+                  <h3 class="text-white font-bold text-sm leading-snug">Revista Memoria Investigaciones en Ingeniería — Universidad de Montevideo</h3>
+                </div>
+              </div>
+              <p class="text-cgr-muted text-xs leading-relaxed flex-1">
+                Los trabajos con las valoraciones más altas serán seleccionados por el comité para enviar su artículo completo. La selección de su artículo no garantiza la publicación, dado que los trabajos se someterán al proceso editorial de la Revista Memoria Investigaciones en Ingeniería para un número especial.
+              </p>
+              <a
+                href="https://revistas.um.edu.uy/index.php/ingenieria/about"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-cgr-purple hover:text-cgr-accent text-xs font-semibold transition-colors"
+              >
+                Ver revista
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+                </svg>
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 10. CTA FINAL ──────────────────────────────────────────────── -->
       <section class="bg-cgr-section py-16 px-5 lg:px-20">
         <div class="max-w-2xl mx-auto text-center">
           <h2 class="text-2xl font-black text-white mb-3">¿Listo para participar?</h2>
