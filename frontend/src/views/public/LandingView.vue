@@ -19,6 +19,7 @@ import FooterSection from '../../components/FooterSection.vue'
     <main class="lg:pl-72">
       <HeroSection />
       <StatsBar />
+      <CarouselSection />
       <AboutSection />
       <TracksSection />
       <LiveStreamSection />
@@ -26,7 +27,6 @@ import FooterSection from '../../components/FooterSection.vue'
       <TimelineSection />
       <PricingSection />
       <CtaSection />
-      <CarouselSection />
     </main>
     <FooterSection />
   </div>

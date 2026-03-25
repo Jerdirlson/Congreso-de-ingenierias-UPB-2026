@@ -44,93 +44,96 @@ onUnmounted(stopAutoplay)
 </script>
 
 <template>
-  <section id="galeria" class="bg-cgr-bg py-20 px-5 lg:px-20">
-    <div class="max-w-5xl mx-auto">
+  <section id="galeria" class="relative bg-cgr-bg py-14">
 
-      <!-- Header -->
-      <div class="text-center mb-10">
-        <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Galería</span>
-        <h2 class="mt-3 text-3xl font-black text-white">El Congreso en imágenes</h2>
-        <p class="mt-3 text-cgr-muted text-sm max-w-xl mx-auto">
-          Conoce la sede, la ciudad y los momentos más destacados del evento.
-        </p>
-      </div>
-
-      <!-- Carousel -->
-      <div
-        class="carousel-dark relative rounded-2xl overflow-hidden border border-cgr-border bg-cgr-card"
-        @mouseenter="stopAutoplay"
-        @mouseleave="startAutoplay"
-      >
-        <!-- Slides -->
-        <div class="relative h-[420px] sm:h-[520px]">
-          <transition-group name="fade">
-            <div
-              v-for="(slide, i) in slides"
-              v-show="i === current"
-              :key="slide.src"
-              class="absolute inset-0"
-            >
-              <!-- Fondo desenfocado (rellena el espacio sobrante) -->
-              <img
-                :src="slide.src"
-                :alt="''"
-                aria-hidden="true"
-                class="absolute inset-0 w-full h-full object-cover scale-110 blur-xl brightness-50"
-              />
-              <!-- Imagen completa centrada encima -->
-              <img
-                :src="slide.src"
-                :alt="slide.alt"
-                class="relative w-full h-full object-contain z-10"
-                loading="lazy"
-              />
-            </div>
-          </transition-group>
-
-          <!-- Gradient overlay bottom -->
-          <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none z-20" />
-
-          <!-- Caption -->
-          <p class="absolute bottom-4 left-5 right-16 text-white text-sm font-medium drop-shadow z-20">
-            {{ slides[current]?.alt }}
-          </p>
-
-          <!-- Flechas -->
-          <button
-            class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-cgr-purple/80 border border-white/10 flex items-center justify-center transition-colors z-20"
-            @click="prev"
-            aria-label="Anterior"
-          >
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </button>
-          <button
-            class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-cgr-purple/80 border border-white/10 flex items-center justify-center transition-colors z-20"
-            @click="next"
-            aria-label="Siguiente"
-          >
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Indicadores -->
-        <div class="flex items-center justify-center gap-1.5 py-4 bg-cgr-card">
-          <button
-            v-for="(_, i) in slides"
-            :key="i"
-            class="h-1.5 rounded-full transition-all duration-300"
-            :class="i === current ? 'w-6 bg-cgr-purple' : 'w-1.5 bg-cgr-border hover:bg-cgr-muted'"
-            @click="goTo(i)"
-            :aria-label="`Ir a imagen ${i + 1}`"
-          />
-        </div>
-      </div>
-
+    <!-- Separador con etiqueta centrada -->
+    <div class="flex items-center gap-4 px-5 lg:px-20 mb-8 max-w-6xl mx-auto">
+      <div class="h-px flex-1 bg-cgr-border" />
+      <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase shrink-0">Galería · Congreso 2026</span>
+      <div class="h-px flex-1 bg-cgr-border" />
     </div>
+
+    <!-- Carousel full-width -->
+    <div
+      class="carousel-dark relative overflow-hidden"
+      @mouseenter="stopAutoplay"
+      @mouseleave="startAutoplay"
+    >
+      <!-- Slides -->
+      <div class="relative h-[300px] sm:h-[420px] lg:h-[500px]">
+        <transition-group name="fade">
+          <div
+            v-for="(slide, i) in slides"
+            v-show="i === current"
+            :key="slide.src"
+            class="absolute inset-0"
+          >
+            <!-- Fondo desenfocado -->
+            <img
+              :src="slide.src"
+              :alt="''"
+              aria-hidden="true"
+              class="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-40"
+            />
+            <!-- Imagen principal centrada -->
+            <img
+              :src="slide.src"
+              :alt="slide.alt"
+              class="relative w-full h-full object-contain z-10"
+              loading="lazy"
+            />
+          </div>
+        </transition-group>
+
+        <!-- Fade lateral izquierdo -->
+        <div class="absolute inset-y-0 left-0 w-20 sm:w-36 lg:w-52 bg-gradient-to-r from-cgr-bg to-transparent pointer-events-none z-20" />
+        <!-- Fade lateral derecho -->
+        <div class="absolute inset-y-0 right-0 w-20 sm:w-36 lg:w-52 bg-gradient-to-l from-cgr-bg to-transparent pointer-events-none z-20" />
+
+        <!-- Gradient inferior -->
+        <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent pointer-events-none z-20" />
+
+        <!-- Caption -->
+        <p class="absolute bottom-4 inset-x-0 text-center text-white/80 text-xs font-medium drop-shadow z-30 px-40">
+          {{ slides[current]?.alt }}
+        </p>
+
+        <!-- Flecha izquierda -->
+        <button
+          class="absolute left-4 sm:left-8 lg:left-14 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-cgr-purple/70 border border-white/10 flex items-center justify-center transition-colors z-30 backdrop-blur-sm"
+          @click="prev"
+          aria-label="Anterior"
+        >
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+
+        <!-- Flecha derecha -->
+        <button
+          class="absolute right-4 sm:right-8 lg:right-14 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-cgr-purple/70 border border-white/10 flex items-center justify-center transition-colors z-30 backdrop-blur-sm"
+          @click="next"
+          aria-label="Siguiente"
+        >
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Indicadores -->
+      <div class="flex items-center justify-center gap-1.5 pt-4 pb-2">
+        <button
+          v-for="(_, i) in slides"
+          :key="i"
+          class="h-1 rounded-full transition-all duration-300"
+          :class="i === current ? 'w-6 bg-cgr-purple' : 'w-1.5 bg-cgr-border hover:bg-cgr-muted'"
+          @click="goTo(i)"
+          :aria-label="`Ir a imagen ${i + 1}`"
+        />
+      </div>
+    </div>
+
   </section>
 </template>
 
