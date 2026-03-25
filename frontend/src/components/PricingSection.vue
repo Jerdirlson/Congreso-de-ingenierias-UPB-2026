@@ -69,7 +69,7 @@ const categories = [
           <span class="text-xs font-semibold text-cgr-muted uppercase tracking-wider">Categoría</span>
           <span class="text-xs font-semibold text-cgr-muted uppercase tracking-wider">Observación</span>
           <span class="text-xs font-semibold text-green-400 uppercase tracking-wider text-right whitespace-nowrap">Hasta 10 jul</span>
-          <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider text-right whitespace-nowrap">Desde 10 jul</span>
+          <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider text-right whitespace-nowrap">Después del 10 jul</span>
         </div>
 
         <!-- Filas -->
