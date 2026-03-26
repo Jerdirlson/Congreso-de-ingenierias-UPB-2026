@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -37,12 +38,11 @@ class AuthController extends Controller
             'institution'       => $validated['institution'] ?? null,
             'country'           => $validated['country'] ?? null,
             'city'              => $validated['city'] ?? null,
-            'email_verified_at' => now(), // TODO: verificación real cuando se active el correo
         ]);
 
         $user->assignRole($validated['registration_type']);
 
-        // event(new Registered($user)); // TODO: activar cuando se configure correo real
+        event(new Registered($user));
 
         $token = $user->createToken('api-token')->plainTextToken;
 

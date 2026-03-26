@@ -54,6 +54,15 @@ services:
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-congreso2026.bucaramanga.upb.edu.co}
       # Habilita /api/dev/* para pruebas. Quitar cuando no se necesite.
       ALLOW_UPLOAD_TEST: ${ALLOW_UPLOAD_TEST:-false}
+      # Correo (verificación de registro)
+      MAIL_MAILER:        ${MAIL_MAILER:-smtp}
+      MAIL_HOST:          ${MAIL_HOST}
+      MAIL_PORT:          ${MAIL_PORT:-587}
+      MAIL_USERNAME:      ${MAIL_USERNAME}
+      MAIL_PASSWORD:      ${MAIL_PASSWORD}
+      MAIL_ENCRYPTION:    ${MAIL_ENCRYPTION:-tls}
+      MAIL_FROM_ADDRESS:  ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME:     ${MAIL_FROM_NAME:-"Congreso Ingenierías 2026"}
       # Cloudflare Stream
       CLOUDFLARE_ACCOUNT_ID:              ${CLOUDFLARE_ACCOUNT_ID}
       CLOUDFLARE_API_TOKEN:               ${CLOUDFLARE_API_TOKEN}
@@ -97,6 +106,14 @@ services:
       SESSION_DRIVER:   redis
       QUEUE_CONNECTION: redis
       LOG_CHANNEL:      stderr
+      MAIL_MAILER:        ${MAIL_MAILER:-smtp}
+      MAIL_HOST:          ${MAIL_HOST}
+      MAIL_PORT:          ${MAIL_PORT:-587}
+      MAIL_USERNAME:      ${MAIL_USERNAME}
+      MAIL_PASSWORD:      ${MAIL_PASSWORD}
+      MAIL_ENCRYPTION:    ${MAIL_ENCRYPTION:-tls}
+      MAIL_FROM_ADDRESS:  ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME:     ${MAIL_FROM_NAME:-"Congreso Ingenierías 2026"}
     depends_on:
       mysql:
         condition: service_healthy
