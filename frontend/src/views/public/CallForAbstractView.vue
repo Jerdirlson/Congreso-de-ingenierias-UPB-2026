@@ -395,7 +395,7 @@ const steps = [
       </section>
 
       <!-- ── 9. REVISTAS INDEXADAS ─────────────────────────────────────── -->
-      <section class="bg-cgr-section py-20 px-5 lg:px-20">
+      <section id="revistas" class="bg-cgr-section py-20 px-5 lg:px-20">
         <div class="max-w-5xl mx-auto">
           <div class="text-center mb-12">
             <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Publicaciones científicas</span>

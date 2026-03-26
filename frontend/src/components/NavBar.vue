@@ -14,6 +14,7 @@ const links: { label: string; href?: string; to?: string }[] = [
   { label: 'Acerca de',            to: '/#acerca' },
   { label: 'Ejes Temáticos',       to: '/#ejes' },
   { label: 'Llamado a Ponencias',  to: '/ponencias' },
+  { label: 'Revistas Indexadas',   to: '/ponencias#revistas' },
   { label: 'Comités',              to: '/comites' },
   { label: 'Actividades',          to: '/#actividades' },
   { label: 'Fechas',               to: '/#fechas' },
