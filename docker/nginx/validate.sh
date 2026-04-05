@@ -2,7 +2,7 @@
 # Valida nginx.prod.conf con Docker.
 # Genera certs SSL dummy y resuelve el upstream 'backend' para evitar falsos negativos.
 
-CONF="$(dirname "$0")/nginx.prod.conf"
+CONF="$(cd "$(dirname "$0")" && pwd)/nginx.prod.conf"
 IMAGE="nginx:1.27-alpine"
 
 docker run --rm \
