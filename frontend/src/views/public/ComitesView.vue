@@ -183,7 +183,7 @@ const organizador: { nombre: string; facultad: string }[] = [
         </div>
       </section>
 
+      <FooterSection />
     </main>
-    <FooterSection />
   </div>
 </template>

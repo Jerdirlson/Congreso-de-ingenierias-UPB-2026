@@ -506,7 +506,7 @@ const steps = [
         </div>
       </section>
 
+      <FooterSection />
     </main>
-    <FooterSection />
   </div>
 </template>

@@ -27,7 +27,7 @@ import FooterSection from '../../components/FooterSection.vue'
       <TimelineSection />
       <PricingSection />
       <CtaSection />
+      <FooterSection />
     </main>
-    <FooterSection />
   </div>
 </template>
