@@ -21,10 +21,7 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # Validar nginx config
-docker run --rm \
-  --add-host backend:127.0.0.1 \
-  -v "$(pwd)/${NGINX_CONF}:/etc/nginx/conf.d/default.conf:ro" \
-  "${NGINX_IMAGE}" nginx -t 2>&1
+sh "$(pwd)/docker/nginx/validate.sh" 2>&1
 
 if [ $? -ne 0 ]; then
   echo ""

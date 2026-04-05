@@ -54,11 +54,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validar nginx.prod.conf
-        run: |
-          docker run --rm \
-            --add-host backend:127.0.0.1 \
-            -v "${{ github.workspace }}/docker/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro" \
-            nginx:1.27-alpine nginx -t
+        run: sh docker/nginx/validate.sh
 
   # ── 3. Deploy al VPS (solo push a main, solo si los tests pasan) ────────────
   deploy:
