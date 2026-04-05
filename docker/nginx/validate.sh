@@ -9,6 +9,7 @@ docker run --rm \
   --add-host backend:127.0.0.1 \
   -v "${CONF}:/etc/nginx/conf.d/default.conf:ro" \
   "${IMAGE}" sh -c "
+    apk add --no-cache openssl -q &&
     mkdir -p /etc/ssl/congreso &&
     openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
       -keyout /etc/ssl/congreso/privkey.pem \
