@@ -93,6 +93,7 @@ setup-hooks: ## Activar git hooks del proyecto (correr una vez al clonar)
 validate-nginx: ## Validar nginx.prod.conf con Docker
 	@echo "🔍 Validando docker/nginx/nginx.prod.conf..."
 	@docker run --rm \
+		--add-host backend:127.0.0.1 \
 		-v "$(shell pwd)/docker/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro" \
 		nginx:1.27-alpine nginx -t \
 		&& echo "✅ Config válida" || (echo "❌ Config inválida" && exit 1)
