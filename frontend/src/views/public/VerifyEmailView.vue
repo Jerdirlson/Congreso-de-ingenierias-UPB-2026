@@ -36,7 +36,9 @@ function redirectToDashboard() {
 }
 
 function maskEmail(email: string): string {
-  const [user, domain] = email.split('@')
+  const parts = email.split('@')
+  const user = parts[0] ?? ''
+  const domain = parts[1] ?? ''
   const visible = user.slice(0, 3)
   const hidden = '*'.repeat(Math.max(user.length - 3, 2))
   return `${visible}${hidden}@${domain}`
