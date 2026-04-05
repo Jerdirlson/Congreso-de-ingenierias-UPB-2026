@@ -119,6 +119,7 @@ services:
       SESSION_DRIVER:   redis
       QUEUE_CONNECTION: redis
       LOG_CHANNEL:      stderr
+      RUN_MIGRATIONS:   "false"
       MAIL_MAILER:        ${MAIL_MAILER:-smtp}
       MAIL_HOST:          ${MAIL_HOST}
       MAIL_PORT:          ${MAIL_PORT:-587}

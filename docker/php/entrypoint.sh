@@ -82,9 +82,12 @@ mkdir -p "$APP_DIR/storage/framework/views" \
 chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 chown -R www-data:www-data "$APP_DIR/storage" "$APP_DIR/bootstrap/cache" 2>/dev/null || true
 
-# ── Migraciones ───────────────────────────────────────────────────────────────
+# ── Migraciones (solo si RUN_MIGRATIONS != false) ─────────────────────────────
+# El queue-worker usa el mismo entrypoint pero no debe migrar (race condition).
 cd "$APP_DIR"
-if [ "$APP_ENV" = "production" ]; then
+if [ "${RUN_MIGRATIONS:-true}" = "false" ]; then
+  echo "⏭️  Migraciones omitidas (RUN_MIGRATIONS=false)"
+elif [ "$APP_ENV" = "production" ]; then
   # Producción: solo migrar, nunca sembrar datos de prueba
   php artisan migrate --force --no-interaction 2>&1 || true
 else

@@ -69,3 +69,20 @@ jobs:
 
       - name: Verificar despliegue
         run: docker compose -f ~/congreso/docker-compose.prod.yml ps
+
+      - name: Health check — esperar que el backend responda
+        run: |
+          echo "⏳ Esperando que el backend esté listo..."
+          for i in $(seq 1 20); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/api/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Backend responde OK (HTTP $STATUS)"
+              exit 0
+            fi
+            echo "   intento $i/20 — HTTP $STATUS, reintentando en 5s..."
+            sleep 5
+          done
+          echo "❌ El backend no respondió después de 100s"
+          docker compose -f ~/congreso/docker-compose.prod.yml logs --tail=30 nginx
+          docker compose -f ~/congreso/docker-compose.prod.yml logs --tail=30 backend
+          exit 1
