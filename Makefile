@@ -4,7 +4,7 @@
 # Uso: make [comando]
 # Ejemplo: make up
 
-.PHONY: help up down build rebuild logs ps restart shell-backend shell-frontend artisan migrate fresh composer npm clean
+.PHONY: help up down build rebuild logs ps restart shell-backend shell-frontend artisan migrate fresh composer npm clean setup-hooks validate-nginx
 
 # Comando por defecto: mostrar ayuda
 .DEFAULT_GOAL := help
@@ -82,6 +82,20 @@ composer: ## Ejecutar composer (uso: make composer CMD="install")
 
 npm: ## Ejecutar npm en frontend (uso: make npm CMD="run build")
 	docker compose exec frontend npm $(CMD)
+
+# ── Hooks y validaciones ──────────────────────────────────────────────────────
+
+setup-hooks: ## Activar git hooks del proyecto (correr una vez al clonar)
+	git config core.hooksPath .githooks
+	chmod +x .githooks/pre-push 2>/dev/null || true
+	@echo "✅ Git hooks activados. nginx se validará antes de cada push."
+
+validate-nginx: ## Validar nginx.prod.conf con Docker
+	@echo "🔍 Validando docker/nginx/nginx.prod.conf..."
+	@docker run --rm \
+		-v "$(shell pwd)/docker/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro" \
+		nginx:1.27-alpine nginx -t \
+		&& echo "✅ Config válida" || (echo "❌ Config inválida" && exit 1)
 
 # ── Limpieza ───────────────────────────────────────────────────────────────────
 

@@ -1,0 +1,38 @@
+#!/bin/sh
+# ── Pre-push hook — Congreso Ingenierías 2026 ─────────────────────────────────
+# Valida nginx.prod.conf con Docker antes de permitir el push.
+# Se ejecuta automáticamente con: git config core.hooksPath .githooks
+#
+# Para saltar en emergencia (NO recomendado):
+#   git push --no-verify
+
+NGINX_CONF="docker/nginx/nginx.prod.conf"
+NGINX_IMAGE="nginx:1.27-alpine"
+
+echo ""
+echo "🔍 Pre-push: validando configuración de nginx..."
+
+# Si Docker no está corriendo, advertir pero no bloquear
+if ! docker info > /dev/null 2>&1; then
+  echo "⚠️  Docker no está corriendo — validación de nginx omitida."
+  echo "   Asegúrate de que la config sea correcta antes de deployar."
+  echo ""
+  exit 0
+fi
+
+# Validar nginx config
+docker run --rm \
+  -v "$(pwd)/${NGINX_CONF}:/etc/nginx/conf.d/default.conf:ro" \
+  "${NGINX_IMAGE}" nginx -t 2>&1
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ nginx config inválida — push bloqueado."
+  echo "   Corrige el error en ${NGINX_CONF} y vuelve a intentarlo."
+  echo ""
+  exit 1
+fi
+
+echo "✅ nginx config válida — continuando con el push."
+echo ""
+exit 0
