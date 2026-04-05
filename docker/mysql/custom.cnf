@@ -1,0 +1,34 @@
+[mysqld]
+# ══════════════════════════════════════════════════════════════════════════════
+#  MySQL 8 — tuning para VPS 4 GB con ~300 usuarios concurrentes
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── InnoDB (motor principal) ───────────────────────────────────────────────────
+# Buffer pool: caché principal de datos e índices (~25% del RAM total)
+innodb_buffer_pool_size        = 512M
+innodb_log_file_size           = 128M
+
+# Reduce I/O de disco: acepta perder < 1 segundo de transacciones en crash
+# Aceptable para un congreso; cambiar a 1 si se requiere durabilidad máxima
+innodb_flush_log_at_trx_commit = 2
+innodb_flush_method            = O_DIRECT
+
+# ── Conexiones ─────────────────────────────────────────────────────────────────
+# PHP-FPM tiene max 20 workers → 100 conexiones es más que suficiente
+max_connections                = 100
+thread_cache_size              = 8
+wait_timeout                   = 600
+interactive_timeout            = 600
+
+# ── Tablas temporales en memoria (evita spill a disco en JOINs complejos) ───────
+tmp_table_size                 = 64M
+max_heap_table_size            = 64M
+
+# ── Buffers por conexión (se multiplican por max_connections) ──────────────────
+join_buffer_size               = 2M
+sort_buffer_size               = 2M
+
+# ── Slow query log (queries > 2s van a stderr → visibles con docker logs) ───────
+slow_query_log                 = 1
+long_query_time                = 2
+slow_query_log_file            = /dev/stderr

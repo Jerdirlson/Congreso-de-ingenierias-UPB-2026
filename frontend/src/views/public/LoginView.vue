@@ -19,7 +19,9 @@ async function submit() {
   const result = await auth.login(email.value, password.value)
   if (result.ok) {
     const r = auth.role
-    if (r === 'ponente') router.push({ name: 'ponente-home' })
+    if ((r === 'ponente' || r === 'participante') && !auth.isEmailVerified) {
+      router.push({ name: 'verify-email' })
+    } else if (r === 'ponente') router.push({ name: 'ponente-home' })
     else if (r === 'participante') router.push({ name: 'participante-home' })
     else if (r === 'revisor') router.push({ name: 'revisor-home' })
     else if (r === 'admin' || r === 'administrativo') router.push({ name: 'admin-home' })

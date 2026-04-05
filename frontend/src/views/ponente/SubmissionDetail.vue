@@ -24,7 +24,8 @@ const submission = ref<{
   reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; reviewer?: { name: string } }[]
 } | null>(null)
 
-const abstractContent = ref('')
+const abstractFile = ref<File | null>(null)
+const abstractFileError = ref('')
 const documentFile = ref<File | null>(null)
 const modalityChoice = ref<string>('')
 const errorMessage = ref('')
@@ -116,20 +117,49 @@ async function loadSubmission() {
 }
 
 async function submitAbstract() {
+  if (!abstractFile.value) return
   errorMessage.value = ''
-  const data = await api.post<{ abstract: { llm_axis?: { id: number } } }>(
+  const form = new FormData()
+  form.append('abstract_file', abstractFile.value)
+
+  const data = await api.postForm<{ abstract: { llm_axis?: { id: number } } }>(
     `/submissions/${route.params.id}/abstracts`,
-    { content: abstractContent.value }
+    form,
   )
   if (data) {
-    abstractContent.value = ''
+    abstractFile.value = null
+    abstractFileError.value = ''
     showResubmitForm.value = false
     const recommendedId = data.abstract?.llm_axis?.id
     if (recommendedId) selectedAxisId.value = recommendedId
     await loadSubmission()
   } else {
-    errorMessage.value = api.error.value?.message ?? 'Error al enviar el resumen'
+    errorMessage.value = api.error.value?.message ?? 'Error al enviar el archivo de resumen'
   }
+}
+
+function onAbstractFileChange(event: Event) {
+  abstractFileError.value = ''
+  const file = (event.target as HTMLInputElement).files?.[0] ?? null
+  if (!file) {
+    abstractFile.value = null
+    return
+  }
+
+  const lower = file.name.toLowerCase()
+  if (!(lower.endsWith('.docx') || lower.endsWith('.pdf'))) {
+    abstractFile.value = null
+    abstractFileError.value = 'Solo se permiten archivos .docx o .pdf.'
+    return
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    abstractFile.value = null
+    abstractFileError.value = 'El archivo no debe superar 10 MB.'
+    return
+  }
+
+  abstractFile.value = file
 }
 
 async function confirmAxis() {
@@ -382,13 +412,17 @@ watch(() => route.params.id, () => {
 
       <!-- Formulario de envío inicial (draft) -->
       <div v-if="canSubmitAbstract">
-        <textarea
-          v-model="abstractContent"
-          rows="6"
-          placeholder="Escribe el resumen de tu ponencia (mínimo 100 caracteres)…"
-          class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple resize-y"
+        <input
+          type="file"
+          accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+          class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
+          @change="onAbstractFileChange"
         />
-        <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractContent.trim()" @click="submitAbstract">
+        <p v-if="abstractFileError" class="mt-2 text-xs text-red-400">{{ abstractFileError }}</p>
+        <p v-if="abstractFile" class="mt-2 text-xs text-cgr-subtle">
+          Archivo seleccionado: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
+        </p>
+        <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
           Analizar con IA
         </UiButton>
       </div>
@@ -465,22 +499,26 @@ watch(() => route.params.id, () => {
               Confirmar eje temático
             </UiButton>
             <UiButton variant="secondary" @click="showResubmitForm = true">
-              Cambiar resumen
+              Cambiar archivo
             </UiButton>
           </div>
         </div>
 
         <!-- Formulario de reenvío de resumen -->
         <div v-else>
-          <p class="text-xs text-cgr-muted mb-3">Escribe un nuevo resumen para obtener una nueva recomendación de la IA.</p>
-          <textarea
-            v-model="abstractContent"
-            rows="6"
-            placeholder="Escribe el nuevo resumen de tu ponencia…"
-            class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple resize-y"
+          <p class="text-xs text-cgr-muted mb-3">Sube un nuevo archivo para obtener una nueva recomendación de la IA.</p>
+          <input
+            type="file"
+            accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+            class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
+            @change="onAbstractFileChange"
           />
+          <p v-if="abstractFileError" class="mt-2 text-xs text-red-400">{{ abstractFileError }}</p>
+          <p v-if="abstractFile" class="mt-2 text-xs text-cgr-subtle">
+            Archivo seleccionado: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
+          </p>
           <div class="flex gap-3 mt-4">
-            <UiButton :loading="api.loading.value" :disabled="!abstractContent.trim()" @click="submitAbstract">
+            <UiButton :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
               Analizar con IA
             </UiButton>
             <UiButton variant="secondary" @click="showResubmitForm = false">

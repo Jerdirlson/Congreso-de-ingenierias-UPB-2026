@@ -43,10 +43,7 @@ async function submit() {
   const result = await auth.register(body)
 
   if (result.ok) {
-    const r = auth.role
-    if (r === 'ponente') router.push({ name: 'ponente-home' })
-    else if (r === 'participante') router.push({ name: 'participante-home' })
-    else router.push({ name: 'landing' })
+    router.push({ name: 'verify-email' })
     return
   }
 

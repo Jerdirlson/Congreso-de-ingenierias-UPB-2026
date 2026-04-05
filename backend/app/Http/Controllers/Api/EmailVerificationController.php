@@ -11,31 +11,50 @@ use Illuminate\Http\Request;
 class EmailVerificationController extends Controller
 {
     /**
-     * Verifica el correo al hacer clic en el enlace del email.
-     * No requiere auth: la URL firmada + hash validan la identidad.
+     * Verifica el correo mediante el código de 6 dígitos enviado por email.
      */
-    public function verify(Request $request): JsonResponse
+    public function verifyCode(Request $request): JsonResponse
     {
-        $user = User::findOrFail($request->route('id'));
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'code'  => 'required|string|size:6',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
 
         if ($user->hasVerifiedEmail()) {
-            $frontendUrl = rtrim(config('app.frontend_url', config('app.url')), '/');
-            return redirect()->away("{$frontendUrl}/verify-email?verified=1");
+            return response()->json([
+                'message'        => 'El correo ya está verificado.',
+                'email_verified' => true,
+            ]);
         }
 
-        if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
-            return response()->json(['message' => 'Enlace de verificación inválido.'], 403);
+        if (
+            ! $user->email_verification_code ||
+            ! hash_equals($user->email_verification_code, $request->code)
+        ) {
+            return response()->json(['message' => 'Código incorrecto.'], 422);
         }
 
+        if ($user->email_verification_expires_at->isPast()) {
+            return response()->json([
+                'message' => 'El código ha expirado. Solicita uno nuevo.',
+            ], 422);
+        }
+
+        $user->email_verification_code       = null;
+        $user->email_verification_expires_at = null;
         $user->markEmailAsVerified();
         event(new Verified($user));
 
-        $frontendUrl = rtrim(config('app.frontend_url', config('app.url')), '/');
-        return redirect()->away("{$frontendUrl}/verify-email?verified=1");
+        return response()->json([
+            'message'        => 'Correo verificado correctamente.',
+            'email_verified' => true,
+        ]);
     }
 
     /**
-     * Reenvía el correo de verificación.
+     * Reenvía el código de verificación al correo del usuario.
      */
     public function resend(Request $request): JsonResponse
     {
@@ -45,7 +64,7 @@ class EmailVerificationController extends Controller
 
         if ($user->hasVerifiedEmail()) {
             return response()->json([
-                'message' => 'El correo ya está verificado.',
+                'message'        => 'El correo ya está verificado.',
                 'email_verified' => true,
             ]);
         }
@@ -53,7 +72,7 @@ class EmailVerificationController extends Controller
         $user->sendEmailVerificationNotification();
 
         return response()->json([
-            'message' => 'Se ha enviado un nuevo enlace de verificación a tu correo.',
+            'message' => 'Se ha enviado un nuevo código de verificación a tu correo.',
         ]);
     }
 }

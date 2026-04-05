@@ -59,19 +59,21 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::get('/me',       [AuthController::class, 'me'])->middleware('auth:sanctum');
 });
 
-// ── Verificación de correo (sin auth para el enlace del email) ─────────────
+// ── Verificación de correo por código ─────────────────────────────────────────
 
-Route::middleware('throttle:6,1')->group(function () {
-    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-        ->middleware('signed')
-        ->name('verification.verify');
-    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
-        ->name('verification.send');
-});
+// Verificar código: máximo 10 intentos/min (permite corregir errores de tipeo)
+Route::post('/email/verify-code', [EmailVerificationController::class, 'verifyCode'])
+    ->middleware('throttle:10,1')
+    ->name('verification.verify');
+
+// Reenviar código: máximo 3 solicitudes/min (evita abuso)
+Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
+    ->middleware('throttle:3,1')
+    ->name('verification.send');
 
 // ── Ponente (auth + role + email verificado) ──────────────────────────────
 
-Route::middleware(['auth:sanctum', 'role:ponente', 'throttle:60,1'])->group(function () {
+Route::middleware(['auth:sanctum', 'verified', 'role:ponente', 'throttle:60,1'])->group(function () {
     Route::get('/submissions',                    [SubmissionController::class, 'index']);
     Route::post('/submissions',                   [SubmissionController::class, 'store']);
     Route::get('/submissions/{submission}',       [SubmissionController::class, 'show']);
@@ -88,7 +90,7 @@ Route::middleware(['auth:sanctum', 'role:ponente', 'throttle:60,1'])->group(func
 
 // ── Ponente + Participante (pagos e inscripciones) ────────────────────────
 
-Route::middleware(['auth:sanctum', 'role:ponente|participante', 'throttle:60,1'])->group(function () {
+Route::middleware(['auth:sanctum', 'verified', 'role:ponente|participante', 'throttle:60,1'])->group(function () {
     Route::post('/payments', [PaymentController::class, 'store']);
     Route::get('/registrations', [RegistrationController::class, 'index']);
 });

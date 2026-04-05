@@ -37,7 +37,6 @@ const axisApi = useFetchApi()
 const confirmApi = useFetchApi()
 
 // Campos existentes
-const abstractContent = ref('')
 const result = ref<SubmissionResult | null>(null)
 const errorMessage = ref('')
 const axes = ref<ThematicAxis[]>([])
@@ -51,8 +50,6 @@ const abstractFile = ref<File | null>(null)
 const abstractFileError = ref('')
 
 // Computados
-const charCount = computed(() => abstractContent.value.length)
-
 const keywordList = computed(() =>
   keywords.value.split(',').map(k => k.trim()).filter(Boolean)
 )
@@ -63,7 +60,6 @@ const keywordsValid = computed(() =>
 
 const isValid = computed(() => {
   if (!title.value.trim()) return false
-  if (abstractContent.value.trim().length < 100) return false
   if (!keywordsValid.value) return false
   if (!abstractFile.value) return false
   // Autor principal: todos los campos requeridos
@@ -109,13 +105,14 @@ function onFileChange(e: Event) {
   abstractFileError.value = ''
   const file = (e.target as HTMLInputElement).files?.[0] ?? null
   if (!file) { abstractFile.value = null; return }
-  if (!file.name.toLowerCase().endsWith('.docx')) {
-    abstractFileError.value = 'Solo se permiten archivos .docx'
+  const lower = file.name.toLowerCase()
+  if (!(lower.endsWith('.docx') || lower.endsWith('.pdf'))) {
+    abstractFileError.value = 'Solo se permiten archivos .docx o .pdf'
     abstractFile.value = null
     return
   }
-  if (file.size > 5 * 1024 * 1024) {
-    abstractFileError.value = 'El archivo no debe superar 5 MB'
+  if (file.size > 10 * 1024 * 1024) {
+    abstractFileError.value = 'El archivo no debe superar 10 MB'
     abstractFile.value = null
     return
   }
@@ -128,7 +125,6 @@ async function submit() {
 
   const formData = new FormData()
   formData.append('title', title.value.trim())
-  formData.append('abstract', abstractContent.value)
   formData.append('keywords', keywords.value.trim())
 
   authors.value.forEach((author, i) => {
@@ -150,7 +146,7 @@ async function submit() {
       selectedAxisId.value = recommended.id ?? null
     }
   } else {
-    errorMessage.value = api.error.value?.message ?? 'Error al enviar el resumen'
+    errorMessage.value = api.error.value?.message ?? 'Error al enviar el archivo para análisis'
   }
 }
 
@@ -172,7 +168,6 @@ async function confirmAxis() {
 
 function retry() {
   result.value = null
-  abstractContent.value = ''
   selectedAxisId.value = null
   errorMessage.value = ''
   title.value = ''
@@ -191,7 +186,7 @@ function retry() {
       </RouterLink>
       <h1 class="text-2xl font-bold text-white">Nueva ponencia</h1>
       <p class="text-sm text-cgr-muted mt-1">
-        Completa el formulario con los datos de tu ponencia. La IA analizará el resumen y recomendará un eje temático.
+        Completa el formulario con los datos de tu ponencia. La IA analizará tu archivo y recomendará un eje temático.
       </p>
     </div>
 
@@ -273,7 +268,7 @@ function retry() {
             Confirmar eje temático
           </UiButton>
           <UiButton variant="secondary" @click="retry">
-            Cambiar resumen
+            Cambiar archivo
           </UiButton>
         </div>
       </UiCard>
@@ -411,29 +406,11 @@ function retry() {
           </div>
         </div>
 
-        <!-- Resumen (texto para análisis IA) -->
+        <!-- Subir archivo del resumen -->
         <div>
           <label class="block text-xs font-medium text-cgr-muted mb-1.5">
-            Resumen <span class="text-red-400">*</span>
-            <span class="ml-2 text-cgr-subtle">({{ charCount }} / 10 000 · mínimo 100 caracteres)</span>
-          </label>
-          <textarea
-            v-model="abstractContent"
-            rows="8"
-            placeholder="Describe el contenido de tu ponencia: objetivos, metodología, resultados y conclusiones principales. Este texto será analizado por la IA para sugerir el eje temático..."
-            class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple resize-y transition-colors"
-            :class="{ 'border-red-500/50': charCount > 0 && charCount < 100 }"
-          />
-          <p v-if="charCount > 0 && charCount < 100" class="mt-1 text-xs text-red-400">
-            El resumen debe tener al menos 100 caracteres.
-          </p>
-        </div>
-
-        <!-- Subir archivo .docx -->
-        <div>
-          <label class="block text-xs font-medium text-cgr-muted mb-1.5">
-            Archivo del resumen (.docx) <span class="text-red-400">*</span>
-            <span class="ml-2 text-cgr-subtle font-normal">Solo .docx · máximo 5 MB</span>
+            Archivo del resumen (Word o PDF) <span class="text-red-400">*</span>
+            <span class="ml-2 text-cgr-subtle font-normal">.docx o .pdf · máximo 10 MB</span>
           </label>
           <label
             class="flex items-center gap-3 w-full bg-cgr-section border rounded-lg px-3 py-2.5 cursor-pointer transition-colors"
@@ -447,12 +424,12 @@ function retry() {
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
             </svg>
             <span class="text-sm flex-1 truncate" :class="abstractFile ? 'text-white' : 'text-cgr-subtle'">
-              {{ abstractFile ? abstractFile.name : 'Seleccionar archivo .docx…' }}
+              {{ abstractFile ? abstractFile.name : 'Seleccionar archivo .docx o .pdf…' }}
             </span>
             <span v-if="abstractFile" class="text-xs text-cgr-muted shrink-0">
               {{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB
             </span>
-            <input type="file" accept=".docx" class="hidden" @change="onFileChange" />
+            <input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" class="hidden" @change="onFileChange" />
           </label>
           <p v-if="abstractFileError" class="mt-1 text-xs text-red-400">{{ abstractFileError }}</p>
         </div>

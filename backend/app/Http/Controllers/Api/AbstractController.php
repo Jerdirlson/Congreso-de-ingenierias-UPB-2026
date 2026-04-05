@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Submission;
 use App\Models\SubmissionAbstract;
 use App\Models\ThematicAxis;
+use App\Services\AbstractFileExtractorService;
 use App\Services\LlmClassificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class AbstractController extends Controller
 {
-    /** POST /api/submissions/{submission}/abstracts — reenviar resumen (tras rechazo) */
+    /** POST /api/submissions/{submission}/abstracts — reenviar archivo de resumen */
     public function store(Request $request, Submission $submission): JsonResponse
     {
         $this->authorize('update', $submission);
@@ -24,13 +26,23 @@ class AbstractController extends Controller
         abort_if(! in_array($submission->status, $allowed), 422, 'No puede subir resumen en el estado actual.');
 
         $validated = $request->validate([
-            'content' => 'required|string|min:100|max:10000',
+            'abstract_file' => 'required|file|mimes:docx,pdf|max:10240',
         ]);
+
+        try {
+            $abstractText = app(AbstractFileExtractorService::class)->extractText($validated['abstract_file']);
+        } catch (RuntimeException $e) {
+            abort(422, $e->getMessage());
+        }
+
+        if (mb_strlen($abstractText) < 100) {
+            abort(422, 'El archivo debe contener al menos 100 caracteres de texto legible para análisis.');
+        }
 
         $version = $submission->abstract_attempts + 1;
 
         $abstract = $submission->abstracts()->create([
-            'content'    => $validated['content'],
+            'content'    => $abstractText,
             'version'    => $version,
             'llm_status' => SubmissionAbstract::LLM_STATUS_PENDING,
         ]);
@@ -52,7 +64,7 @@ class AbstractController extends Controller
                 'processed_at'      => now(),
             ]);
         } else {
-            $result         = $llm->classify($validated['content'], $axes);
+            $result         = $llm->classify($abstractText, $axes);
             $highConfidence = $llm->isApproved($result['confidence_score']) && $result['axis_id'] !== null;
 
             $abstract->update([

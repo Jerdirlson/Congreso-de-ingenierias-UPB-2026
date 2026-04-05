@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Submission;
 use App\Models\SubmissionAbstract;
 use App\Models\ThematicAxis;
+use App\Services\AbstractFileExtractorService;
 use App\Services\LlmClassificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class SubmissionController extends Controller
 {
@@ -25,7 +27,7 @@ class SubmissionController extends Controller
         return response()->json($submissions);
     }
 
-    /** POST /api/submissions — crear ponencia con resumen y clasificación IA */
+    /** POST /api/submissions — crear ponencia con archivo de resumen y clasificación IA */
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -42,11 +44,21 @@ class SubmissionController extends Controller
         abort_if($user->submissions()->exists(), 422, 'Ya tienes una ponencia registrada. Solo se permite una por ponente.');
 
         $validated = $request->validate([
-            'abstract' => 'required|string|min:100|max:10000',
+            'abstract_file' => 'required|file|mimes:docx,pdf|max:10240',
         ]);
 
+        try {
+            $abstractText = app(AbstractFileExtractorService::class)->extractText($validated['abstract_file']);
+        } catch (RuntimeException $e) {
+            abort(422, $e->getMessage());
+        }
+
+        if (mb_strlen($abstractText) < 100) {
+            abort(422, 'El archivo debe contener al menos 100 caracteres de texto legible para análisis.');
+        }
+
         // Título provisional: primeros 150 caracteres del resumen
-        $title = Str::limit($validated['abstract'], 150);
+        $title = Str::limit($abstractText, 150);
 
         $submission = $user->submissions()->create([
             'title'  => $title,
@@ -55,7 +67,7 @@ class SubmissionController extends Controller
 
         // Crear registro del resumen
         $abstract = $submission->abstracts()->create([
-            'content'    => $validated['abstract'],
+            'content'    => $abstractText,
             'version'    => 1,
             'llm_status' => SubmissionAbstract::LLM_STATUS_PENDING,
         ]);

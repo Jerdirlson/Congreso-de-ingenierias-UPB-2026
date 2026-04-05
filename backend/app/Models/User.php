@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\EmailVerificationCode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -30,14 +31,32 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'email_verification_code',
+        'email_verification_expires_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
+            'email_verified_at'              => 'datetime',
+            'email_verification_expires_at'  => 'datetime',
+            'password'                       => 'hashed',
         ];
+    }
+
+    /**
+     * Genera un código de 6 dígitos, lo guarda en la BD y lo envía por correo.
+     * Expira en 15 minutos.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $this->email_verification_code        = $code;
+        $this->email_verification_expires_at  = now()->addMinutes(15);
+        $this->saveQuietly();
+
+        $this->notify(new EmailVerificationCode($code));
     }
 
     public function submissions(): HasMany

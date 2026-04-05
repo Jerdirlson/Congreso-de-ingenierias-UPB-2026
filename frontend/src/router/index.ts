@@ -125,8 +125,9 @@ router.beforeEach(async (to) => {
       const ok = await auth.fetchMe()
       if (!ok) return { name: 'login', query: { redirect: to.fullPath } }
     }
-    // TODO: verificación de correo cuando se active
-    // if (!auth.isEmailVerified) return { name: 'verify-email', query: { redirect: to.fullPath } }
+    if (!auth.isEmailVerified && (auth.role === 'ponente' || auth.role === 'participante')) {
+      return { name: 'verify-email', query: { redirect: to.fullPath } }
+    }
     const requiredRole = to.meta.role as string | string[] | undefined
     if (requiredRole) {
       const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]

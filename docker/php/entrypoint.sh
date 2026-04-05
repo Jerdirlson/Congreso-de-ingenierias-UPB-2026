@@ -29,6 +29,9 @@ sed -i "s|^DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME}|"       "$APP_DIR/.env"
 sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD}|"       "$APP_DIR/.env"
 sed -i "s|^REDIS_HOST=.*|REDIS_HOST=${REDIS_HOST}|"         "$APP_DIR/.env"
 sed -i "s|^REDIS_PORT=.*|REDIS_PORT=${REDIS_PORT}|"         "$APP_DIR/.env"
+if [ -n "${REDIS_PASSWORD}" ]; then
+  sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${REDIS_PASSWORD}|" "$APP_DIR/.env"
+fi
 sed -i "s|^CACHE_STORE=.*|CACHE_STORE=${CACHE_DRIVER:-redis}|" "$APP_DIR/.env"
 sed -i "s|^SESSION_DRIVER=.*|SESSION_DRIVER=${SESSION_DRIVER:-redis}|" "$APP_DIR/.env"
 sed -i "s|^QUEUE_CONNECTION=.*|QUEUE_CONNECTION=${QUEUE_CONNECTION:-redis}|" "$APP_DIR/.env"
