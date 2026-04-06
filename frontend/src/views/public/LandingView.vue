@@ -9,7 +9,6 @@ import SpeakersSection from '../../components/SpeakersSection.vue'
 import TimelineSection from '../../components/TimelineSection.vue'
 import PricingSection from '../../components/PricingSection.vue'
 import CtaSection from '../../components/CtaSection.vue'
-import CarouselSection from '../../components/CarouselSection.vue'
 import FooterSection from '../../components/FooterSection.vue'
 </script>
 
@@ -19,7 +18,6 @@ import FooterSection from '../../components/FooterSection.vue'
     <main class="lg:pl-72">
       <HeroSection />
       <StatsBar />
-      <CarouselSection />
       <AboutSection />
       <TracksSection />
       <LiveStreamSection />
