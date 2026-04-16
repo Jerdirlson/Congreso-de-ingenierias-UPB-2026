@@ -115,13 +115,6 @@ const statusColor: Record<string, string> = {
   confirmed: 'bg-green-400',
 }
 
-const modalityLabel: Record<string, string> = {
-  presencial_oral: 'Presencial oral',
-  presencial_poster: 'Presencial póster',
-  virtual: 'Virtual',
-  proyecto_aula: 'Proyecto de aula',
-}
-
 // ── Computed stats ────────────────────────────────────────────────────────────
 
 const presencialCount = computed(() => {
@@ -177,11 +170,6 @@ const reviewStatusColor: Record<string, string> = {
   completed: 'text-green-400',
 }
 
-const reviewStatusLabel: Record<string, string> = {
-  pending: 'Pendientes',
-  in_progress: 'En progreso',
-  completed: 'Completadas',
-}
 </script>
 
 <template>
