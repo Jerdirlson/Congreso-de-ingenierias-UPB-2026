@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AbstractController;
+use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminMetricsController;
 use App\Http\Controllers\Api\AdminSubmissionController;
 use App\Http\Controllers\Api\AuthController;
@@ -109,6 +110,7 @@ Route::middleware(['auth:sanctum', 'role:revisor', 'throttle:60,1'])->group(func
 
 Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1'])->prefix('admin')->group(function () {
     Route::get('/metrics',                              AdminMetricsController::class);
+    Route::get('/analytics',                            AdminAnalyticsController::class);
     Route::get('/submissions',                          [AdminSubmissionController::class, 'index']);
     Route::get('/reviewers',                            [AdminSubmissionController::class, 'reviewers']);
     Route::get('/submissions/{submission}',             [AdminSubmissionController::class, 'show']);

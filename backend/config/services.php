@@ -54,4 +54,9 @@ return [
         'confidence_threshold' => env('LLM_CONFIDENCE_THRESHOLD', 70),
     ],
 
+    'ga4' => [
+        'property_id'          => env('GA4_PROPERTY_ID', ''),
+        'service_account_json' => env('GA4_SERVICE_ACCOUNT_JSON', ''),
+    ],
+
 ];
