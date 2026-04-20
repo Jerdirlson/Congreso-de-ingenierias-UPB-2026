@@ -10,7 +10,7 @@ const route = useRoute()
 const activeHash = ref(route.hash)
 
 const links: { label: string; href?: string; to?: string }[] = [
-  { label: 'Inicio',               to: '/#inicio' },
+  { label: 'Inicio / Galería',      to: '/#inicio' },
   { label: 'Acerca de',            to: '/#acerca' },
   { label: 'Ejes Temáticos',       to: '/#ejes' },
   { label: 'Llamado a Ponencias',  to: '/ponencias' },
@@ -20,7 +20,6 @@ const links: { label: string; href?: string; to?: string }[] = [
   { label: 'Fechas',               to: '/#fechas' },
   { label: 'Precios',              to: '/#precios' },
   { label: 'Inscripción',          to: '/#inscripcion' },
-  { label: 'Galería',              to: '/#galeria' },
   { label: 'Sitios de Interés',    to: '/sitios-de-interes' },
 ]
 
