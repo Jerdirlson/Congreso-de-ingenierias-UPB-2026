@@ -41,6 +41,7 @@ const conferencistas: Conferencista[] = [
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
+    foto: '/speakers/carlos-garcia.jpg',
     lineas: [
       'Hidrógeno y transición energética',
       'Gases combustibles y gas natural',
@@ -60,6 +61,7 @@ const conferencistas: Conferencista[] = [
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
+    foto: '/speakers/sindey-bernal.jpg',
     lineas: ['Ingeniería Humanocéntrica', 'Innovación Educativa y STEM inclusivo', 'Gamificación', 'Impacto regional con tecnología'],
   },
   {
@@ -83,6 +85,7 @@ const conferencistas: Conferencista[] = [
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
+    foto: '/speakers/jhon-narvaez.png',
     lineas: ['Iniciativas de mejora continua', 'Gestión de activos y mantenimiento', 'Transformación digital para mantenimiento'],
   },
 ]
