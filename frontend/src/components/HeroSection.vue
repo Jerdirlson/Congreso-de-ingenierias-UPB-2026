@@ -13,12 +13,12 @@ const slides: Slide[] = [
   { type: 'image', src: '/carousel/tarifas-congreso.jpg', alt: 'Tarifas — Congreso de Ingeniería II' },
   { type: 'image', src: '/carousel/congreso-1.jpg',      alt: 'La 27, Bucaramanga' },
   { type: 'image', src: '/carousel/congreso-2.jpg',      alt: 'Parroquia Histórica San Laureano' },
-  { type: 'image', src: '/carousel/congreso-3.webp',     alt: 'Puente La Novena, Bucaramanga' },
-  { type: 'image', src: '/carousel/congreso-4.jpg',      alt: 'Basílica menor Señor de los Milagros (Parroquia San Juan Bautista)' },
-  { type: 'image', src: '/carousel/congreso-5.jpg',      alt: 'El Santísimo' },
-  { type: 'image', src: '/carousel/congreso-6.jpg',      alt: 'Parque Nacional del Chicamocha' },
-  { type: 'image', src: '/carousel/congreso-7.jpg',      alt: 'Congreso de Ingenierías 2026' },
-  { type: 'image', src: '/carousel/congreso-8.webp',     alt: 'Congreso de Ingenierías 2026' },
+  { type: 'image', src: '/carousel/congreso-3.webp',     alt: 'Bucaramanga' },
+  { type: 'image', src: '/carousel/congreso-4.jpg',      alt: 'Puente La Novena' },
+  { type: 'image', src: '/carousel/congreso-5.jpg',      alt: 'Bucaramanga' },
+  { type: 'image', src: '/carousel/congreso-6.jpg',      alt: 'Basílica menor Señor de los Milagros (Parroquia San Juan Bautista)' },
+  { type: 'image', src: '/carousel/congreso-7.jpg',      alt: 'El Santísimo' },
+  { type: 'image', src: '/carousel/congreso-8.webp',     alt: 'Parque Nacional del Chicamocha' },
 ]
 
 const current = ref(0)
