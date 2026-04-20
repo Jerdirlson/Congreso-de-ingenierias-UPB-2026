@@ -68,8 +68,8 @@ const categories = [
         <div class="grid grid-cols-[1fr_1fr_auto_auto] gap-x-4 px-6 py-3 bg-cgr-bg border-b border-cgr-border">
           <span class="text-xs font-semibold text-cgr-muted uppercase tracking-wider">Categoría</span>
           <span class="text-xs font-semibold text-cgr-muted uppercase tracking-wider">Observación</span>
-          <span class="text-xs font-semibold text-green-400 uppercase tracking-wider text-right whitespace-nowrap">Hasta 10 jul</span>
-          <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider text-right whitespace-nowrap">Después del 10 jul</span>
+          <span class="text-xs font-semibold text-green-400 uppercase tracking-wider text-right whitespace-nowrap">Valor</span>
+          <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider text-right whitespace-nowrap">Desde el 10 de Julio</span>
         </div>
 
         <!-- Filas -->
