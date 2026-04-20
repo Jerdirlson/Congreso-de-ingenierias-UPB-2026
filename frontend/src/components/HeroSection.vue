@@ -8,8 +8,9 @@ type Slide = { type: 'video'; src: string; alt: string } | { type: 'image'; src:
 const slides: Slide[] = [
   { type: 'video', src: '/carousel/bucaramanga-1.mp4',   alt: 'Bucaramanga, Santander' },
   { type: 'video', src: '/carousel/bucaramanga-2.mp4',   alt: 'Bucaramanga, Santander' },
-  { type: 'image', src: '/carousel/call-for-papers.jpg', alt: 'Call for Papers — Congreso II' },
-  { type: 'image', src: '/carousel/congreso-ii.jpg',     alt: 'Congreso de Ingeniería II' },
+  { type: 'image', src: '/carousel/call-for-papers.jpg',  alt: 'Call for Papers — Congreso II' },
+  { type: 'image', src: '/carousel/congreso-ii.jpg',      alt: 'Congreso de Ingeniería II' },
+  { type: 'image', src: '/carousel/tarifas-congreso.jpg', alt: 'Tarifas — Congreso de Ingeniería II' },
   { type: 'image', src: '/carousel/congreso-1.jpg',      alt: 'Congreso de Ingenierías 2026' },
   { type: 'image', src: '/carousel/congreso-2.jpg',      alt: 'Congreso de Ingenierías 2026' },
   { type: 'image', src: '/carousel/congreso-3.webp',     alt: 'Congreso de Ingenierías 2026' },
