@@ -46,6 +46,17 @@ const conferencistas: Conferencista[] = [
     ],
   },
   {
+    nombre: 'Sindey Carolina Bernal Villamarín',
+    titulo: 'Dra.',
+    conferencia: 'La Revolución de la Tecnología al Servicio de la Diversidad',
+    bio: 'Doctora en Educación Inclusiva y en Formación en Diversidad (Summa Cum Laude). Directora de la Maestría en Educación Inclusiva en la Universidad El Bosque, ExViceministra de Transformación Digital en el Ministerio TIC e investigadora en la Consejería para la Reconciliación Nacional. Combina visión de Estado, de docente y de investigadora para diseñar soluciones tecnológicas que cierran brechas de comunicación y aprendizaje.',
+    institucion: 'Universidad El Bosque',
+    pais: 'Colombia',
+    tipo: 'Nacional',
+    modalidad: 'Presencial',
+    lineas: ['Ingeniería Humanocéntrica', 'Innovación Educativa y STEM inclusivo', 'Gamificación', 'Impacto regional con tecnología'],
+  },
+  {
     nombre: 'Neila Mantilla Barbosa',
     titulo: 'Dra.',
     conferencia: 'Construyendo ecosistemas de innovación sostenible: experiencias en bioenergía y transferencia tecnológica',
