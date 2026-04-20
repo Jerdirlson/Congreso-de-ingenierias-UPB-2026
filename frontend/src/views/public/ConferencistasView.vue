@@ -30,7 +30,7 @@ const conferencistas: Conferencista[] = [
     pais: 'Chile',
     tipo: 'Internacional',
     lineas: ['Catálisis', 'Hidrógeno verde', 'Biocombustibles sostenibles (SAF)', 'Biorrefinerías'],
-    foto: '/conferencistas/nestor-escalona.jpg',
+    foto: '/speakers/nestor-escalona.jpg',
   },
   {
     nombre: 'Carlos Eduardo García Sánchez',
@@ -73,7 +73,7 @@ const conferencistas: Conferencista[] = [
     modalidad: 'Presencial',
     lineas: ['Bioenergía y procesos sostenibles', 'Valorización de biomasa y tecnologías de pretratamiento', 'Innovación sostenible y transferencia tecnológica'],
     cvUrl: 'https://www.linkedin.com/in/neila-mantilla-543924140/',
-    foto: '/conferencistas/neila-mantilla.jpg',
+    foto: '/speakers/neila-mantilla.jpg',
   },
   {
     nombre: 'Jhon Alexander Narváez Salazar',
