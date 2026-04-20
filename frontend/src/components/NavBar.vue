@@ -16,6 +16,7 @@ const links: { label: string; href?: string; to?: string }[] = [
   { label: 'Llamado a Ponencias',  to: '/ponencias' },
   { label: 'Revistas Indexadas',   to: '/ponencias#revistas' },
   { label: 'Comités',              to: '/comites' },
+  { label: 'Conferencistas',       to: '/conferencistas' },
   { label: 'Actividades',          to: '/#actividades' },
   { label: 'Fechas',               to: '/#fechas' },
   { label: 'Precios',              to: '/#precios' },

@@ -43,6 +43,12 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/conferencistas',
+      name: 'conferencistas',
+      component: () => import('../views/public/ConferencistasView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/public/LoginView.vue'),
