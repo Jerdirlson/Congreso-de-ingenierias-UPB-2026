@@ -13,9 +13,10 @@ const colCongreso = [
 ]
 
 const colUniversidad = [
-  { label: 'UPB Bucaramanga',        href: 'https://www.upb.edu.co/es/seccional-bucaramanga' },
-  { label: 'Escuela de Ingeniería',  href: '#' },
-  { label: 'Investigación',          href: '#' },
+  { label: 'UPB Bucaramanga',                href: 'https://www.upb.edu.co/es/seccional-bucaramanga' },
+  { label: 'Escuela de Ingeniería',          href: '#' },
+  { label: 'Departamento de Ciencias Básicas', href: '#' },
+  { label: 'Investigación',                  href: '#' },
 ]
 
 const colFacultades = [
