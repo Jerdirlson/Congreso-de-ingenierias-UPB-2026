@@ -46,6 +46,18 @@ const conferencistas: Conferencista[] = [
     ],
   },
   {
+    nombre: 'Neila Mantilla Barbosa',
+    titulo: 'Dra.',
+    conferencia: 'Construyendo ecosistemas de innovación sostenible: experiencias en bioenergía y transferencia tecnológica',
+    bio: 'Doctora en Ingeniería Química e investigadora con 2 patentes desarrolladas en Colombia. Realizó su postdoctorado en Cenipalma, lo que le otorga un enfoque altamente aplicado en el sector energético. Comprometida con la articulación entre investigación, industria y transferencia tecnológica.',
+    institucion: 'Universidad de la Costa – CUC',
+    pais: 'Colombia',
+    tipo: 'Nacional',
+    modalidad: 'Presencial',
+    lineas: ['Bioenergía y procesos sostenibles', 'Valorización de biomasa y tecnologías de pretratamiento', 'Innovación sostenible y transferencia tecnológica'],
+    cvUrl: 'https://www.linkedin.com/in/neila-mantilla-543924140/',
+  },
+  {
     nombre: 'Jhon Alexander Narváez Salazar',
     titulo: 'Mg.',
     conferencia: 'Del dato al valor: Cómo la transformación digital del mantenimiento impacta la confiabilidad industrial y el bienestar',
