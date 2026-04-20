@@ -287,7 +287,7 @@ const deviceIcons: Record<string, string> = {
               <div class="w-24 h-1.5 bg-cgr-section rounded-full overflow-hidden shrink-0">
                 <div
                   class="h-full bg-blue-500 rounded-full"
-                  :style="{ width: pct(c.sessions, data.countries[0].sessions) + '%' }"
+                  :style="{ width: pct(c.sessions, data.countries[0]?.sessions ?? 1) + '%' }"
                 />
               </div>
               <span class="text-cgr-muted text-xs w-10 text-right shrink-0">{{ fmt(c.sessions) }}</span>
