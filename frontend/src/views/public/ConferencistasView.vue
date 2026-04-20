@@ -12,7 +12,12 @@ type Conferencista = {
   tipo: 'Internacional' | 'Nacional'
   modalidad?: 'Presencial' | 'Virtual' | 'Híbrida'
   lineas?: string[]
+  foto?: string
   cvUrl?: string
+}
+
+function initials(nombre: string): string {
+  return nombre.split(' ').filter((_, i) => i === 0 || i === 2).map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
 const conferencistas: Conferencista[] = [
@@ -88,7 +93,7 @@ const conferencistas: Conferencista[] = [
 
     <!-- Hero -->
     <section class="bg-cgr-section border-b border-cgr-border py-14 px-6 lg:px-16">
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-5xl mx-auto">
         <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Congreso de Ingenierías 2026</span>
         <h1 class="text-3xl sm:text-4xl font-black text-white mt-3 mb-4">Conferencistas</h1>
         <p class="text-cgr-muted text-sm max-w-2xl leading-relaxed">
@@ -99,58 +104,87 @@ const conferencistas: Conferencista[] = [
 
     <!-- Cards -->
     <section class="py-12 px-6 lg:px-16">
-      <div class="max-w-4xl mx-auto space-y-8">
+      <div class="max-w-5xl mx-auto space-y-8">
 
         <article
           v-for="c in conferencistas"
           :key="c.nombre"
-          class="bg-cgr-card border border-cgr-border rounded-2xl overflow-hidden"
+          class="bg-cgr-card border border-cgr-border rounded-2xl overflow-hidden flex flex-col md:flex-row"
         >
-          <!-- Cabecera coloreada -->
-          <div class="bg-cgr-section border-b border-cgr-border px-6 py-5 flex flex-col sm:flex-row sm:items-start gap-4">
-            <!-- Avatar -->
-            <div class="shrink-0 w-14 h-14 rounded-full bg-cgr-purple/20 border border-cgr-purple/30 flex items-center justify-center">
-              <span class="text-cgr-purple font-bold text-lg">{{ c.titulo }}</span>
+          <!-- ── Imagen / Placeholder ── -->
+          <div class="relative md:w-56 lg:w-64 h-60 md:h-auto shrink-0">
+            <img
+              v-if="c.foto"
+              :src="c.foto"
+              :alt="c.nombre"
+              class="absolute inset-0 w-full h-full object-cover object-top"
+            />
+            <!-- Placeholder elegante cuando no hay foto -->
+            <div
+              v-else
+              class="absolute inset-0 flex flex-col items-center justify-center"
+              :class="c.tipo === 'Internacional'
+                ? 'bg-gradient-to-br from-cgr-purple-deep/60 via-cgr-purple/30 to-black/60'
+                : 'bg-gradient-to-br from-slate-700/60 via-slate-600/30 to-black/60'"
+            >
+              <span class="text-7xl font-black text-white/10 select-none leading-none mb-2">{{ initials(c.nombre) }}</span>
+              <span class="text-white/40 text-xs font-semibold tracking-widest uppercase">{{ c.titulo }}</span>
             </div>
 
-            <div class="flex-1 min-w-0">
-              <div class="flex flex-wrap items-center gap-2 mb-1">
-                <h2 class="text-white font-bold text-lg leading-snug">{{ c.nombre }}</h2>
-                <!-- Tipo badge -->
-                <span
-                  :class="c.tipo === 'Internacional'
-                    ? 'bg-cgr-purple/20 text-cgr-purple border border-cgr-purple/30'
-                    : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'"
-                  class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wide shrink-0"
-                >
-                  {{ c.tipo }}
-                </span>
-                <span
-                  v-if="c.modalidad"
-                  class="bg-cgr-border/60 text-cgr-subtle text-[10px] font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wide shrink-0"
-                >
-                  {{ c.modalidad }}
-                </span>
-              </div>
-              <p class="text-cgr-muted text-sm">{{ c.institucion }} · {{ c.pais }}</p>
+            <!-- Badges sobre la imagen -->
+            <div class="absolute bottom-3 left-3 flex flex-col gap-1.5 z-10">
+              <span
+                :class="c.tipo === 'Internacional'
+                  ? 'bg-cgr-purple/80 text-white border border-cgr-purple/50'
+                  : 'bg-emerald-600/80 text-white border border-emerald-500/50'"
+                class="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide backdrop-blur-sm w-fit"
+              >
+                {{ c.tipo }}
+              </span>
+              <span
+                v-if="c.modalidad"
+                class="bg-black/60 text-white/80 border border-white/10 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wide backdrop-blur-sm w-fit"
+              >
+                {{ c.modalidad }}
+              </span>
             </div>
           </div>
 
-          <!-- Cuerpo -->
-          <div class="px-6 py-5 space-y-4">
-            <!-- Conferencia -->
+          <!-- ── Contenido ── -->
+          <div class="flex-1 flex flex-col p-6 gap-5 min-w-0">
+
+            <!-- Nombre e institución -->
             <div>
-              <p class="text-cgr-purple text-[10px] font-semibold uppercase tracking-widest mb-1">Conferencia</p>
-              <p class="text-white font-semibold text-base leading-snug">"{{ c.conferencia }}"</p>
+              <h2 class="text-white font-black text-xl leading-tight mb-1">
+                {{ c.titulo }} {{ c.nombre }}
+              </h2>
+              <div class="flex items-center gap-1.5 text-cgr-muted text-sm flex-wrap">
+                <svg class="w-3.5 h-3.5 text-cgr-purple shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 9.2c0 7.3-8 11.8-8 11.8z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>{{ c.institucion }}</span>
+                <span class="text-cgr-border">·</span>
+                <span>{{ c.pais }}</span>
+              </div>
+            </div>
+
+            <!-- Separador -->
+            <div class="h-px bg-cgr-border" />
+
+            <!-- Conferencia -->
+            <div class="border-l-2 border-cgr-purple pl-4">
+              <p class="text-cgr-purple text-[10px] font-semibold uppercase tracking-widest mb-2">Conferencia</p>
+              <p class="text-white font-semibold text-base leading-snug">{{ c.conferencia }}</p>
             </div>
 
             <!-- Bio -->
-            <p v-if="c.bio" class="text-cgr-muted text-sm leading-relaxed">{{ c.bio }}</p>
+            <p v-if="c.bio" class="text-cgr-muted text-sm leading-relaxed line-clamp-4">{{ c.bio }}</p>
 
             <!-- Líneas de experiencia -->
             <div v-if="c.lineas?.length">
               <p class="text-cgr-subtle text-[10px] font-semibold uppercase tracking-widest mb-2">Líneas de experiencia</p>
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-1.5">
                 <span
                   v-for="linea in c.lineas"
                   :key="linea"
@@ -161,8 +195,8 @@ const conferencistas: Conferencista[] = [
               </div>
             </div>
 
-            <!-- CV -->
-            <div v-if="c.cvUrl" class="pt-1">
+            <!-- Botón CV -->
+            <div v-if="c.cvUrl" class="mt-auto pt-1">
               <a
                 :href="c.cvUrl"
                 target="_blank"
@@ -172,9 +206,10 @@ const conferencistas: Conferencista[] = [
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
                 </svg>
-                Ver CV
+                Ver perfil
               </a>
             </div>
+
           </div>
         </article>
 
