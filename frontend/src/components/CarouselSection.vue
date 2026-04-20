@@ -2,16 +2,19 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const slides = [
+  { src: '/carousel/bucaramanga-1.mp4',   alt: 'Bucaramanga' },
+  { src: '/carousel/bucaramanga-2.mp4',   alt: 'Bucaramanga' },
   { src: '/carousel/call-for-papers.jpg', alt: 'Call for Papers — Congreso de Ingeniería II' },
   { src: '/carousel/congreso-ii.jpg',     alt: 'Congreso de Ingeniería II' },
   { src: '/carousel/congreso-1.jpg',      alt: 'Congreso de Ingenierías 2026' },
-  { src: '/carousel/congreso-2.jpg',      alt: 'Congreso de Ingenierías 2026' },
-  { src: '/carousel/congreso-3.webp',     alt: 'Congreso de Ingenierías 2026' },
-  { src: '/carousel/congreso-4.jpg',      alt: 'Congreso de Ingenierías 2026' },
-  { src: '/carousel/congreso-5.jpg',      alt: 'Congreso de Ingenierías 2026' },
-  { src: '/carousel/congreso-6.jpg',      alt: 'Congreso de Ingenierías 2026' },
-  { src: '/carousel/congreso-7.jpg',      alt: 'Congreso de Ingenierías 2026' },
+  { src: '/carousel/congreso-2.jpg',      alt: 'La 27, Bucaramanga' },
+  { src: '/carousel/congreso-3.webp',     alt: 'Parroquia Histórica San Laureano' },
+  { src: '/carousel/congreso-4.jpg',      alt: 'Puente La Novena, Bucaramanga' },
+  { src: '/carousel/congreso-5.jpg',      alt: 'Basílica menor Señor de los Milagros (Parroquia San Juan Bautista)' },
+  { src: '/carousel/congreso-6.jpg',      alt: 'El Santísimo' },
+  { src: '/carousel/congreso-7.jpg',      alt: 'Parque Nacional del Chicamocha' },
   { src: '/carousel/congreso-8.webp',     alt: 'Congreso de Ingenierías 2026' },
+  { src: '/carousel/tarifas-congreso.jpg', alt: 'Tarifas — Congreso de Ingenierías 2026' },
 ]
 
 const current = ref(0)
@@ -69,14 +72,31 @@ onUnmounted(stopAutoplay)
             class="absolute inset-0"
           >
             <!-- Fondo desenfocado -->
+            <video
+              v-if="slide.src.endsWith('.mp4')"
+              aria-hidden="true"
+              class="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-40"
+              muted loop autoplay playsinline
+            >
+              <source :src="slide.src" type="video/mp4" />
+            </video>
             <img
+              v-else
               :src="slide.src"
               :alt="''"
               aria-hidden="true"
               class="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-40"
             />
-            <!-- Imagen principal centrada -->
+            <!-- Contenido principal centrado -->
+            <video
+              v-if="slide.src.endsWith('.mp4')"
+              class="relative w-full h-full object-contain z-10"
+              muted loop autoplay playsinline
+            >
+              <source :src="slide.src" type="video/mp4" />
+            </video>
             <img
+              v-else
               :src="slide.src"
               :alt="slide.alt"
               class="relative w-full h-full object-contain z-10"
