@@ -75,7 +75,7 @@ onUnmounted(() => clearImageTimer())
   <section id="inicio" class="relative flex flex-col lg:flex-row pt-16 min-h-[600px] lg:min-h-[700px]">
 
     <!-- ── IZQUIERDA: Carousel de medios ──────────────────────────── -->
-    <div class="relative w-full lg:w-[58%] bg-black overflow-hidden min-h-[300px] sm:min-h-[440px] lg:min-h-0">
+    <div id="galeria" class="relative w-full lg:w-[58%] bg-black overflow-hidden min-h-[300px] sm:min-h-[440px] lg:min-h-0">
 
       <!-- Slides -->
       <transition-group name="fade">
