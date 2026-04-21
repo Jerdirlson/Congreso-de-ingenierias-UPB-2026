@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useFetchApi } from '../../composables/useFetchApi'
 import UiCard from '../../components/ui/UiCard.vue'
 
@@ -110,7 +110,7 @@ async function saveRole() {
   if (res) {
     selected.value.role = res.role
     const idx = users.value.findIndex(u => u.id === selected.value!.id)
-    if (idx !== -1) users.value[idx].role = res.role
+    if (idx !== -1) users.value[idx]!.role = res.role
   }
   savingRole.value  = false
   editingRole.value = false
