@@ -105,6 +105,7 @@ const router = createRouter({
         { path: 'submissions/:id', name: 'admin-submission-detail', component: () => import('../views/admin/AdminSubmissionDetail.vue') },
         { path: 'thematic-axes', name: 'admin-axes', component: () => import('../views/admin/AdminAxes.vue') },
         { path: 'analytics', name: 'admin-analytics', component: () => import('../views/admin/AdminAnalytics.vue') },
+        { path: 'mail', name: 'admin-mail', component: () => import('../views/admin/AdminMailView.vue') },
       ],
     },
   ],
