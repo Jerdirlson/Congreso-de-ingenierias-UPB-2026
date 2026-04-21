@@ -22,10 +22,10 @@ class ModalityController extends Controller
 
         $submission->update(['modality' => $validated['modality']]);
 
-        // Pago ya realizado antes del pipeline → presencial/póster/aula pasan directo a confirmado
+        // El pago ocurre al final: presencial/póster esperan pago; virtual sube video primero
         $nextStatus = $validated['modality'] === Submission::MODALITY_VIRTUAL
             ? Submission::STATUS_VIDEO_PENDING
-            : Submission::STATUS_CONFIRMED;
+            : Submission::STATUS_PAYMENT_PENDING;
 
         $submission->advanceTo($nextStatus);
 

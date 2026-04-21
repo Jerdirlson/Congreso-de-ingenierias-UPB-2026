@@ -81,9 +81,9 @@ class AdminSubmissionController extends Controller
         $video = $submission->video;
         abort_if(! $video || $video->status !== SubmissionVideo::STATUS_READY, 422, 'El video debe estar en estado "listo" para aprobarse.');
 
-        $submission->advanceTo(Submission::STATUS_CONFIRMED);
+        $submission->advanceTo(Submission::STATUS_PAYMENT_PENDING);
 
-        return response()->json(['status' => 'confirmed']);
+        return response()->json(['status' => 'payment_pending']);
     }
 
     /** PATCH /api/admin/submissions/{submission}/video/reject — rechazar videoponencia */

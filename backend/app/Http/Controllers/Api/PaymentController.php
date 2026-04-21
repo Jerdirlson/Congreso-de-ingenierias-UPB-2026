@@ -30,13 +30,23 @@ class PaymentController extends Controller
             : null;
 
         if ($validated['registration_type'] === 'speaker') {
-            // El pago del ponente es previo a la ponencia — no requiere submission_id
+            // El pago del ponente ocurre al final, cuando la ponencia es aprobada
+            abort_if(! isset($validated['submission_id']), 422, 'Se requiere submission_id para el pago de ponente.');
+
+            $submission = \App\Models\Submission::where('id', $validated['submission_id'])
+                ->where('user_id', $user->id)
+                ->firstOrFail();
+
             abort_if(
-                $user->registrations()->where('registration_type', 'speaker')->whereNotNull('ticket_code')->exists(),
+                $submission->status !== \App\Models\Submission::STATUS_PAYMENT_PENDING,
                 422,
-                'Ya tienes una inscripción como ponente confirmada.'
+                'La ponencia debe estar en estado "Pago pendiente" para proceder.'
             );
-            $submission = null;
+            abort_if(
+                $user->registrations()->where('submission_id', $submission->id)->whereNotNull('ticket_code')->exists(),
+                422,
+                'Esta ponencia ya tiene una inscripción confirmada.'
+            );
             $amount = $congressEvent ? (float) $congressEvent->price : 200000;
         } else {
             abort_if(
