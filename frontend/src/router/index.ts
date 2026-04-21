@@ -100,6 +100,7 @@ const router = createRouter({
       meta: { requiresAuth: true, role: ['admin', 'administrativo'] },
       children: [
         { path: '', name: 'admin-home', component: () => import('../views/admin/AdminHome.vue') },
+        { path: 'users', name: 'admin-users', component: () => import('../views/admin/AdminUsersView.vue') },
         { path: 'submissions', name: 'admin-submissions', component: () => import('../views/admin/AdminSubmissions.vue') },
         { path: 'submissions/:id', name: 'admin-submission-detail', component: () => import('../views/admin/AdminSubmissionDetail.vue') },
         { path: 'thematic-axes', name: 'admin-axes', component: () => import('../views/admin/AdminAxes.vue') },

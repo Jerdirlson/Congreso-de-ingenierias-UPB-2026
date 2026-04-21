@@ -30,6 +30,7 @@ const links = computed(() => {
   if (props.role === 'admin' || props.role === 'administrativo') {
     return [
       { to: { name: 'admin-home' },        label: 'Dashboard',       icon: 'chart' },
+      { to: { name: 'admin-users' },       label: 'Usuarios',        icon: 'users' },
       { to: { name: 'admin-submissions' }, label: 'Ponencias',       icon: 'list' },
       { to: { name: 'admin-axes' },        label: 'Ejes temáticos',  icon: 'tag' },
       { to: { name: 'admin-analytics' },   label: 'Analytics',       icon: 'analytics' },
@@ -95,6 +96,10 @@ function isActive(to: { name: string }) {
           <!-- pencil -->
           <svg v-else-if="link.icon === 'pencil'" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          <!-- users -->
+          <svg v-else-if="link.icon === 'users'" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
           </svg>
           <!-- chart -->
           <svg v-else-if="link.icon === 'chart'" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
