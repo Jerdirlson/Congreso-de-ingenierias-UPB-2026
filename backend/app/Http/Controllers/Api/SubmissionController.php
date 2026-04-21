@@ -32,14 +32,6 @@ class SubmissionController extends Controller
     {
         $user = $request->user();
 
-        // El ponente debe tener una inscripción confirmada antes de crear su ponencia
-        $hasRegistration = $user->registrations()
-            ->where('registration_type', 'speaker')
-            ->whereNotNull('ticket_code')
-            ->exists();
-
-        abort_unless($hasRegistration, 403, 'Debes inscribirte y pagar antes de poder registrar tu ponencia.');
-
         // Solo se permite una ponencia por ponente (las soft-deleted no cuentan)
         abort_if($user->submissions()->exists(), 422, 'Ya tienes una ponencia registrada. Solo se permite una por ponente.');
 
