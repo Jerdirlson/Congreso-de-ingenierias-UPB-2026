@@ -137,12 +137,12 @@ const conferencistas: Conferencista[] = [
           class="bg-cgr-card border border-cgr-border rounded-2xl overflow-hidden flex flex-col md:flex-row"
         >
           <!-- ── Imagen / Placeholder ── -->
-          <div class="relative w-full md:w-56 lg:w-64 md:h-auto shrink-0" style="min-height: 280px;">
+          <div class="relative w-full aspect-square md:aspect-auto md:w-56 lg:w-64 shrink-0">
             <img
               v-if="c.foto"
               :src="c.foto"
               :alt="c.nombre"
-              class="absolute inset-0 w-full h-full object-cover object-top"
+              class="absolute inset-0 w-full h-full object-cover object-center"
             />
             <!-- Placeholder elegante cuando no hay foto -->
             <div
