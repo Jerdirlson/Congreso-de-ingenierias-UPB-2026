@@ -11,6 +11,7 @@ type Conferencista = {
   pais: string
   tipo: 'Internacional' | 'Nacional'
   modalidad?: 'Presencial' | 'Virtual' | 'Híbrida'
+  provisional?: boolean
   lineas?: string[]
   foto?: string
   cvUrl?: string
@@ -21,22 +22,64 @@ function initials(nombre: string): string {
 }
 
 const conferencistas: Conferencista[] = [
+  // 1
   {
     nombre: 'Néstor Guillermo Escalona Burgos',
     titulo: 'Dr.',
     conferencia: 'Cadena de valor del H₂ verde: Tecnologías y desafíos para su implementación',
-    bio: 'Profesor Titular en la Pontificia Universidad Católica de Chile, Doctor en Química con destacada trayectoria en investigación y formación de capital humano avanzado en ingeniería química y catálisis. Su trabajo se centra en el desarrollo de procesos catalíticos aplicados a la descontaminación ambiental, la producción de energía y la valorización de biomasa, incluyendo hidrotratamiento, gasificación, producción de hidrógeno y biocombustibles sostenibles (SAF) en el contexto de biorrefinerías. Ha liderado numerosos proyectos nacionales e internacionales, cuenta con amplia producción científica en revistas de alto impacto y ha sido reconocido con premios por excelencia académica.',
+    bio: 'Doctor en Química y Profesor Titular en la Pontificia Universidad Católica de Chile. Su investigación se enfoca en catálisis heterogénea, hidrotratamiento, gasificación, producción de hidrógeno y biocombustibles sostenibles (SAF) en el marco de biorrefinerías. Con más de un centenar de publicaciones en revistas de alto impacto, lidera proyectos nacionales e internacionales sobre tecnologías limpias y descontaminación ambiental, y ha formado numerosas generaciones de ingenieros e investigadores en capital humano avanzado.',
     institucion: 'Pontificia Universidad Católica de Chile',
     pais: 'Chile',
     tipo: 'Internacional',
-    lineas: ['Catálisis', 'Hidrógeno verde', 'Biocombustibles sostenibles (SAF)', 'Biorrefinerías'],
     foto: '/speakers/nestor-escalona.jpg',
+    lineas: ['Catálisis heterogénea', 'Hidrógeno verde', 'Biocombustibles sostenibles (SAF)', 'Biorrefinerías', 'Valorización de biomasa'],
   },
+  // 2
+  {
+    nombre: 'Sindey Carolina Bernal Villamarín',
+    titulo: 'Dra.',
+    conferencia: 'La Revolución de la Tecnología al Servicio de la Diversidad',
+    bio: 'Doctora en Educación Inclusiva (Universidad de Baja California) y Doctora en Formación en Diversidad (Universidad de Manizales, Summa Cum Laude). Directora de la Maestría en Educación Inclusiva en la Universidad El Bosque e investigadora en la Consejería para la Reconciliación Nacional. Ex Viceministra de Transformación Digital en el Ministerio TIC y Ex Subdirectora en el Ministerio de Educación Nacional. Reconocida con el premio Globant Awards: Women that Build, ha liderado el desarrollo de software para traducción de voz a lengua de señas y el diseño de ecosistemas de aprendizaje inclusivos (e-learning y m-learning).',
+    institucion: 'Universidad El Bosque',
+    pais: 'Colombia',
+    tipo: 'Nacional',
+    modalidad: 'Presencial',
+    foto: '/speakers/sindey-bernal.jpg',
+    lineas: ['Ingeniería Humanocéntrica', 'Innovación Educativa y STEM inclusivo', 'Lengua de señas y tecnología asistiva', 'Gamificación', 'Impacto social con tecnología'],
+  },
+  // 3
+  {
+    nombre: 'Jhon Alexander Narváez Salazar',
+    titulo: 'Mg.',
+    conferencia: 'Del dato al valor: Cómo la transformación digital del mantenimiento impacta la confiabilidad industrial y el bienestar',
+    bio: 'Magíster en Administración de Empresas (Universidad Santo Tomás) y Máster en Gestión Integral de Activos Físicos (UCAM, España), con certificaciones internacionales PMP®, CMRP, CGMC, IAM Certificate y Auditor Líder ISO 55001. Con más de 22 años de experiencia en Ecopetrol en la industria del petróleo, gas y petroquímica, lidera como Product Owner la digitalización de paradas de planta, articulando procesos, SAP PM, control y transformación digital. Docente de posgrado en la Universidad Pontificia Bolivariana y miembro de la Comisión Nacional de Mantenimiento y Gestión de Activos de ACIEM.',
+    institucion: 'Ecopetrol',
+    pais: 'Colombia',
+    tipo: 'Nacional',
+    modalidad: 'Presencial',
+    foto: '/speakers/jhon-narvaez.png',
+    lineas: ['Gestión integral de activos', 'Mantenimiento y confiabilidad industrial', 'Transformación digital', 'SAP PM', 'Análisis de Costos de Ciclo de Vida'],
+  },
+  // 4
+  {
+    nombre: 'Neila Mantilla Barbosa',
+    titulo: 'Dra.',
+    conferencia: 'Construyendo ecosistemas de innovación sostenible: experiencias en bioenergía y transferencia tecnológica',
+    bio: 'Doctora en Ingeniería Química por la Universidad Industrial de Santander, con estancia postdoctoral en Cenipalma. Investigadora enfocada en bioenergía, aprovechamiento de biomasa y sostenibilidad, con 2 patentes desarrolladas en Colombia. Se ha desempeñado como investigadora en Cenipalma y como docente universitaria, articulando la generación de conocimiento con la transferencia tecnológica al sector agroindustrial y energético.',
+    institucion: 'Universidad de la Costa – CUC',
+    pais: 'Colombia',
+    tipo: 'Nacional',
+    modalidad: 'Presencial',
+    foto: '/speakers/neila-mantilla.jpg',
+    lineas: ['Bioenergía y procesos sostenibles', 'Valorización de biomasa', 'Tecnologías de pretratamiento', 'Innovación sostenible y transferencia tecnológica'],
+    cvUrl: 'https://www.linkedin.com/in/neila-mantilla-543924140/',
+  },
+  // 5
   {
     nombre: 'Carlos Eduardo García Sánchez',
     titulo: 'Dr.',
     conferencia: 'De la teoría al impacto: el rol de la investigación aplicada en el desarrollo tecnológico del país',
-    bio: 'Investigador Senior reconocido por Minciencias, con actividad simultánea en la industria y la academia. Doctor en Ingeniería Química con amplia experiencia en proyectos con el sector productivo y entidades de gobierno, enfocado en el desarrollo tecnológico aplicado a la industria energética nacional.',
+    bio: 'Doctor en Ingeniería Química, Investigador Senior reconocido por Minciencias. Vinculado a la Corporación Centro de Desarrollo Tecnológico del Gas (CDT de Gas) y a la Universidad Industrial de Santander (UIS), impulsa investigación aplicada y transferencia de conocimiento en alianza con el sector productivo y entidades gubernamentales. Su experiencia integra hidrógeno y transición energética, metrología de gases, modelado y simulación de procesos, biogás, calidad del aire, sensores inteligentes e IoT.',
     institucion: 'CDT del Gas · Universidad Industrial de Santander (UIS)',
     pais: 'Colombia',
     tipo: 'Nacional',
@@ -48,45 +91,22 @@ const conferencistas: Conferencista[] = [
       'Metrología y medición de gases',
       'Modelado y simulación de procesos',
       'Sensores, IoT y gemelos digitales',
-      'Energía y biogás',
+      'Biogás y energía',
       'Calidad del aire urbano',
     ],
   },
+  // 6 – Provisional
   {
-    nombre: 'Sindey Carolina Bernal Villamarín',
+    nombre: 'Paola Andrea Moreno Yáñez',
     titulo: 'Dra.',
-    conferencia: 'La Revolución de la Tecnología al Servicio de la Diversidad',
-    bio: 'Doctora en Educación Inclusiva y en Formación en Diversidad (Summa Cum Laude). Directora de la Maestría en Educación Inclusiva en la Universidad El Bosque, ExViceministra de Transformación Digital en el Ministerio TIC e investigadora en la Consejería para la Reconciliación Nacional. Combina visión de Estado, de docente y de investigadora para diseñar soluciones tecnológicas que cierran brechas de comunicación y aprendizaje.',
-    institucion: 'Universidad El Bosque',
-    pais: 'Colombia',
-    tipo: 'Nacional',
-    modalidad: 'Presencial',
-    foto: '/speakers/sindey-bernal.jpg',
-    lineas: ['Ingeniería Humanocéntrica', 'Innovación Educativa y STEM inclusivo', 'Gamificación', 'Impacto regional con tecnología'],
-  },
-  {
-    nombre: 'Neila Mantilla Barbosa',
-    titulo: 'Dra.',
-    conferencia: 'Construyendo ecosistemas de innovación sostenible: experiencias en bioenergía y transferencia tecnológica',
-    bio: 'Doctora en Ingeniería Química e investigadora con 2 patentes desarrolladas en Colombia. Realizó su postdoctorado en Cenipalma, lo que le otorga un enfoque altamente aplicado en el sector energético. Comprometida con la articulación entre investigación, industria y transferencia tecnológica.',
-    institucion: 'Universidad de la Costa – CUC',
-    pais: 'Colombia',
-    tipo: 'Nacional',
-    modalidad: 'Presencial',
-    lineas: ['Bioenergía y procesos sostenibles', 'Valorización de biomasa y tecnologías de pretratamiento', 'Innovación sostenible y transferencia tecnológica'],
-    cvUrl: 'https://www.linkedin.com/in/neila-mantilla-543924140/',
-    foto: '/speakers/neila-mantilla.jpg',
-  },
-  {
-    nombre: 'Jhon Alexander Narváez Salazar',
-    titulo: 'Mg.',
-    conferencia: 'Del dato al valor: Cómo la transformación digital del mantenimiento impacta la confiabilidad industrial y el bienestar',
-    institucion: 'Ecopetrol',
-    pais: 'Colombia',
-    tipo: 'Nacional',
-    modalidad: 'Presencial',
-    foto: '/speakers/jhon-narvaez.png',
-    lineas: ['Iniciativas de mejora continua', 'Gestión de activos y mantenimiento', 'Transformación digital para mantenimiento'],
+    conferencia: 'Huella de carbono y análisis de ciclo de vida: herramientas para la sostenibilidad urbana y energética',
+    bio: 'Doctora en Ingeniería Química e investigadora en el laboratorio LIRIDE de la Université de Sherbrooke (Canadá). Su trabajo se centra en análisis de ciclo de vida (LCA), modelación ambiental input-output, huella de carbono en hogares y ciudades, y desarrollo de materiales sostenibles como biopolímeros y materiales cementantes alternativos. Integra enfoques cuantitativos y análisis multicriterio para evaluar el impacto ambiental de sistemas urbanos y energéticos, aportando herramientas para la formulación de políticas públicas de sostenibilidad.',
+    institucion: 'Université de Sherbrooke',
+    pais: 'Canadá',
+    tipo: 'Internacional',
+    provisional: true,
+    foto: '/speakers/paola-moreno.jpg',
+    lineas: ['Análisis de ciclo de vida (LCA)', 'Huella de carbono urbana', 'Modelación ambiental input-output', 'Materiales sostenibles', 'Políticas públicas de sostenibilidad'],
   },
 ]
 </script>
@@ -117,7 +137,7 @@ const conferencistas: Conferencista[] = [
           class="bg-cgr-card border border-cgr-border rounded-2xl overflow-hidden flex flex-col md:flex-row"
         >
           <!-- ── Imagen / Placeholder ── -->
-          <div class="relative md:w-56 lg:w-64 h-60 md:h-auto shrink-0">
+          <div class="relative w-full md:w-56 lg:w-64 md:h-auto shrink-0" style="min-height: 280px;">
             <img
               v-if="c.foto"
               :src="c.foto"
@@ -151,6 +171,12 @@ const conferencistas: Conferencista[] = [
                 class="bg-black/60 text-white/80 border border-white/10 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wide backdrop-blur-sm w-fit"
               >
                 {{ c.modalidad }}
+              </span>
+              <span
+                v-if="c.provisional"
+                class="bg-amber-500/70 text-white border border-amber-400/50 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide backdrop-blur-sm w-fit"
+              >
+                Provisional
               </span>
             </div>
           </div>
