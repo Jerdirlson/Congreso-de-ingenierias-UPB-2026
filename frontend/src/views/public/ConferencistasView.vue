@@ -31,7 +31,7 @@ const conferencistas: Conferencista[] = [
     institucion: 'Pontificia Universidad Católica de Chile',
     pais: 'Chile',
     tipo: 'Internacional',
-    foto: '/speakers/nestor-escalona.jpg',
+    foto: '/speakers/nestor-escalona.png',
     lineas: ['Catálisis heterogénea', 'Hidrógeno verde', 'Biocombustibles sostenibles (SAF)', 'Biorrefinerías', 'Valorización de biomasa'],
   },
   // 2
@@ -44,7 +44,7 @@ const conferencistas: Conferencista[] = [
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
-    foto: '/speakers/sindey-bernal.jpg',
+    foto: '/speakers/sindey-bernal.png',
     lineas: ['Ingeniería Humanocéntrica', 'Innovación Educativa y STEM inclusivo', 'Lengua de señas y tecnología asistiva', 'Gamificación', 'Impacto social con tecnología'],
   },
   // 3
