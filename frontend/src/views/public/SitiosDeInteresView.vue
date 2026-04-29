@@ -141,6 +141,15 @@ const hoteles = [
             </div>
           </div>
 
+          <!-- Imagen del campus -->
+          <div class="mt-6 rounded-2xl overflow-hidden border border-cgr-border">
+            <img
+              src="/upb-campus.jpeg"
+              alt="Campus UPB Bucaramanga"
+              class="w-full object-cover max-h-72"
+            />
+          </div>
+
           <!-- Mapa -->
           <div class="mt-6 rounded-2xl overflow-hidden border border-cgr-border">
             <iframe
