@@ -70,7 +70,6 @@ const conferencistas: Conferencista[] = [
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
-    foto: '/speakers/neila-mantilla.jpg',
     lineas: ['Bioenergía y procesos sostenibles', 'Valorización de biomasa', 'Tecnologías de pretratamiento', 'Innovación sostenible y transferencia tecnológica'],
     cvUrl: 'https://www.linkedin.com/in/neila-mantilla-543924140/',
   },
@@ -84,7 +83,6 @@ const conferencistas: Conferencista[] = [
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
-    foto: '/speakers/carlos-garcia.jpg',
     lineas: [
       'Hidrógeno y transición energética',
       'Gases combustibles y gas natural',
@@ -144,16 +142,23 @@ const conferencistas: Conferencista[] = [
               :alt="c.nombre"
               class="absolute inset-0 w-full h-full object-cover object-center"
             />
-            <!-- Placeholder elegante cuando no hay foto -->
+            <!-- Placeholder cuando no hay foto -->
             <div
               v-else
-              class="absolute inset-0 flex flex-col items-center justify-center"
+              class="absolute inset-0 flex flex-col items-center justify-center gap-3"
               :class="c.tipo === 'Internacional'
-                ? 'bg-gradient-to-br from-cgr-purple-deep/60 via-cgr-purple/30 to-black/60'
-                : 'bg-gradient-to-br from-slate-700/60 via-slate-600/30 to-black/60'"
+                ? 'bg-gradient-to-br from-cgr-purple-deep via-cgr-purple/40 to-black'
+                : 'bg-gradient-to-br from-slate-800 via-slate-700/60 to-black'"
             >
-              <span class="text-7xl font-black text-white/10 select-none leading-none mb-2">{{ initials(c.nombre) }}</span>
-              <span class="text-white/40 text-xs font-semibold tracking-widest uppercase">{{ c.titulo }}</span>
+              <!-- Silueta de persona -->
+              <svg class="w-20 h-20 text-white/20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+              </svg>
+              <!-- Iniciales + título -->
+              <div class="flex flex-col items-center gap-1">
+                <span class="text-3xl font-black text-white/50 leading-none tracking-tight">{{ initials(c.nombre) }}</span>
+                <span class="text-white/30 text-[10px] font-semibold tracking-widest uppercase">{{ c.titulo }}</span>
+              </div>
             </div>
 
             <!-- Badges sobre la imagen -->
