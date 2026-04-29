@@ -102,7 +102,6 @@ const conferencistas: Conferencista[] = [
     institucion: 'Université de Sherbrooke',
     pais: 'Canadá',
     tipo: 'Internacional',
-    provisional: true,
     foto: '/speakers/paola-moreno.jpg',
     lineas: ['Análisis de ciclo de vida (LCA)', 'Huella de carbono urbana', 'Modelación ambiental input-output', 'Materiales sostenibles', 'Políticas públicas de sostenibilidad'],
   },
