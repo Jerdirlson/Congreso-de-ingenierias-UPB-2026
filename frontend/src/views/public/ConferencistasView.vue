@@ -70,6 +70,7 @@ const conferencistas: Conferencista[] = [
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
+    foto: '/speakers/neila-mantilla.jpg',
     lineas: ['Bioenergía y procesos sostenibles', 'Valorización de biomasa', 'Tecnologías de pretratamiento', 'Innovación sostenible y transferencia tecnológica'],
     cvUrl: 'https://www.linkedin.com/in/neila-mantilla-543924140/',
   },
