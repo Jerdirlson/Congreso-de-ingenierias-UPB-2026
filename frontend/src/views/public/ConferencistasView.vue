@@ -93,18 +93,6 @@ const conferencistas: Conferencista[] = [
       'Calidad del aire urbano',
     ],
   },
-  // 6 – Provisional
-  {
-    nombre: 'Paola Andrea Moreno Yáñez',
-    titulo: 'Dra.',
-    conferencia: 'Huella de carbono y análisis de ciclo de vida: herramientas para la sostenibilidad urbana y energética',
-    bio: 'Doctora en Ingeniería Química e investigadora en el laboratorio LIRIDE de la Université de Sherbrooke (Canadá). Su trabajo se centra en análisis de ciclo de vida (LCA), modelación ambiental input-output, huella de carbono en hogares y ciudades, y desarrollo de materiales sostenibles como biopolímeros y materiales cementantes alternativos. Integra enfoques cuantitativos y análisis multicriterio para evaluar el impacto ambiental de sistemas urbanos y energéticos, aportando herramientas para la formulación de políticas públicas de sostenibilidad.',
-    institucion: 'Université de Sherbrooke',
-    pais: 'Canadá',
-    tipo: 'Internacional',
-    foto: '/speakers/paola-moreno.jpg',
-    lineas: ['Análisis de ciclo de vida (LCA)', 'Huella de carbono urbana', 'Modelación ambiental input-output', 'Materiales sostenibles', 'Políticas públicas de sostenibilidad'],
-  },
 ]
 </script>
 
