@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 import FooterSection from '../../components/FooterSection.vue'
 
@@ -15,6 +16,12 @@ type Conferencista = {
   lineas?: string[]
   foto?: string
   cvUrl?: string
+}
+
+const expanded = ref<Set<string>>(new Set())
+function toggleBio(nombre: string) {
+  expanded.value.has(nombre) ? expanded.value.delete(nombre) : expanded.value.add(nombre)
+  expanded.value = new Set(expanded.value)
 }
 
 function initials(nombre: string): string {
@@ -203,7 +210,18 @@ const conferencistas: Conferencista[] = [
             </div>
 
             <!-- Bio -->
-            <p v-if="c.bio" class="text-cgr-muted text-sm leading-relaxed line-clamp-4">{{ c.bio }}</p>
+            <div v-if="c.bio">
+              <p
+                class="text-cgr-muted text-sm leading-relaxed"
+                :class="{ 'line-clamp-3': !expanded.has(c.nombre) }"
+              >{{ c.bio }}</p>
+              <button
+                @click="toggleBio(c.nombre)"
+                class="mt-2 text-cgr-purple text-xs font-semibold hover:underline"
+              >
+                {{ expanded.has(c.nombre) ? 'Ver menos' : 'Ver más' }}
+              </button>
+            </div>
 
             <!-- Líneas de experiencia -->
             <div v-if="c.lineas?.length">
