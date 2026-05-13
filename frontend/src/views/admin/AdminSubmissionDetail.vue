@@ -107,7 +107,7 @@ async function downloadDoc(doc: Document) {
   downloading.value = doc.id
   const token = getApiToken()
   try {
-    const res = await fetch(`/api/submissions/${route.params.id}/documents/${doc.id}/download`, {
+    const res = await fetch(`/api/admin/submissions/${route.params.id}/documents/${doc.id}/download`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) { downloading.value = null; return }

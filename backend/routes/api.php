@@ -117,6 +117,7 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::get('/reviewers',                            [AdminSubmissionController::class, 'reviewers']);
     Route::get('/submissions/{submission}',             [AdminSubmissionController::class, 'show']);
     Route::post('/submissions/{submission}/assign-reviewer',    [AdminSubmissionController::class, 'assignReviewer']);
+    Route::get('/submissions/{submission}/documents/{document}/download', [DocumentSubmissionController::class, 'download']);
     Route::get('/submissions/{submission}/video/stream',         [AdminSubmissionController::class, 'streamVideo']);
     Route::patch('/submissions/{submission}/video/approve',      [AdminSubmissionController::class, 'approveVideo']);
     Route::patch('/submissions/{submission}/video/reject',       [AdminSubmissionController::class, 'rejectVideo']);
