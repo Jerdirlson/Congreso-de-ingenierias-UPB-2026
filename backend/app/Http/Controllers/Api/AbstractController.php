@@ -22,6 +22,7 @@ class AbstractController extends Controller
         $allowed = [
             Submission::STATUS_DRAFT,
             Submission::STATUS_ABSTRACT_SUBMITTED,
+            Submission::STATUS_ABSTRACT_REJECTED,
         ];
         abort_if(! in_array($submission->status, $allowed), 422, 'No puede subir resumen en el estado actual.');
 

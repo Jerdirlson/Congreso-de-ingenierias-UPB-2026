@@ -108,6 +108,22 @@ class AdminSubmissionController extends Controller
         return response()->json(['status' => 'video_pending']);
     }
 
+    /** PATCH /api/admin/submissions/{submission}/abstract/approve — aprobar resumen */
+    public function approveAbstract(Submission $submission): JsonResponse
+    {
+        abort_if($submission->status !== Submission::STATUS_ABSTRACT_SUBMITTED, 422, 'El resumen debe estar en estado "enviado" para aprobarse.');
+        $submission->advanceTo(Submission::STATUS_ABSTRACT_APPROVED);
+        return response()->json(['status' => Submission::STATUS_ABSTRACT_APPROVED]);
+    }
+
+    /** PATCH /api/admin/submissions/{submission}/abstract/reject — rechazar resumen */
+    public function rejectAbstract(Submission $submission): JsonResponse
+    {
+        abort_if($submission->status !== Submission::STATUS_ABSTRACT_SUBMITTED, 422, 'El resumen debe estar en estado "enviado" para rechazarse.');
+        $submission->advanceTo(Submission::STATUS_ABSTRACT_REJECTED);
+        return response()->json(['status' => Submission::STATUS_ABSTRACT_REJECTED]);
+    }
+
     /** POST /api/admin/submissions/{submission}/assign-reviewer */
     public function assignReviewer(Request $request, Submission $submission): JsonResponse
     {

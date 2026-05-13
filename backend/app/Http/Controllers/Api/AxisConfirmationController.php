@@ -30,7 +30,6 @@ class AxisConfirmationController extends Controller
             ->firstOrFail();
 
         $submission->update(['thematic_axis_id' => $axis->id]);
-        $submission->advanceTo(Submission::STATUS_ABSTRACT_APPROVED);
 
         return response()->json($submission->fresh(['thematicAxis', 'abstracts.llmAxis']));
     }
