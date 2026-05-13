@@ -91,6 +91,7 @@ const conferencistas: Conferencista[] = [
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
+    foto: '/speakers/carlos-garcia.jpg',
     lineas: [
       'Hidrógeno y transición energética',
       'Gases combustibles y gas natural',
