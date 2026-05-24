@@ -48,12 +48,27 @@ if ! grep -q "APP_KEY=base64" "$APP_DIR/.env" 2>/dev/null; then
   php "$APP_DIR/artisan" key:generate --no-interaction
 fi
 
-# ── Vendor: el build instaló los paquetes en la imagen.
-#    El named volume cgr-vendor los preserva sobre el bind mount.
-#    Solo hacemos composer install si vendor está vacío (primera vez con nuevo volume).
+# ── Vendor: el named volume cgr-vendor pisa el vendor del build de la imagen.
+#    Reinstalar si: (a) vendor está vacío, o (b) composer.lock cambió vs lo instalado.
+LOCK_FILE="$APP_DIR/composer.lock"
+LOCK_MARKER="$APP_DIR/vendor/.composer-lock.sha256"
+NEEDS_INSTALL=false
+REASON=""
 if [ ! -f "$APP_DIR/vendor/autoload.php" ]; then
-  echo "📦  vendor/ empty — running composer install..."
+  NEEDS_INSTALL=true
+  REASON="vendor/ vacío"
+elif [ -f "$LOCK_FILE" ]; then
+  CURRENT_HASH=$(sha256sum "$LOCK_FILE" | awk '{print $1}')
+  INSTALLED_HASH=$(cat "$LOCK_MARKER" 2>/dev/null || echo "")
+  if [ "$CURRENT_HASH" != "$INSTALLED_HASH" ]; then
+    NEEDS_INSTALL=true
+    REASON="composer.lock cambió desde la última instalación"
+  fi
+fi
+if [ "$NEEDS_INSTALL" = "true" ]; then
+  echo "📦  ${REASON} — running composer install..."
   cd "$APP_DIR" && composer install --no-scripts --no-interaction --prefer-dist
+  [ -f "$LOCK_FILE" ] && sha256sum "$LOCK_FILE" | awk '{print $1}' > "$LOCK_MARKER"
 fi
 
 # ── Publicar vendor assets (Sanctum, Spatie, etc.) ───────────────────────────
