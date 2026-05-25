@@ -74,10 +74,6 @@ function formatTime(time: string | null) {
   return time.slice(0, 5)
 }
 
-function formatPrice(price: number, currency: string) {
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency, maximumFractionDigits: 0 }).format(price)
-}
-
 const modalityLabel: Record<string, string> = {
   presencial: 'Presencial', virtual: 'Virtual', hibrido: 'Híbrido',
 }
@@ -157,9 +153,6 @@ onMounted(loadData)
                     <span :class="['text-xs font-medium border px-2 py-0.5 rounded-full', modalityColor[event.modality]]">
                       {{ modalityLabel[event.modality] }}
                     </span>
-                    <span v-if="event.is_free" class="text-xs font-medium text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
-                      Gratuito
-                    </span>
                   </div>
 
                   <h3 class="text-base font-semibold text-white mb-1 leading-tight">{{ event.name }}</h3>
@@ -187,10 +180,6 @@ onMounted(loadData)
 
                 <!-- Acción -->
                 <div class="flex flex-col items-end gap-2 shrink-0">
-                  <p class="text-base font-bold text-white">
-                    {{ event.is_free ? 'Gratis' : formatPrice(event.price, event.currency) }}
-                  </p>
-
                   <UiBadge v-if="isRegistered(event.id)" variant="success">Inscrito ✓</UiBadge>
                   <UiBadge v-else-if="event.is_full" variant="warning">Cupos agotados</UiBadge>
                   <UiButton

@@ -6,12 +6,12 @@ import UiCard from '../../components/ui/UiCard.vue'
 import UiButton from '../../components/ui/UiButton.vue'
 import UiBadge from '../../components/ui/UiBadge.vue'
 import UiSteps from '../../components/ui/UiSteps.vue'
+import UpbRegistrationOptions from '../../components/UpbRegistrationOptions.vue'
 
 const route = useRoute()
 const router = useRouter()
 const api = useFetchApi()
 const confirmAxisApi = useFetchApi()
-const payApi = useFetchApi()
 
 const submission = ref<{
   id: number
@@ -32,8 +32,6 @@ const modalityChoice = ref<string>('')
 const errorMessage = ref('')
 const confirmDelete = ref(false)
 const deleting = ref(false)
-const payError = ref('')
-const ticketCode = ref('')
 const videoFile = ref<File | null>(null)
 const uploadProgress = ref(0)
 const uploading = ref(false)
@@ -47,13 +45,12 @@ const showResubmitForm = ref(false)
 const deletableStatuses = ['draft', 'abstract_submitted']
 const canDelete = computed(() => deletableStatuses.includes(submission.value?.status ?? ''))
 
-// Flujo: Resumen → Documento → Modalidad → (Video si virtual) → Pago → Confirmado
+// Flujo: Resumen → Documento → Modalidad → (Video si virtual) → Inscripción
 const STEPS = [
   { key: 'abstract', label: 'Resumen' },
   { key: 'document', label: 'Documento' },
   { key: 'modality', label: 'Modalidad' },
-  { key: 'payment', label: 'Pago' },
-  { key: 'confirmed', label: 'Confirmado' },
+  { key: 'payment', label: 'Inscripción' },
 ]
 
 const MODALITIES = [
@@ -69,8 +66,8 @@ const currentStepIndex = computed(() => {
   if (['abstract_approved', 'under_review', 'revision_requested'].includes(s)) return 1
   if (s === 'document_approved') return 2
   if (['modality_selected', 'video_pending', 'video_ready'].includes(s)) return 3
-  if (s === 'payment_pending') return 4
-  if (s === 'confirmed') return 5
+  if (s === 'payment_pending') return 3
+  if (s === 'confirmed') return 4
   return 0
 })
 
@@ -235,20 +232,6 @@ async function deleteSubmission() {
   await api.delete(`/submissions/${route.params.id}`)
   deleting.value = false
   router.push({ name: 'ponente-home' })
-}
-
-async function confirmPayment() {
-  payError.value = ''
-  const data = await payApi.post<{ ticket_code: string }>('/payments', {
-    registration_type: 'speaker',
-    submission_id: Number(route.params.id),
-  })
-  if (data) {
-    ticketCode.value = data.ticket_code
-    await loadSubmission()
-  } else {
-    payError.value = payApi.error.value?.message ?? 'No se pudo procesar el pago. Intenta de nuevo.'
-  }
 }
 
 const VIDEO_MAX_DURATION  = 600  // 10 min in seconds
@@ -780,69 +763,26 @@ watch(() => route.params.id, () => {
       </div>
     </UiCard>
 
-    <!-- ── Paso 5: Pago ── -->
-    <UiCard v-if="canPay || submission?.status === 'confirmed'" class="p-6 mb-4">
+    <!-- ── Paso 5: Inscripción y pago (portal UPB) ── -->
+    <UiCard v-if="canPay" class="p-6 mb-4">
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
-        5. Pago de inscripción
-        <UiBadge v-if="submission?.status === 'confirmed'" variant="success">Completado</UiBadge>
-        <UiBadge v-else-if="canPay" variant="warning">Pendiente</UiBadge>
+        5. Inscripción y pago
+        <UiBadge variant="warning">Pendiente</UiBadge>
       </h2>
 
-      <!-- Pago pendiente -->
-      <div v-if="canPay">
-        <div class="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-4 mb-5">
-          <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 3h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-          </svg>
-          <div>
-            <p class="text-sm font-semibold text-amber-300">Tu ponencia fue aprobada — completa el pago para confirmar tu participación</p>
-            <p class="text-xs text-amber-200/70 mt-1">Al confirmar el pago recibirás tu código de inscripción para el congreso.</p>
-          </div>
-        </div>
-
-        <div class="bg-cgr-section border border-cgr-border rounded-xl px-5 py-4 mb-5">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-cgr-muted">Inscripción como ponente</span>
-            <span class="text-lg font-bold text-white">$200.000 COP</span>
-          </div>
-          <p class="text-xs text-cgr-subtle mt-1">Incluye acceso completo al congreso</p>
-        </div>
-
-        <p v-if="payError" class="mb-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
-          {{ payError }}
-        </p>
-
-        <UiButton variant="primary" :loading="payApi.loading.value" @click="confirmPayment">
-          Confirmar pago e inscripción
-        </UiButton>
-      </div>
-
-      <!-- Pago completado -->
-      <div v-else class="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-4">
-        <svg class="w-5 h-5 text-green-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <div class="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-4 mb-5">
+        <svg class="w-5 h-5 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         <div>
-          <p class="text-sm font-semibold text-green-300">Pago registrado</p>
-          <p v-if="ticketCode" class="text-xs text-green-200/70 mt-0.5">Código de inscripción: <strong class="text-white">{{ ticketCode }}</strong></p>
+          <p class="text-sm font-semibold text-green-300">Tu ponencia fue aprobada</p>
+          <p class="text-xs text-green-200/80 mt-1">
+            Solo falta completar la inscripción y el pago en el portal oficial de la UPB.
+          </p>
         </div>
       </div>
-    </UiCard>
 
-    <!-- ── Confirmado ── -->
-    <UiCard v-if="submission?.status === 'confirmed'" class="p-6 text-center">
-      <div class="text-5xl mb-4">🎉</div>
-      <p class="text-white font-semibold text-xl mb-2">¡Ponencia confirmada!</p>
-      <p class="text-sm text-cgr-muted mb-4">
-        Tu ponencia ha completado el proceso y está confirmada para el Congreso de Ingenierías 2026.
-      </p>
-      <div v-if="ticketCode" class="inline-flex items-center gap-2 bg-cgr-section border border-cgr-border rounded-lg px-4 py-2">
-        <svg class="w-4 h-4 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
-        </svg>
-        <span class="text-sm text-cgr-muted">Código:</span>
-        <span class="font-mono font-bold text-white">{{ ticketCode }}</span>
-      </div>
+      <UpbRegistrationOptions audience="ponente" />
     </UiCard>
   </div>
 </template>

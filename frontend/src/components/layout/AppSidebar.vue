@@ -19,7 +19,7 @@ const links = computed(() => {
   if (props.role === 'participante') {
     return [
       { to: { name: 'participante-home' }, label: 'Mis inscripciones', icon: 'ticket' },
-      { to: { name: 'participante-pago' }, label: 'Realizar pago',     icon: 'card' },
+      { to: { name: 'participante-pago' }, label: 'Inscripción',       icon: 'card' },
     ]
   }
   if (props.role === 'revisor') {
