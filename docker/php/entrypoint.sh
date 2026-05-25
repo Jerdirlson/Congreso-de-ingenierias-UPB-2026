@@ -43,23 +43,6 @@ if [ -n "${APP_ENV}" ]; then
   sed -i "s|^APP_DEBUG=.*|APP_DEBUG=${APP_DEBUG:-false}|" "$APP_DIR/.env"
 fi
 
-# ── Mail SMTP (necesario antes de config:cache para que Laravel lo recoja) ───
-# El .env.example apunta a mailpit:1025; sin esta inyección los correos no se
-# envían en producción aunque docker-compose pase MAIL_* al contenedor.
-if [ -n "${MAIL_HOST}" ]; then
-  sed -i '/^MAIL_MAILER=/d;/^MAIL_HOST=/d;/^MAIL_PORT=/d;/^MAIL_USERNAME=/d;/^MAIL_PASSWORD=/d;/^MAIL_ENCRYPTION=/d;/^MAIL_FROM_ADDRESS=/d;/^MAIL_FROM_NAME=/d' "$APP_DIR/.env"
-  {
-    echo "MAIL_MAILER=\"${MAIL_MAILER:-smtp}\""
-    echo "MAIL_HOST=\"${MAIL_HOST}\""
-    echo "MAIL_PORT=\"${MAIL_PORT:-587}\""
-    echo "MAIL_USERNAME=\"${MAIL_USERNAME}\""
-    echo "MAIL_PASSWORD=\"${MAIL_PASSWORD}\""
-    echo "MAIL_ENCRYPTION=\"${MAIL_ENCRYPTION:-tls}\""
-    echo "MAIL_FROM_ADDRESS=\"${MAIL_FROM_ADDRESS}\""
-    echo "MAIL_FROM_NAME=\"${MAIL_FROM_NAME:-Congreso Ingenierías 2026}\""
-  } >> "$APP_DIR/.env"
-fi
-
 # ── App Key ───────────────────────────────────────────────────────────────────
 if ! grep -q "APP_KEY=base64" "$APP_DIR/.env" 2>/dev/null; then
   php "$APP_DIR/artisan" key:generate --no-interaction
