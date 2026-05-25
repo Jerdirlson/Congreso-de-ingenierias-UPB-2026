@@ -57,12 +57,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user'  => [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
-                'role'  => $validated['registration_type'],
-            ],
+            'user'  => $this->userPayload($user),
         ], 201);
     }
 
@@ -86,12 +81,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user'  => [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
-                'role'  => $user->getRoleNames()->first(),
-            ],
+            'user'  => $this->userPayload($user),
         ]);
     }
 
@@ -106,19 +96,47 @@ class AuthController extends Controller
     /** GET /api/me */
     public function me(Request $request): JsonResponse
     {
+        return response()->json($this->userPayload($request->user()));
+    }
+
+    /** POST /api/me/confirm-external-registration
+     *  Marca al usuario como inscrito en la plataforma institucional UPB.
+     *  Para ponentes con ponencia en payment_pending, también la avanza a confirmed.
+     *  No-op si ya está marcado.
+     */
+    public function confirmExternalRegistration(Request $request): JsonResponse
+    {
         $user = $request->user();
-        return response()->json([
-            'id'                => $user->id,
-            'name'              => $user->name,
-            'email'             => $user->email,
-            'email_verified_at' => $user->email_verified_at?->toIso8601String(),
-            'phone'             => $user->phone,
-            'document_type'     => $user->document_type,
-            'document_number'   => $user->document_number,
-            'institution'       => $user->institution,
-            'country'           => $user->country,
-            'city'              => $user->city,
-            'role'              => $user->getRoleNames()->first(),
-        ]);
+
+        if (! $user->external_registration_at) {
+            $user->external_registration_at = now();
+            $user->save();
+
+            $user->submissions()
+                ->where('status', \App\Models\Submission::STATUS_PAYMENT_PENDING)
+                ->get()
+                ->each(fn ($s) => $s->advanceTo(\App\Models\Submission::STATUS_CONFIRMED));
+        }
+
+        return response()->json($this->userPayload($user));
+    }
+
+    private function userPayload(User $user): array
+    {
+        return [
+            'id'                            => $user->id,
+            'name'                          => $user->name,
+            'email'                         => $user->email,
+            'email_verified_at'             => $user->email_verified_at?->toIso8601String(),
+            'phone'                         => $user->phone,
+            'document_type'                 => $user->document_type,
+            'document_number'               => $user->document_number,
+            'institution'                   => $user->institution,
+            'country'                       => $user->country,
+            'city'                          => $user->city,
+            'external_registration_at'      => $user->external_registration_at?->toIso8601String(),
+            'external_registration_paid_at' => $user->external_registration_paid_at?->toIso8601String(),
+            'role'                          => $user->getRoleNames()->first(),
+        ];
     }
 }

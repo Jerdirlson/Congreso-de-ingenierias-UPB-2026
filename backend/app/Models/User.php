@@ -26,6 +26,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'country',
         'city',
         'email_verified_at',
+        'external_registration_at',
+        'external_registration_paid_at',
     ];
 
     protected $hidden = [
@@ -40,6 +42,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at'              => 'datetime',
             'email_verification_expires_at'  => 'datetime',
+            'external_registration_at'       => 'datetime',
+            'external_registration_paid_at'  => 'datetime',
             'password'                       => 'hashed',
         ];
     }

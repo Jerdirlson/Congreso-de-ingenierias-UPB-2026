@@ -61,6 +61,7 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/login',    [AuthController::class, 'login']);
     Route::post('/logout',  [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/me',       [AuthController::class, 'me'])->middleware('auth:sanctum');
+    Route::post('/me/confirm-external-registration', [AuthController::class, 'confirmExternalRegistration'])->middleware('auth:sanctum');
 });
 
 // ── Verificación de correo por código ─────────────────────────────────────────

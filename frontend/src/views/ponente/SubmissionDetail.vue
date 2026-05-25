@@ -764,13 +764,14 @@ watch(() => route.params.id, () => {
     </UiCard>
 
     <!-- ── Paso 5: Inscripción y pago (portal UPB) ── -->
-    <UiCard v-if="canPay" class="p-6 mb-4">
+    <UiCard v-if="canPay || submission?.status === 'confirmed'" class="p-6 mb-4">
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
         5. Inscripción y pago
-        <UiBadge variant="warning">Pendiente</UiBadge>
+        <UiBadge v-if="submission?.status === 'confirmed'" variant="success">Completado</UiBadge>
+        <UiBadge v-else variant="warning">Pendiente</UiBadge>
       </h2>
 
-      <div class="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-4 mb-5">
+      <div v-if="canPay" class="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-4 mb-5">
         <svg class="w-5 h-5 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
@@ -782,7 +783,7 @@ watch(() => route.params.id, () => {
         </div>
       </div>
 
-      <UpbRegistrationOptions audience="ponente" />
+      <UpbRegistrationOptions audience="ponente" @confirmed="loadSubmission" />
     </UiCard>
   </div>
 </template>

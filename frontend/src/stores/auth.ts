@@ -23,6 +23,8 @@ export interface AuthUser {
   institution?: string
   country?: string
   city?: string
+  external_registration_at?: string | null
+  external_registration_paid_at?: string | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -112,6 +114,16 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = u
   }
 
+  async function confirmExternalRegistration(): Promise<boolean> {
+    const api = useFetchApi()
+    const data = await api.post<AuthUser>('/me/confirm-external-registration', {})
+    if (data) {
+      user.value = data
+      return true
+    }
+    return false
+  }
+
   return {
     user,
     loading,
@@ -128,5 +140,6 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     setUser,
+    confirmExternalRegistration,
   }
 })

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useAuthStore } from '../stores/auth'
 
 type Audience = 'participante' | 'ponente'
 
@@ -64,15 +65,52 @@ const ALL_OPTIONS: NrcOption[] = [
 ]
 
 const props = defineProps<{ audience: Audience }>()
+const emit = defineEmits<{ confirmed: [] }>()
 
+const auth = useAuthStore()
 const selectedNrc = ref<string | null>(null)
+const confirmLoading = ref(false)
+const confirmError = ref('')
 
 const options = computed(() => ALL_OPTIONS.filter(o => o.audiences.includes(props.audience)))
 const selected = computed(() => options.value.find(o => o.nrc === selectedNrc.value) ?? null)
+const alreadyConfirmed = computed(() => !!auth.user?.external_registration_at)
+const alreadyPaid = computed(() => !!auth.user?.external_registration_paid_at)
+
+async function confirmExternal() {
+  confirmError.value = ''
+  confirmLoading.value = true
+  const ok = await auth.confirmExternalRegistration()
+  confirmLoading.value = false
+  if (ok) emit('confirmed')
+  else confirmError.value = 'No se pudo registrar tu confirmación. Intenta de nuevo en unos segundos.'
+}
 </script>
 
 <template>
-  <div>
+  <!-- ── Estado: ya confirmó la inscripción externa ── -->
+  <div v-if="alreadyConfirmed">
+    <div class="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-5 py-5">
+      <svg class="w-6 h-6 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div>
+        <p class="text-base font-semibold text-green-300 mb-1">Estás totalmente inscrito al Congreso</p>
+        <p class="text-sm text-green-200/80 leading-relaxed">
+          <template v-if="alreadyPaid">
+            Confirmamos la recepción de tu pago. ¡Te esperamos en el congreso!
+          </template>
+          <template v-else>
+            Registramos tu inscripción en la plataforma institucional UPB.
+            Recibirás un correo de confirmación cuando se complete el pago.
+          </template>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Selector + botón "ya terminé" ── -->
+  <div v-else>
     <div class="flex items-start gap-3 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3 mb-5 text-sm">
       <svg class="w-4 h-4 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -128,5 +166,27 @@ const selected = computed(() => options.value.find(o => o.nrc === selectedNrc.va
     >
       Selecciona una opción para continuar
     </button>
+
+    <!-- ── Confirmación de inscripción externa ── -->
+    <div class="mt-6 pt-5 border-t border-cgr-border">
+      <p class="text-sm text-cgr-muted mb-3">
+        ¿Ya terminaste la inscripción en la plataforma institucional?
+      </p>
+      <button
+        type="button"
+        :disabled="confirmLoading"
+        class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold border border-cgr-purple text-cgr-purple hover:bg-cgr-purple/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        @click="confirmExternal"
+      >
+        <svg v-if="confirmLoading" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 018-8v2a6 6 0 00-6 6H4z"/>
+        </svg>
+        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ confirmLoading ? 'Procesando…' : 'Sí, ya terminé mi inscripción' }}
+      </button>
+      <p v-if="confirmError" class="mt-2 text-xs text-red-400">{{ confirmError }}</p>
+    </div>
   </div>
 </template>
