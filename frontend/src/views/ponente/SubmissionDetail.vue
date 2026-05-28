@@ -37,6 +37,10 @@ const uploadProgress = ref(0)
 const uploading = ref(false)
 const videoValidationError = ref('')
 let videoPolling: ReturnType<typeof setInterval> | null = null
+const llmTimedOut = ref(false)
+let llmPolling: ReturnType<typeof setInterval> | null = null
+let llmPollCount = 0
+const LLM_POLL_MAX = 15 // 15 × 3 s = 45 s antes de rendirse
 
 const axes = ref<{ id: number; name: string; description?: string }[]>([])
 const selectedAxisId = ref<number | null>(null)
@@ -104,6 +108,7 @@ const latestAbstract = computed(() => {
 })
 
 const llmClassifying = computed(() => latestAbstract.value?.llm_status === 'pending')
+const showLlmSpinner = computed(() => llmClassifying.value && !llmTimedOut.value)
 
 const revisionReview = computed(() => {
   const reviews = submission.value?.reviews ?? []
@@ -138,9 +143,11 @@ async function submitAbstract() {
     abstractFile.value = null
     abstractFileError.value = ''
     showResubmitForm.value = false
+    llmTimedOut.value = false
     const recommendedId = data.abstract?.llm_axis?.id
     if (recommendedId) selectedAxisId.value = recommendedId
     await loadSubmission()
+    if (llmClassifying.value) startLlmPolling()
   } else {
     errorMessage.value = api.error.value?.message ?? 'Error al enviar el archivo de resumen'
   }
@@ -358,18 +365,43 @@ function stopVideoPolling() {
   if (videoPolling) { clearInterval(videoPolling); videoPolling = null }
 }
 
+function startLlmPolling() {
+  stopLlmPolling()
+  llmPollCount = 0
+  llmTimedOut.value = false
+  llmPolling = setInterval(async () => {
+    llmPollCount++
+    if (llmPollCount >= LLM_POLL_MAX) {
+      stopLlmPolling()
+      llmTimedOut.value = true
+      return
+    }
+    await loadSubmission()
+    if (!llmClassifying.value) {
+      stopLlmPolling()
+      const axisId = submission.value?.abstracts?.[0]?.llm_axis?.id
+      if (axisId) selectedAxisId.value = axisId
+    }
+  }, 3000)
+}
+
+function stopLlmPolling() {
+  if (llmPolling) { clearInterval(llmPolling); llmPolling = null }
+}
+
 onMounted(async () => {
   const axisData = await useFetchApi().get<{ data: typeof axes.value } | typeof axes.value>('/thematic-axes')
   if (axisData) axes.value = Array.isArray(axisData) ? axisData : axisData.data
   await loadSubmission()
-  // Pre-seleccionar eje recomendado por la IA si ya hay resumen pendiente de confirmación
   if (submission.value?.status === 'abstract_submitted') {
     const axisId = submission.value?.abstracts?.[0]?.llm_axis?.id
     if (axisId) selectedAxisId.value = axisId
+    if (llmClassifying.value) startLlmPolling()
   }
 })
 watch(() => route.params.id, () => {
   stopVideoPolling()
+  stopLlmPolling()
   loadSubmission()
 })
 </script>
@@ -415,7 +447,7 @@ watch(() => route.params.id, () => {
         1. Resumen
         <UiBadge v-if="canConfirmAxis" variant="info">Pendiente de confirmación</UiBadge>
         <UiBadge v-else-if="latestAbstract?.llm_status === 'approved' && !canConfirmAxis" variant="success">Eje confirmado</UiBadge>
-        <UiBadge v-else-if="llmClassifying" variant="info">Clasificando…</UiBadge>
+        <UiBadge v-else-if="showLlmSpinner" variant="info">Clasificando…</UiBadge>
       </h2>
 
       <!-- Formulario de envío inicial (draft) -->
@@ -436,7 +468,7 @@ watch(() => route.params.id, () => {
       </div>
 
       <!-- Clasificando con LLM -->
-      <div v-else-if="llmClassifying" class="flex items-center gap-3 text-cgr-muted text-sm">
+      <div v-else-if="showLlmSpinner" class="flex items-center gap-3 text-cgr-muted text-sm">
         <div class="w-4 h-4 border-2 border-cgr-purple border-t-transparent rounded-full animate-spin shrink-0"></div>
         Clasificando con IA… esto puede tomar unos segundos.
       </div>
