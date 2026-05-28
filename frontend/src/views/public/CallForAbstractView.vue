@@ -60,6 +60,7 @@ const benefits = [
   'Publicación en Libro de Resúmenes oficial con registro ISSN',
   'Opción de publicación en Revista Facultad de Ingeniería — Universidad de Antioquia',
   'Opción de publicación en Revista Memoria Investigaciones en Ingeniería (Uruguay)',
+  'Opción de publicación en Revista UIS Ingenierías — Universidad Industrial de Santander',
   'Certificación digital de ponencia con nombre de todos los autores',
   'Edición especial ISSN para proyectos estudiantiles UPB y colegios',
 ]
@@ -405,7 +406,7 @@ const steps = [
             </p>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- Revista UdeA -->
             <div class="bg-cgr-card border border-cgr-border rounded-2xl p-7 flex flex-col gap-5 hover:border-cgr-purple-dark/50 hover:shadow-lg hover:shadow-cgr-purple/10 transition-all duration-300">
@@ -454,6 +455,35 @@ const steps = [
               </p>
               <a
                 href="https://revistas.um.edu.uy/index.php/ingenieria/about"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-cgr-purple hover:text-cgr-accent text-xs font-semibold transition-colors"
+              >
+                Ver revista
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+                </svg>
+              </a>
+            </div>
+
+            <!-- Revista UIS Ingenierías -->
+            <div class="bg-cgr-card border border-cgr-border rounded-2xl p-7 flex flex-col gap-5 hover:border-cgr-purple-dark/50 hover:shadow-lg hover:shadow-cgr-purple/10 transition-all duration-300">
+              <div class="flex items-start gap-4">
+                <div class="w-11 h-11 rounded-xl bg-cgr-purple/10 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5 text-cgr-purple" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-cgr-purple text-xs font-semibold uppercase tracking-wider mb-1">Colombia · UIS</p>
+                  <h3 class="text-white font-bold text-sm leading-snug">Revista UIS Ingenierías — Universidad Industrial de Santander</h3>
+                </div>
+              </div>
+              <p class="text-cgr-muted text-xs leading-relaxed flex-1">
+                Los trabajos con las valoraciones más altas serán seleccionados por el comité para enviar su artículo completo. La selección de su artículo no garantiza la publicación, dado que los trabajos se someterán al proceso editorial de la Revista UIS Ingenierías para un número especial.
+              </p>
+              <a
+                href="https://revistas.uis.edu.co/index.php/revistauisingenierias"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-2 text-cgr-purple hover:text-cgr-accent text-xs font-semibold transition-colors"
