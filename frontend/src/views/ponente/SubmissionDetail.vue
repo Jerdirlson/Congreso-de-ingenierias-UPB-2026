@@ -74,7 +74,12 @@ const currentStepIndex = computed(() => {
 const canPay = computed(() => submission.value?.status === 'payment_pending')
 
 const canSubmitAbstract = computed(() => submission.value?.status === 'draft')
-const canConfirmAxis = computed(() => submission.value?.status === 'abstract_submitted')
+const canConfirmAxis = computed(() =>
+  submission.value?.status === 'abstract_submitted' && !submission.value?.thematic_axis
+)
+const awaitingAdminApproval = computed(() =>
+  submission.value?.status === 'abstract_submitted' && !!submission.value?.thematic_axis
+)
 
 const canSubmitDocument = computed(() => {
   const s = submission.value?.status
@@ -528,6 +533,22 @@ watch(() => route.params.id, () => {
               Cancelar
             </UiButton>
           </div>
+        </div>
+      </div>
+
+      <!-- Eje confirmado, esperando revisión del comité (abstract_submitted + axis set) -->
+      <div v-else-if="awaitingAdminApproval" class="flex items-start gap-3 bg-cgr-section border border-cgr-border rounded-lg px-4 py-4">
+        <svg class="w-4 h-4 text-cgr-purple shrink-0 mt-0.5 animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div class="text-sm space-y-1">
+          <p class="text-white font-medium">Resumen enviado al comité para revisión</p>
+          <p class="text-cgr-muted text-xs">
+            Eje confirmado: <span class="text-cgr-purple font-medium">{{ submission?.thematic_axis?.name }}</span>
+          </p>
+          <p class="text-cgr-muted text-xs leading-relaxed">
+            El comité revisará tu resumen. Una vez aprobado, podrás continuar con la carga del documento completo.
+          </p>
         </div>
       </div>
 
