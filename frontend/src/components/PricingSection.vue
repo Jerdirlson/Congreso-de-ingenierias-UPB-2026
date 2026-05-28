@@ -62,10 +62,10 @@ const categories = [
       <!-- Tabla de precios -->
       <div
         :ref="(el) => setRef(el as Element, 0)"
-        class="animate-reveal bg-cgr-card border border-cgr-border rounded-2xl overflow-hidden mb-6"
+        class="animate-reveal bg-cgr-card border border-cgr-border rounded-2xl overflow-hidden mb-8"
       >
         <!-- Cabecera tabla -->
-        <div class="grid grid-cols-[1fr_1fr_auto_auto] gap-x-4 px-6 py-3 bg-cgr-bg border-b border-cgr-border">
+        <div class="grid grid-cols-[1fr_1fr_100px_140px] gap-x-4 px-6 py-3 bg-cgr-bg border-b border-cgr-border">
           <span class="text-xs font-semibold text-cgr-muted uppercase tracking-wider">Categoría</span>
           <span class="text-xs font-semibold text-cgr-muted uppercase tracking-wider">Observación</span>
           <span class="text-xs font-semibold text-green-400 uppercase tracking-wider text-right whitespace-nowrap">Valor</span>
@@ -77,27 +77,13 @@ const categories = [
           v-for="(cat, i) in categories"
           :key="i"
           :ref="(el) => setRef(el as Element, i + 1)"
-          class="animate-reveal grid grid-cols-[1fr_1fr_auto_auto] gap-x-4 items-center px-6 py-4 border-b border-cgr-border last:border-b-0 hover:bg-cgr-section transition-colors duration-150"
+          class="animate-reveal grid grid-cols-[1fr_1fr_100px_140px] gap-x-4 items-center px-6 py-4 border-b border-cgr-border last:border-b-0 hover:bg-cgr-section transition-colors duration-150"
         >
           <span class="text-white text-sm font-medium leading-snug">{{ cat.label }}</span>
           <span class="text-cgr-muted text-sm leading-snug">{{ cat.obs }}</span>
           <span class="text-green-400 text-sm font-bold text-right whitespace-nowrap">{{ cat.early }}</span>
           <span class="text-amber-400 text-sm font-bold text-right whitespace-nowrap">{{ cat.late }}</span>
         </div>
-      </div>
-
-      <!-- Nota NRC -->
-      <div
-        :ref="(el) => setRef(el as Element, 6)"
-        class="animate-reveal flex items-start gap-3 bg-cgr-card border border-cgr-border rounded-xl px-5 py-4 mb-8"
-      >
-        <svg class="w-4 h-4 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <p class="text-cgr-muted text-sm leading-relaxed">
-          Los <span class="text-white font-medium">códigos NRC para el pago</span> serán habilitados próximamente.
-          Los valores incluyen acceso a todas las sesiones, libro de memorias con ISSN y certificado digital de participación.
-        </p>
       </div>
 
       <!-- CTA de inscripción -->
