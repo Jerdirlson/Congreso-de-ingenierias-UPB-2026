@@ -36,8 +36,9 @@ class AbstractController extends Controller
             abort(422, $e->getMessage());
         }
 
-        if (mb_strlen($abstractText) < 100) {
-            abort(422, 'El archivo debe contener al menos 100 caracteres de texto legible para análisis.');
+        $wordCount = count(preg_split('/\s+/', trim($abstractText), -1, PREG_SPLIT_NO_EMPTY));
+        if ($wordCount < 100) {
+            abort(422, "El archivo contiene muy poco texto legible ({$wordCount} palabras). Asegúrate de que el resumen tenga al menos 100 palabras y no sea un PDF escaneado.");
         }
 
         $version = $submission->abstract_attempts + 1;

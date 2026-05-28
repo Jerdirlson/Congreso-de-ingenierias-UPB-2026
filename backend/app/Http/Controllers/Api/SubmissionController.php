@@ -10,7 +10,6 @@ use App\Services\AbstractFileExtractorService;
 use App\Services\LlmClassificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class SubmissionController extends Controller
@@ -36,6 +35,7 @@ class SubmissionController extends Controller
         abort_if($user->submissions()->exists(), 422, 'Ya tienes una ponencia registrada. Solo se permite una por ponente.');
 
         $validated = $request->validate([
+            'title'         => 'required|string|max:500',
             'abstract_file' => 'required|file|mimes:docx,pdf|max:10240',
         ]);
 
@@ -45,15 +45,13 @@ class SubmissionController extends Controller
             abort(422, $e->getMessage());
         }
 
-        if (mb_strlen($abstractText) < 100) {
-            abort(422, 'El archivo debe contener al menos 100 caracteres de texto legible para análisis.');
+        $wordCount = count(preg_split('/\s+/', trim($abstractText), -1, PREG_SPLIT_NO_EMPTY));
+        if ($wordCount < 100) {
+            abort(422, "El archivo contiene muy poco texto legible ({$wordCount} palabras). Asegúrate de que el resumen tenga al menos 100 palabras y no sea un PDF escaneado.");
         }
 
-        // Título provisional: primeros 150 caracteres del resumen
-        $title = Str::limit($abstractText, 150);
-
         $submission = $user->submissions()->create([
-            'title'  => $title,
+            'title'  => $validated['title'],
             'status' => Submission::STATUS_DRAFT,
         ]);
 

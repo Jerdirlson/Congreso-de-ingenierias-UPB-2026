@@ -58,7 +58,12 @@ class AbstractFileExtractorService
             throw new RuntimeException('El archivo DOCX no contiene el documento principal esperado.');
         }
 
-        // Strip XML tags and decode entities
+        // Insertar espacio en los límites de párrafo y celda de tabla antes de
+        // eliminar los tags, evitando que palabras de párrafos distintos se peguen.
+        $xml = preg_replace('/<\/w:p>|<\/w:tc>/', ' ', $xml) ?? $xml;
+        // Saltos de línea explícitos del documento también se convierten en espacio
+        $xml = preg_replace('/<w:br[^>]*\/>/', ' ', $xml) ?? $xml;
+
         $text = strip_tags($xml);
         $text = html_entity_decode($text, ENT_QUOTES | ENT_XML1, 'UTF-8');
         $text = preg_replace('/\s+/', ' ', $text) ?? $text;
