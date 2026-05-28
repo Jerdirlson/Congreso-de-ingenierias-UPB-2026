@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import type { AuthUser, UserRole } from '../../stores/auth'
+import { useAuthStore } from '../../stores/auth'
 import ThemeControls from '../ThemeControls.vue'
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+function stopImpersonation() {
+  authStore.stopImpersonation()
+  router.push({ name: 'admin-users' })
+}
 
 const props = defineProps<{
   user: AuthUser | null
@@ -35,6 +45,24 @@ const roleBadgeClass = computed(() => {
 </script>
 
 <template>
+  <!-- Impersonation banner -->
+  <div
+    v-if="authStore.impersonating"
+    class="bg-orange-500/10 border-b border-orange-500/30 text-orange-300 px-4 py-2 flex items-center justify-between gap-3 text-sm"
+  >
+    <span>
+      Estás viendo la plataforma como
+      <strong>{{ authStore.user?.name }}</strong>
+      · {{ authStore.user?.email }}
+    </span>
+    <button
+      @click="stopImpersonation"
+      class="px-3 py-1 bg-orange-500/20 border border-orange-500/40 text-orange-300 text-xs font-semibold rounded-lg hover:bg-orange-500/30 hover:border-orange-500/60 transition-colors shrink-0"
+    >
+      Salir de impersonación
+    </button>
+  </div>
+
   <header class="h-16 shrink-0 border-b border-cgr-border bg-cgr-bg/90 backdrop-blur-md px-4 flex items-center justify-between gap-3">
 
     <div class="flex items-center gap-3">

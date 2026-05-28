@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useFetchApi } from '../../composables/useFetchApi'
+import { useAuthStore } from '../../stores/auth'
 import UiCard from '../../components/ui/UiCard.vue'
 
 interface User {
@@ -49,6 +51,11 @@ const loadingDetail = ref(false)
 const editingRole = ref(false)
 const newRole   = ref('')
 const savingRole = ref(false)
+
+const router = useRouter()
+const auth = useAuthStore()
+const impersonating = ref(false)
+const impersonateError = ref('')
 
 const roles = ['ponente', 'participante', 'revisor', 'admin', 'administrativo']
 
@@ -114,6 +121,23 @@ async function saveRole() {
   }
   savingRole.value  = false
   editingRole.value = false
+}
+
+async function impersonate() {
+  if (!selected.value) return
+  impersonating.value = true
+  impersonateError.value = ''
+  const ok = await auth.startImpersonation(selected.value.id)
+  impersonating.value = false
+  if (ok) {
+    const role = selected.value.role
+    if (role === 'ponente') router.push({ name: 'ponente-home' })
+    else if (role === 'participante') router.push({ name: 'participante-home' })
+    else if (role === 'revisor') router.push({ name: 'revisor-home' })
+    else router.push({ name: 'ponente-home' })
+  } else {
+    impersonateError.value = 'No se pudo iniciar la impersonación.'
+  }
 }
 
 function formatDate(d: string) {
@@ -368,6 +392,27 @@ onMounted(load)
                 >{{ savingRole ? '…' : 'Guardar' }}</button>
                 <button @click="editingRole = false" class="px-3 py-1.5 border border-cgr-border text-cgr-muted text-sm rounded-lg hover:text-white transition-colors">✕</button>
               </div>
+            </div>
+
+            <!-- Impersonar -->
+            <div v-if="selected.role !== 'admin' && selected.role !== 'administrativo'" class="bg-cgr-card border border-cgr-border rounded-xl p-4">
+              <p class="text-cgr-subtle text-xs font-semibold uppercase tracking-widest mb-3">Impersonar</p>
+              <p class="text-cgr-muted text-xs mb-3">Inicia sesión como este usuario para ver la plataforma desde su perspectiva.</p>
+              <p v-if="impersonateError" class="text-red-400 text-xs mb-2">{{ impersonateError }}</p>
+              <button
+                @click="impersonate"
+                :disabled="impersonating"
+                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-500/10 border border-orange-500/30 text-orange-300 text-sm font-semibold rounded-lg hover:bg-orange-500/20 hover:border-orange-500/50 disabled:opacity-50 transition-colors"
+              >
+                <svg v-if="impersonating" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                </svg>
+                {{ impersonating ? 'Iniciando…' : 'Ver como este usuario' }}
+              </button>
             </div>
 
             <!-- Ponencias -->

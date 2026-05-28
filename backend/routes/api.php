@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AbstractController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminMetricsController;
 use App\Http\Controllers\Api\AdminSubmissionController;
+use App\Http\Controllers\Api\AdminImpersonateController;
 use App\Http\Controllers\Api\AdminMailController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
@@ -128,6 +129,7 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::get('/users',                [AdminUserController::class, 'index']);
     Route::get('/users/{user}',         [AdminUserController::class, 'show']);
     Route::patch('/users/{user}/role',  [AdminUserController::class, 'updateRole']);
+    Route::post('/users/{user}/impersonate', [AdminImpersonateController::class, 'store']);
     Route::post('/mail/preview',        [AdminMailController::class, 'preview']);
     Route::post('/mail/send',           [AdminMailController::class, 'send']);
 });

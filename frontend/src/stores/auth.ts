@@ -30,6 +30,10 @@ export interface AuthUser {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
   const loading = ref(false)
+  const impersonating = ref(!!localStorage.getItem('cgr_admin_token'))
+  const originalAdminUser = ref<AuthUser | null>(
+    (() => { try { return JSON.parse(localStorage.getItem('cgr_admin_user') ?? '') } catch { return null } })()
+  )
 
   const token = computed(() => getApiToken())
   const isLoggedIn = computed(() => !!token.value && !!user.value)
@@ -124,9 +128,35 @@ export const useAuthStore = defineStore('auth', () => {
     return false
   }
 
+  async function startImpersonation(userId: number): Promise<boolean> {
+    const api = useFetchApi()
+    const data = await api.post<{ token: string; user: AuthUser }>(`/admin/users/${userId}/impersonate`, {})
+    if (!data) return false
+    localStorage.setItem('cgr_admin_token', getApiToken() ?? '')
+    localStorage.setItem('cgr_admin_user', JSON.stringify(user.value))
+    originalAdminUser.value = user.value
+    setApiToken(data.token)
+    user.value = data.user
+    impersonating.value = true
+    return true
+  }
+
+  function stopImpersonation(): void {
+    const savedToken = localStorage.getItem('cgr_admin_token')
+    const savedUser = localStorage.getItem('cgr_admin_user')
+    if (savedToken) setApiToken(savedToken)
+    try { user.value = savedUser ? JSON.parse(savedUser) : null } catch { user.value = null }
+    localStorage.removeItem('cgr_admin_token')
+    localStorage.removeItem('cgr_admin_user')
+    impersonating.value = false
+    originalAdminUser.value = null
+  }
+
   return {
     user,
     loading,
+    impersonating,
+    originalAdminUser,
     token,
     isLoggedIn,
     isEmailVerified,
@@ -141,5 +171,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     setUser,
     confirmExternalRegistration,
+    startImpersonation,
+    stopImpersonation,
   }
 })
