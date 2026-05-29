@@ -93,7 +93,7 @@ onMounted(loadData)
           </p>
         </div>
         <UiButton
-          v-if="submissions.length === 0"
+          v-if="submissions.length < 2"
           variant="primary"
           size="sm"
           @click="router.push({ name: 'ponente-new' })"
@@ -105,7 +105,7 @@ onMounted(loadData)
       <!-- Sin ponencias -->
       <div v-if="submissions.length === 0" class="text-center py-12">
         <p class="text-cgr-muted mb-2">Aún no tienes ponencias registradas.</p>
-        <p class="text-xs text-cgr-subtle mb-6">Solo se permite una ponencia por ponente.</p>
+        <p class="text-xs text-cgr-subtle mb-6">Puedes registrar hasta 2 ponencias por ponente.</p>
         <UiButton variant="primary" @click="router.push({ name: 'ponente-new' })">
           Registrar mi ponencia
         </UiButton>

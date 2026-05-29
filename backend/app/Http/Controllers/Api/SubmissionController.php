@@ -31,8 +31,8 @@ class SubmissionController extends Controller
     {
         $user = $request->user();
 
-        // Solo se permite una ponencia por ponente (las soft-deleted no cuentan)
-        abort_if($user->submissions()->exists(), 422, 'Ya tienes una ponencia registrada. Solo se permite una por ponente.');
+        // Máximo 2 ponencias por ponente (las soft-deleted no cuentan)
+        abort_if($user->submissions()->count() >= 2, 422, 'Ya tienes 2 ponencias registradas. El máximo permitido es 2 por ponente.');
 
         $validated = $request->validate([
             'title'         => 'required|string|max:500',
