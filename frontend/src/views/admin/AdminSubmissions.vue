@@ -56,9 +56,9 @@ const statusVariants: Record<string, 'default' | 'warning' | 'danger' | 'success
 const stats = computed(() => {
   const list = submissions.value
   return {
-    total: list.length,
-    pending: list.filter(s => ['abstract_approved', 'under_review'].includes(s.status)).length,
-    revision: list.filter(s => s.status === 'revision_requested').length,
+    total:     list.length,
+    toApprove: list.filter(s => s.status === 'abstract_submitted').length,
+    inReview:  list.filter(s => s.status === 'under_review').length,
     confirmed: list.filter(s => s.status === 'confirmed').length,
   }
 })
@@ -78,10 +78,10 @@ async function loadData() {
   const api1 = useFetchApi()
   const api2 = useFetchApi()
   const [subsData, axesData] = await Promise.all([
-    api1.get<{ data: Submission[] }>('/admin/submissions?per_page=100'),
+    api1.get<Submission[]>('/admin/submissions'),
     api2.get<ThematicAxis[]>('/thematic-axes'),
   ])
-  if (subsData) submissions.value = (subsData as { data: Submission[] }).data ?? []
+  if (subsData) submissions.value = subsData as Submission[]
   if (axesData) axes.value = axesData
   loading.value = false
 }
@@ -105,12 +105,12 @@ onMounted(loadData)
           <p class="text-xs text-cgr-muted mt-1">Total</p>
         </UiCard>
         <UiCard class="p-4 text-center">
-          <p class="text-2xl font-bold text-blue-400">{{ stats.pending }}</p>
-          <p class="text-xs text-cgr-muted mt-1">En revisión</p>
+          <p class="text-2xl font-bold text-blue-400">{{ stats.toApprove }}</p>
+          <p class="text-xs text-cgr-muted mt-1">Por aprobar</p>
         </UiCard>
         <UiCard class="p-4 text-center">
-          <p class="text-2xl font-bold text-yellow-400">{{ stats.revision }}</p>
-          <p class="text-xs text-cgr-muted mt-1">Con correcciones</p>
+          <p class="text-2xl font-bold text-yellow-400">{{ stats.inReview }}</p>
+          <p class="text-xs text-cgr-muted mt-1">En revisión</p>
         </UiCard>
         <UiCard class="p-4 text-center">
           <p class="text-2xl font-bold text-green-400">{{ stats.confirmed }}</p>

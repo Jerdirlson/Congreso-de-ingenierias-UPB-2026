@@ -27,7 +27,7 @@ class AdminSubmissionController extends Controller
             $query->where('thematic_axis_id', $request->axis);
         }
 
-        $submissions = $query->paginate(20);
+        $submissions = $query->get();
 
         return response()->json($submissions);
     }
