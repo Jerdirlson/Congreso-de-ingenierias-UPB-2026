@@ -64,45 +64,62 @@ PROMPT;
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}";
 
-        try {
-            $response = Http::timeout(60)
-                ->withHeaders(['Content-Type' => 'application/json'])
-                ->post($url, [
-                    'contents' => [
-                        ['parts' => [['text' => $prompt]]],
-                    ],
-                    'generationConfig' => [
-                        'temperature'     => 0.1,
-                        'maxOutputTokens' => 2048,
-                    ],
-                ]);
+        $maxRetries = 3;
 
-            $body = $response->json();
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $response = Http::timeout(60)
+                    ->withHeaders(['Content-Type' => 'application/json'])
+                    ->post($url, [
+                        'contents' => [
+                            ['parts' => [['text' => $prompt]]],
+                        ],
+                        'generationConfig' => [
+                            'temperature'     => 0.1,
+                            'maxOutputTokens' => 2048,
+                        ],
+                    ]);
 
-            // Gemini devuelve errores en body con clave "error"
-            if (isset($body['error'])) {
-                $errMsg = $body['error']['message'] ?? 'Error desconocido de Gemini';
-                Log::error('Gemini API error', ['body' => $body]);
-                throw new RuntimeException($this->friendlyGeminiError($body['error']['code'] ?? 0, $errMsg));
+                $body = $response->json();
+
+                // Gemini devuelve errores en body con clave "error"
+                if (isset($body['error'])) {
+                    $code   = $body['error']['code'] ?? 0;
+                    $errMsg = $body['error']['message'] ?? 'Error desconocido de Gemini';
+
+                    // Retry en rate limit (429) con backoff exponencial
+                    if ($code === 429 && $attempt < $maxRetries) {
+                        $delay = 2 ** $attempt; // 2s, 4s
+                        Log::warning("Gemini 429 rate limit (intento {$attempt}/{$maxRetries}), esperando {$delay}s");
+                        sleep($delay);
+                        continue;
+                    }
+
+                    Log::error('Gemini API error', ['body' => $body]);
+                    throw new RuntimeException($this->friendlyGeminiError($code, $errMsg));
+                }
+
+                if ($response->failed()) {
+                    Log::error('Gemini HTTP error', ['status' => $response->status(), 'body' => $body]);
+                    throw new RuntimeException('Error de comunicación con Gemini (HTTP ' . $response->status() . ').');
+                }
+
+                $text   = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                $parsed = $this->parseResponse($text);
+                $parsed['raw_response'] = $body;
+
+                return $parsed;
+
+            } catch (RuntimeException $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                Log::error('LlmClassificationService unexpected error', ['error' => $e->getMessage()]);
+                throw new RuntimeException('Error inesperado al contactar Gemini: ' . $e->getMessage());
             }
-
-            if ($response->failed()) {
-                Log::error('Gemini HTTP error', ['status' => $response->status(), 'body' => $body]);
-                throw new RuntimeException('Error de comunicación con Gemini (HTTP ' . $response->status() . ').');
-            }
-
-            $text   = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
-            $parsed = $this->parseResponse($text);
-            $parsed['raw_response'] = $body;
-
-            return $parsed;
-
-        } catch (RuntimeException $e) {
-            throw $e;
-        } catch (\Throwable $e) {
-            Log::error('LlmClassificationService unexpected error', ['error' => $e->getMessage()]);
-            throw new RuntimeException('Error inesperado al contactar Gemini: ' . $e->getMessage());
         }
+
+        // Agotados los reintentos por rate limit
+        throw new RuntimeException('Límite de solicitudes de Gemini alcanzado después de varios intentos. Por favor intenta en unos minutos.');
     }
 
     private function friendlyGeminiError(int $code, string $original): string

@@ -10,6 +10,7 @@ use App\Services\AbstractFileExtractorService;
 use App\Services\LlmClassificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class SubmissionController extends Controller
@@ -63,14 +64,21 @@ class SubmissionController extends Controller
         ]);
         $submission->update(['abstract_attempts' => 1]);
 
-        // Clasificar de forma síncrona (sin cola)
+        // Clasificar de forma síncrona (con reintentos internos)
         try {
             $this->classifyAbstract($abstract, $submission);
         } catch (RuntimeException $e) {
-            // Limpiar registro creado y devolver error al cliente
-            $abstract->delete();
-            $submission->delete();
-            abort(503, $e->getMessage());
+            // La IA no está disponible: marcar como rejected para que el ponente elija manualmente
+            $abstract->update([
+                'llm_status'        => SubmissionAbstract::LLM_STATUS_REJECTED,
+                'llm_justification' => 'La clasificación automática no está disponible en este momento. Por favor selecciona el eje temático manualmente.',
+                'processed_at'      => now(),
+            ]);
+            $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
+            Log::warning('Clasificación IA falló al crear ponencia', [
+                'submission_id' => $submission->id,
+                'error'         => $e->getMessage(),
+            ]);
         }
 
         return response()->json([

@@ -219,13 +219,13 @@ function retry() {
           </div>
         </div>
 
-        <div v-else class="flex items-start gap-3 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3 mb-3">
-          <svg class="w-5 h-5 text-cgr-muted shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        <div v-else class="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-3">
+          <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 3h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
           </svg>
           <div>
-            <p class="text-cgr-muted text-sm font-medium">La IA no pudo determinar un eje con certeza</p>
-            <p class="text-xs text-cgr-subtle mt-0.5">Selecciona el eje temático que mejor corresponda a tu ponencia.</p>
+            <p class="text-amber-400 text-sm font-medium">La IA no pudo clasificar tu ponencia</p>
+            <p class="text-xs text-amber-200/70 mt-0.5">Tu ponencia fue guardada correctamente. Selecciona el eje temático manualmente para continuar.</p>
           </div>
         </div>
       </UiCard>

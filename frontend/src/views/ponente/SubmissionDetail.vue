@@ -147,6 +147,8 @@ async function submitAbstract() {
     const recommendedId = data.abstract?.llm_axis?.id
     if (recommendedId) selectedAxisId.value = recommendedId
     await loadSubmission()
+    // Solo hacer polling si realmente sigue pendiente (la IA procesa async)
+    // Si ya está rejected/approved, el selector aparece de inmediato
     if (llmClassifying.value) startLlmPolling()
   } else {
     errorMessage.value = api.error.value?.message ?? 'Error al enviar el archivo de resumen'
@@ -467,7 +469,7 @@ watch(() => route.params.id, () => {
         </UiButton>
       </div>
 
-      <!-- Clasificando con LLM -->
+      <!-- Clasificando con LLM (solo si realmente está pending y no hubo timeout) -->
       <div v-else-if="showLlmSpinner" class="flex items-center gap-3 text-cgr-muted text-sm">
         <div class="w-4 h-4 border-2 border-cgr-purple border-t-transparent rounded-full animate-spin shrink-0"></div>
         Clasificando con IA… esto puede tomar unos segundos.
@@ -475,6 +477,14 @@ watch(() => route.params.id, () => {
 
       <!-- Pendiente de confirmación de eje (abstract_submitted) -->
       <div v-else-if="canConfirmAxis">
+
+        <!-- Aviso de timeout: IA no respondió a tiempo -->
+        <div v-if="llmTimedOut && !showResubmitForm" class="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-4">
+          <svg class="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 3h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <p class="text-amber-300 text-sm">La IA tardó demasiado en responder. Puedes seleccionar el eje temático manualmente.</p>
+        </div>
 
         <!-- Recomendación de la IA -->
         <div v-if="!showResubmitForm">
@@ -505,7 +515,7 @@ watch(() => route.params.id, () => {
             <svg class="w-4 h-4 text-cgr-muted shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <p class="text-cgr-muted text-sm">La IA no pudo determinar un eje con certeza. Selecciona el que mejor corresponda.</p>
+            <p class="text-cgr-muted text-sm">La IA no pudo clasificar tu resumen. Selecciona el eje temático manualmente para continuar.</p>
           </div>
 
           <!-- Selector de eje -->

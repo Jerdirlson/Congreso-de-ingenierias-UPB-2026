@@ -10,6 +10,7 @@ use App\Services\AbstractFileExtractorService;
 use App\Services\LlmClassificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class AbstractController extends Controller
@@ -85,10 +86,18 @@ class AbstractController extends Controller
         $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
 
         } catch (RuntimeException $e) {
-            // Revertir estado a draft para permitir reintento
-            $abstract->delete();
-            $submission->update(['abstract_attempts' => $version - 1, 'status' => Submission::STATUS_DRAFT]);
-            abort(503, $e->getMessage());
+            // La IA no está disponible: marcar como rejected para que el ponente elija manualmente
+            $abstract->update([
+                'llm_status'        => SubmissionAbstract::LLM_STATUS_REJECTED,
+                'llm_justification' => 'La clasificación automática no está disponible en este momento. Por favor selecciona el eje temático manualmente.',
+                'processed_at'      => now(),
+            ]);
+            $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
+            Log::warning('Clasificación IA falló al reenviar resumen', [
+                'submission_id' => $submission->id,
+                'abstract_id'   => $abstract->id,
+                'error'         => $e->getMessage(),
+            ]);
         }
 
         return response()->json([
