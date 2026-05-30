@@ -118,9 +118,10 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::get('/submissions',                          [AdminSubmissionController::class, 'index']);
     Route::get('/reviewers',                            [AdminSubmissionController::class, 'reviewers']);
     Route::get('/submissions/{submission}',             [AdminSubmissionController::class, 'show']);
-    Route::patch('/submissions/{submission}/abstract/approve',  [AdminSubmissionController::class, 'approveAbstract']);
-    Route::patch('/submissions/{submission}/abstract/reject',   [AdminSubmissionController::class, 'rejectAbstract']);
-    Route::post('/submissions/{submission}/assign-reviewer',    [AdminSubmissionController::class, 'assignReviewer']);
+    Route::patch('/submissions/{submission}/abstract/approve',           [AdminSubmissionController::class, 'approveAbstract']);
+    Route::patch('/submissions/{submission}/abstract/reject',            [AdminSubmissionController::class, 'rejectAbstract']);
+    Route::post('/submissions/{submission}/assign-reviewer',             [AdminSubmissionController::class, 'assignReviewer']);
+    Route::post('/submissions/{submission}/assign-abstract-reviewer',    [AdminSubmissionController::class, 'assignAbstractReviewer']);
     Route::get('/submissions/{submission}/documents/{document}/download', [DocumentSubmissionController::class, 'download']);
     Route::get('/submissions/{submission}/video/stream',         [AdminSubmissionController::class, 'streamVideo']);
     Route::patch('/submissions/{submission}/video/approve',      [AdminSubmissionController::class, 'approveVideo']);

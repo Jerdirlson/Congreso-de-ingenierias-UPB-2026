@@ -15,6 +15,7 @@ interface ReviewDetail {
   status: string
   decision: string | null
   comments: string | null
+  type?: string
   assigned_at: string | null
   started_at: string | null
   completed_at: string | null
@@ -26,10 +27,12 @@ interface ReviewDetail {
     abstracts?: { content: string; version: number }[]
   }
   submission_document?: { id: number; original_filename: string; version: number } | null
+  submission_abstract?: { id: number; content: string; version: number } | null
   history?: {
-    id: number; status: string; decision: string | null; comments: string | null
+    id: number; status: string; decision: string | null; comments: string | null; type?: string
     completed_at: string | null
     submission_document?: { version: number; original_filename: string } | null
+    submission_abstract?: { version: number } | null
   }[]
 }
 
@@ -168,23 +171,36 @@ watch(() => route.params.id, loadReview)
         </div>
         <div class="flex-1">
           <p class="font-medium text-white mb-1">Revision pendiente de iniciar</p>
-          <p class="text-sm text-cgr-muted mb-4">Al iniciar, podras leer el resumen y el documento PDF del ponente para emitir tu dictamen.</p>
+          <p class="text-sm text-cgr-muted mb-4">
+            {{ review.type === 'abstract'
+              ? 'Al iniciar, podrás leer el resumen del ponente y emitir tu dictamen.'
+              : 'Al iniciar, podrás leer el resumen y el documento PDF del ponente para emitir tu dictamen.' }}
+          </p>
           <UiButton :loading="api.loading.value" @click="startReview">Iniciar revision</UiButton>
         </div>
       </div>
     </UiCard>
 
     <template v-if="review?.status === 'in_progress' || review?.status === 'completed'">
-      <!-- Resumen -->
+      <!-- Resumen a revisar (para revisiones de tipo 'abstract' es el objeto principal) -->
       <UiCard class="p-6 mb-4">
-        <h2 class="font-semibold text-white mb-3">Resumen de la ponencia</h2>
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="font-semibold text-white">
+            {{ review?.type === 'abstract' ? 'Resumen a revisar' : 'Resumen de la ponencia' }}
+          </h2>
+          <span v-if="review?.type === 'abstract'" class="text-[10px] font-medium text-cgr-purple border border-cgr-purple/30 bg-cgr-purple/10 rounded-full px-2 py-0.5">
+            Objeto de revisión
+          </span>
+        </div>
         <div class="bg-cgr-section rounded-lg p-4 text-sm text-cgr-muted leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
-          {{ review?.submission?.abstracts?.[0]?.content ?? 'Sin resumen.' }}
+          {{ (review?.type === 'abstract' ? review?.submission_abstract?.content : null)
+             ?? review?.submission?.abstracts?.[0]?.content
+             ?? 'Sin resumen.' }}
         </div>
       </UiCard>
 
-      <!-- Documento -->
-      <UiCard class="p-6 mb-4">
+      <!-- Documento PDF (solo para revisiones de tipo 'document') -->
+      <UiCard v-if="review?.type !== 'abstract'" class="p-6 mb-4">
         <h2 class="font-semibold text-white mb-3">Documento PDF</h2>
         <div v-if="review?.submission_document" class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3">
           <div class="flex items-center gap-3 min-w-0">
@@ -231,7 +247,9 @@ watch(() => route.params.id, loadReview)
             />
           </div>
           <UiButton :loading="api.loading.value" :variant="decision === 'rejected' ? 'danger' : 'primary'" @click="submitReview">
-            {{ decision === 'approved' ? 'Aprobar ponencia' : 'Rechazar ponencia' }}
+            {{ decision === 'approved'
+              ? (review?.type === 'abstract' ? 'Aprobar resumen' : 'Aprobar ponencia')
+              : (review?.type === 'abstract' ? 'Rechazar resumen' : 'Rechazar ponencia') }}
           </UiButton>
         </div>
       </UiCard>
@@ -262,7 +280,9 @@ watch(() => route.params.id, loadReview)
           <div class="flex items-center justify-between gap-3 mb-2">
             <div class="flex items-center gap-2">
               <span class="text-xs text-cgr-subtle">
-                {{ h.submission_document ? 'Doc v' + h.submission_document.version : 'Sin documento' }}
+                {{ h.type === 'abstract'
+                  ? 'Resumen v' + (h.submission_abstract?.version ?? 1)
+                  : h.submission_document ? 'Doc v' + h.submission_document.version : 'Sin documento' }}
               </span>
               <UiBadge :variant="h.decision === 'approved' ? 'success' : h.decision === 'rejected' ? 'danger' : 'default'">
                 {{ h.decision === 'approved' ? 'Aprobada' : h.decision === 'rejected' ? 'Cambios solicitados' : 'Sin dictamen' }}

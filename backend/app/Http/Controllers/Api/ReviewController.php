@@ -20,6 +20,7 @@ class ReviewController extends Controller
                 'submission.user:id,name,email,institution',
                 'submission.thematicAxis:id,name',
                 'submissionDocument',
+                'submissionAbstract',
             ]);
 
         if ($request->filled('status')) {
@@ -48,13 +49,17 @@ class ReviewController extends Controller
             'submission.thematicAxis',
             'submission.abstracts',
             'submissionDocument',
+            'submissionAbstract',
         ]);
 
         // Historial de revisiones anteriores del mismo revisor sobre la misma ponencia
         $history = Review::where('submission_id', $review->submission_id)
             ->where('reviewer_id', $review->reviewer_id)
             ->where('id', '!=', $review->id)
-            ->with('submissionDocument:id,version,original_filename')
+            ->with([
+                'submissionDocument:id,version,original_filename',
+                'submissionAbstract:id,version',
+            ])
             ->orderByDesc('assigned_at')
             ->get();
 
@@ -122,15 +127,22 @@ class ReviewController extends Controller
     {
         $submission = $review->submission;
 
-        if ($review->decision === 'rejected') {
+        if ($review->type === Review::TYPE_ABSTRACT) {
+            $this->updateAbstractStatus($review, $submission);
+            return;
+        }
+
+        // Revisión de documento
+        if ($review->decision === Review::DECISION_REJECTED) {
             $submission->advanceTo('revision_requested');
             $submission->latestDocument?->update(['status' => 'revision_requested']);
             return;
         }
 
-        // Solo evaluar las revisiones del documento actual, no el historial de versiones anteriores
+        // Solo evaluar las revisiones del documento actual (no historial de versiones anteriores)
         $currentDocReviews = $submission->reviews
-            ->where('submission_document_id', $review->submission_document_id);
+            ->where('submission_document_id', $review->submission_document_id)
+            ->where('type', Review::TYPE_DOCUMENT);
 
         $allCompleted = $currentDocReviews->every(fn ($r) => $r->status === Review::STATUS_COMPLETED);
         $allApproved  = $currentDocReviews->every(fn ($r) => $r->decision === Review::DECISION_APPROVED);
@@ -138,6 +150,26 @@ class ReviewController extends Controller
         if ($allCompleted && $allApproved) {
             $submission->advanceTo('document_approved');
             $submission->latestDocument?->update(['status' => 'approved']);
+        }
+    }
+
+    private function updateAbstractStatus(Review $review, \App\Models\Submission $submission): void
+    {
+        if ($review->decision === Review::DECISION_REJECTED) {
+            $submission->advanceTo(\App\Models\Submission::STATUS_ABSTRACT_REJECTED);
+            return;
+        }
+
+        // Verificar si todos los revisores del resumen actual aprobaron
+        $abstractReviews = $submission->reviews
+            ->where('submission_abstract_id', $review->submission_abstract_id)
+            ->where('type', Review::TYPE_ABSTRACT);
+
+        $allCompleted = $abstractReviews->every(fn ($r) => $r->status === Review::STATUS_COMPLETED);
+        $allApproved  = $abstractReviews->every(fn ($r) => $r->decision === Review::DECISION_APPROVED);
+
+        if ($allCompleted && $allApproved) {
+            $submission->advanceTo(\App\Models\Submission::STATUS_ABSTRACT_APPROVED);
         }
     }
 }

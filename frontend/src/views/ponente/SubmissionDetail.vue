@@ -22,7 +22,7 @@ const submission = ref<{
   abstracts?: { id: number; content: string; llm_status: string; llm_axis?: { id: number; name: string }; llm_justification?: string; llm_confidence_score?: number }[]
   documents?: { id: number; original_filename: string; version: number; status: string }[]
   video?: { id: number; status: string; error_message?: string | null; original_filename?: string | null } | null
-  reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; reviewer?: { name: string } }[]
+  reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; type?: string; reviewer?: { name: string } }[]
 } | null>(null)
 
 const abstractFile = ref<File | null>(null)
@@ -78,6 +78,14 @@ const currentStepIndex = computed(() => {
 const canPay = computed(() => submission.value?.status === 'payment_pending')
 
 const canSubmitAbstract = computed(() => submission.value?.status === 'draft')
+const canResubmitAbstract = computed(() => submission.value?.status === 'abstract_rejected')
+
+const abstractRejectionReview = computed(() => {
+  const reviews = submission.value?.reviews ?? []
+  return reviews
+    .filter(r => r.type === 'abstract' && r.status === 'completed' && r.decision === 'rejected')
+    .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
+})
 const canConfirmAxis = computed(() =>
   submission.value?.status === 'abstract_submitted' && !submission.value?.thematic_axis
 )
@@ -592,6 +600,40 @@ watch(() => route.params.id, () => {
             El comité revisará tu resumen. Una vez aprobado, podrás continuar con la carga del documento completo.
           </p>
         </div>
+      </div>
+
+      <!-- Resumen rechazado por revisor -->
+      <div v-else-if="canResubmitAbstract">
+        <div class="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-4 mb-4">
+          <div class="flex gap-3 items-start mb-3">
+            <svg class="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div>
+              <p class="text-sm font-semibold text-red-300">Tu resumen fue rechazado por el comité</p>
+              <p class="text-xs text-red-200/70 mt-0.5">Revisa los comentarios y sube una nueva versión corregida.</p>
+            </div>
+          </div>
+          <div v-if="abstractRejectionReview?.comments" class="bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-3 text-sm text-red-100 whitespace-pre-wrap leading-relaxed">
+            {{ abstractRejectionReview.comments }}
+          </div>
+          <p v-else class="text-xs text-red-200/60">Sin comentarios adicionales del revisor.</p>
+        </div>
+
+        <p class="text-xs text-cgr-muted mb-3">Sube una nueva versión del resumen:</p>
+        <input
+          type="file"
+          accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+          class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
+          @change="onAbstractFileChange"
+        />
+        <p v-if="abstractFileError" class="mt-2 text-xs text-red-400">{{ abstractFileError }}</p>
+        <p v-if="abstractFile" class="mt-2 text-xs text-cgr-subtle">
+          Archivo: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
+        </p>
+        <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
+          Analizar y reenviar resumen
+        </UiButton>
       </div>
 
       <!-- Eje confirmado (abstract_approved y más allá) -->

@@ -13,7 +13,7 @@ const api = useFetchApi()
 
 interface Document { id: number; original_filename: string; version: number; status: string; submitted_at: string }
 interface Review {
-  id: number; status: string; decision: string | null
+  id: number; status: string; decision: string | null; type?: string; comments?: string | null
   reviewer?: { id: number; name: string }
   assignedBy?: { name: string }
   assigned_at: string | null; completed_at: string | null
@@ -36,10 +36,13 @@ const selectedReviewerId = ref<number | null>(null)
 const selectedDocumentId = ref<number | null>(null)
 const assignError = ref('')
 const assigning = ref(false)
+
+const assignAbstractModalOpen = ref(false)
+const selectedAbstractReviewerId = ref<number | null>(null)
+const assignAbstractError = ref('')
+const assigningAbstract = ref(false)
 const downloading = ref<number | null>(null)
 const downloadingVideo = ref(false)
-const approvingAbstract = ref(false)
-const rejectingAbstract = ref(false)
 const rejectingVideo = ref(false)
 const showRejectVideoModal = ref(false)
 const videoRejectReason = ref('')
@@ -122,9 +125,38 @@ async function downloadDoc(doc: Document) {
   } finally { downloading.value = null }
 }
 
-// Check if reviewer already assigned to avoid duplicates
-function isAlreadyAssigned(reviewerId: number) {
-  return submission.value?.reviews?.some(r => r.reviewer?.id === reviewerId) ?? false
+function isAlreadyAssignedToDoc(reviewerId: number) {
+  return submission.value?.reviews?.some(r => r.reviewer?.id === reviewerId && r.type !== 'abstract') ?? false
+}
+
+function isAlreadyAssignedToAbstract(reviewerId: number) {
+  return submission.value?.reviews?.some(r => r.reviewer?.id === reviewerId && r.type === 'abstract') ?? false
+}
+
+function openAssignAbstractModal() {
+  selectedAbstractReviewerId.value = null
+  assignAbstractError.value = ''
+  assignAbstractModalOpen.value = true
+}
+
+async function assignAbstractReviewer() {
+  if (!selectedAbstractReviewerId.value) {
+    assignAbstractError.value = 'Selecciona un revisor.'
+    return
+  }
+  assigningAbstract.value = true
+  assignAbstractError.value = ''
+  const a = useFetchApi()
+  const data = await a.post<unknown>(`/admin/submissions/${route.params.id}/assign-abstract-reviewer`, {
+    reviewer_id: selectedAbstractReviewerId.value,
+  })
+  assigningAbstract.value = false
+  if (data) {
+    assignAbstractModalOpen.value = false
+    await load()
+  } else {
+    assignAbstractError.value = a.error.value?.message ?? 'Error al asignar el revisor.'
+  }
 }
 
 function formatFileSize(bytes?: number) {
@@ -150,21 +182,6 @@ async function downloadVideo() {
     document.body.appendChild(a); a.click()
     document.body.removeChild(a); URL.revokeObjectURL(url)
   } finally { downloadingVideo.value = false }
-}
-async function approveAbstract() {
-  approvingAbstract.value = true
-  const a = useFetchApi()
-  await a.patch(`/admin/submissions/${route.params.id}/abstract/approve`, {})
-  approvingAbstract.value = false
-  await load()
-}
-
-async function rejectAbstract() {
-  rejectingAbstract.value = true
-  const a = useFetchApi()
-  await a.patch(`/admin/submissions/${route.params.id}/abstract/reject`, {})
-  rejectingAbstract.value = false
-  await load()
 }
 
 async function rejectVideo() {
@@ -243,14 +260,13 @@ onMounted(load)
     <UiCard v-if="submission?.abstracts?.length" class="p-5 mb-4">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide">Resumen</h2>
-        <div v-if="submission.status === 'abstract_submitted'" class="flex gap-2">
-          <UiButton size="sm" variant="danger" :loading="rejectingAbstract" @click="rejectAbstract">
-            Rechazar
-          </UiButton>
-          <UiButton size="sm" :loading="approvingAbstract" @click="approveAbstract">
-            Aprobar
-          </UiButton>
-        </div>
+        <UiButton
+          v-if="submission.status === 'abstract_submitted'"
+          size="sm"
+          @click="openAssignAbstractModal"
+        >
+          + Asignar revisor
+        </UiButton>
       </div>
       <div class="bg-cgr-section rounded-lg p-4 text-sm text-cgr-muted leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
         {{ submission.abstracts[0]?.content }}
@@ -298,15 +314,25 @@ onMounted(load)
         <div
           v-for="rev in submission.reviews"
           :key="rev.id"
-          class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3"
+          class="flex items-start justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3"
         >
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-7 h-7 rounded-full bg-cgr-purple/20 flex items-center justify-center shrink-0">
               <span class="text-xs font-bold text-cgr-purple">{{ rev.reviewer?.name?.charAt(0) ?? '?' }}</span>
             </div>
             <div>
-              <p class="text-sm text-white font-medium">{{ rev.reviewer?.name ?? 'Revisor #' + rev.id }}</p>
+              <div class="flex items-center gap-2 mb-0.5">
+                <p class="text-sm text-white font-medium">{{ rev.reviewer?.name ?? 'Revisor #' + rev.id }}</p>
+                <span
+                  :class="['text-[10px] font-medium rounded-full px-2 py-0.5 border', rev.type === 'abstract' ? 'text-cgr-purple border-cgr-purple/30 bg-cgr-purple/10' : 'text-cgr-muted border-cgr-border bg-cgr-section']"
+                >
+                  {{ rev.type === 'abstract' ? 'Resumen' : 'Documento' }}
+                </span>
+              </div>
               <p class="text-xs text-cgr-subtle">Asignado {{ formatDate(rev.assigned_at) }}</p>
+              <p v-if="rev.comments && rev.decision === 'rejected'" class="text-xs text-red-300/70 mt-1 line-clamp-2">
+                "{{ rev.comments }}"
+              </p>
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0">
@@ -323,7 +349,7 @@ onMounted(load)
       <div v-else class="py-6 text-center">
         <p class="text-sm text-cgr-muted mb-1">No hay revisores asignados.</p>
         <p class="text-xs text-cgr-subtle">
-          El ponente debe subir un documento antes de poder asignar revisores.
+          Asigna un revisor al resumen cuando el ponente lo haya enviado.
         </p>
       </div>
     </UiCard>
@@ -384,8 +410,8 @@ onMounted(load)
       </template>
     </UiModal>
 
-    <!-- Modal asignar revisor -->
-    <UiModal v-model="assignModalOpen" title="Asignar revisor">
+    <!-- Modal asignar revisor al documento -->
+    <UiModal v-model="assignModalOpen" title="Asignar revisor al documento">
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-cgr-muted mb-2">Revisor</label>
@@ -398,9 +424,9 @@ onMounted(load)
               v-for="r in reviewers"
               :key="r.id"
               :value="r.id"
-              :disabled="isAlreadyAssigned(r.id)"
+              :disabled="isAlreadyAssignedToDoc(r.id)"
             >
-              {{ r.name }}{{ isAlreadyAssigned(r.id) ? ' (ya asignado)' : '' }}
+              {{ r.name }}{{ isAlreadyAssignedToDoc(r.id) ? ' (ya asignado)' : '' }}
             </option>
           </select>
         </div>
@@ -422,6 +448,37 @@ onMounted(load)
       <template #footer>
         <UiButton variant="secondary" @click="assignModalOpen = false">Cancelar</UiButton>
         <UiButton :loading="assigning" @click="assignReviewer">Asignar</UiButton>
+      </template>
+    </UiModal>
+
+    <!-- Modal asignar revisor al resumen -->
+    <UiModal v-model="assignAbstractModalOpen" title="Asignar revisor al resumen">
+      <div class="space-y-4">
+        <p class="text-xs text-cgr-muted">El revisor podrá leer el texto del resumen y emitir su dictamen (aprobar o rechazar con comentarios).</p>
+        <div>
+          <label class="block text-xs font-medium text-cgr-muted mb-2">Revisor</label>
+          <select
+            v-model="selectedAbstractReviewerId"
+            class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cgr-purple"
+          >
+            <option :value="null" disabled>Selecciona un revisor...</option>
+            <option
+              v-for="r in reviewers"
+              :key="r.id"
+              :value="r.id"
+              :disabled="isAlreadyAssignedToAbstract(r.id)"
+            >
+              {{ r.name }}{{ isAlreadyAssignedToAbstract(r.id) ? ' (ya asignado)' : '' }}
+            </option>
+          </select>
+        </div>
+        <p v-if="assignAbstractError" class="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+          {{ assignAbstractError }}
+        </p>
+      </div>
+      <template #footer>
+        <UiButton variant="secondary" @click="assignAbstractModalOpen = false">Cancelar</UiButton>
+        <UiButton :loading="assigningAbstract" @click="assignAbstractReviewer">Asignar</UiButton>
       </template>
     </UiModal>
   </div>

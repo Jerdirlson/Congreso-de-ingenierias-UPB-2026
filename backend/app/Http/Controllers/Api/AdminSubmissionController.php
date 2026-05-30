@@ -108,7 +108,43 @@ class AdminSubmissionController extends Controller
         return response()->json(['status' => 'video_pending']);
     }
 
-    /** PATCH /api/admin/submissions/{submission}/abstract/approve — aprobar resumen */
+    /** POST /api/admin/submissions/{submission}/assign-abstract-reviewer */
+    public function assignAbstractReviewer(Request $request, Submission $submission): JsonResponse
+    {
+        abort_if(
+            $submission->status !== Submission::STATUS_ABSTRACT_SUBMITTED,
+            422,
+            'Solo se puede asignar revisor al resumen cuando está en estado "enviado".'
+        );
+
+        $validated = $request->validate([
+            'reviewer_id' => 'required|exists:users,id',
+        ]);
+
+        $reviewer = User::findOrFail($validated['reviewer_id']);
+        abort_unless($reviewer->hasRole('revisor'), 422, 'El usuario debe tener rol revisor.');
+
+        $abstract = $submission->abstracts()->latest()->firstOrFail();
+
+        $alreadyAssigned = Review::where('submission_abstract_id', $abstract->id)
+            ->where('reviewer_id', $reviewer->id)
+            ->exists();
+        abort_if($alreadyAssigned, 422, 'Este revisor ya está asignado a este resumen.');
+
+        $review = Review::create([
+            'submission_abstract_id' => $abstract->id,
+            'submission_id'          => $submission->id,
+            'reviewer_id'            => $reviewer->id,
+            'assigned_by'            => $request->user()->id,
+            'type'                   => Review::TYPE_ABSTRACT,
+            'status'                 => Review::STATUS_PENDING,
+            'assigned_at'            => now(),
+        ]);
+
+        return response()->json($review->load(['reviewer:id,name']), 201);
+    }
+
+    /** PATCH /api/admin/submissions/{submission}/abstract/approve — aprobar resumen (override admin) */
     public function approveAbstract(Submission $submission): JsonResponse
     {
         abort_if($submission->status !== Submission::STATUS_ABSTRACT_SUBMITTED, 422, 'El resumen debe estar en estado "enviado" para aprobarse.');
@@ -116,7 +152,7 @@ class AdminSubmissionController extends Controller
         return response()->json(['status' => Submission::STATUS_ABSTRACT_APPROVED]);
     }
 
-    /** PATCH /api/admin/submissions/{submission}/abstract/reject — rechazar resumen */
+    /** PATCH /api/admin/submissions/{submission}/abstract/reject — rechazar resumen (override admin) */
     public function rejectAbstract(Submission $submission): JsonResponse
     {
         abort_if($submission->status !== Submission::STATUS_ABSTRACT_SUBMITTED, 422, 'El resumen debe estar en estado "enviado" para rechazarse.');

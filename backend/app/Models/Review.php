@@ -14,6 +14,8 @@ class Review extends Model
 
     protected $fillable = [
         'submission_document_id',
+        'submission_abstract_id',
+        'type',
         'submission_id',
         'reviewer_id',
         'assigned_by',
@@ -36,6 +38,11 @@ class Review extends Model
         return $this->belongsTo(SubmissionDocument::class, 'submission_document_id');
     }
 
+    public function submissionAbstract(): BelongsTo
+    {
+        return $this->belongsTo(SubmissionAbstract::class, 'submission_abstract_id');
+    }
+
     public function submission(): BelongsTo
     {
         return $this->belongsTo(Submission::class);
@@ -51,10 +58,13 @@ class Review extends Model
         return $this->belongsTo(User::class, 'assigned_by');
     }
 
-    public const STATUS_PENDING = 'pending';
+    public const STATUS_PENDING     = 'pending';
     public const STATUS_IN_PROGRESS = 'in_progress';
-    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_COMPLETED   = 'completed';
 
     public const DECISION_APPROVED = 'approved';
     public const DECISION_REJECTED = 'rejected';
+
+    public const TYPE_DOCUMENT = 'document';
+    public const TYPE_ABSTRACT = 'abstract';
 }

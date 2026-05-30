@@ -12,6 +12,7 @@ interface Review {
   id: number
   status: 'pending' | 'in_progress' | 'completed'
   decision: string | null
+  type?: string
   assigned_at: string | null
   submission?: {
     id: number
@@ -181,15 +182,18 @@ onMounted(loadData)
                   · {{ r.submission.thematic_axis.name }}
                 </span>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <UiBadge :variant="statusVariants[r.status]">
                   {{ statusLabels[r.status] }}
                 </UiBadge>
                 <UiBadge v-if="r.decision" :variant="decisionVariants[r.decision]">
                   {{ decisionLabels[r.decision] }}
                 </UiBadge>
-                <span v-if="all.length > 1" class="text-xs text-cgr-purple font-medium bg-cgr-purple/10 border border-cgr-purple/20 rounded-full px-2 py-0.5">
-                  Revisión v{{ all.length }}
+                <span v-if="r.type === 'abstract'" class="text-xs text-cgr-purple font-medium bg-cgr-purple/10 border border-cgr-purple/20 rounded-full px-2 py-0.5">
+                  Resumen
+                </span>
+                <span v-if="all.length > 1" class="text-xs text-cgr-muted font-medium bg-cgr-section border border-cgr-border rounded-full px-2 py-0.5">
+                  v{{ all.length }}
                 </span>
               </div>
             </div>
