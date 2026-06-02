@@ -108,6 +108,27 @@ async function assignReviewer() {
   }
 }
 
+function slugify(text: string) {
+  return text
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'resumen'
+}
+
+function downloadAbstract() {
+  const content = submission.value?.abstracts?.[0]?.content
+  if (!content) return
+  const title = submission.value?.title ?? 'resumen'
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Resumen-${slugify(title)}.txt`
+  document.body.appendChild(a); a.click()
+  document.body.removeChild(a); URL.revokeObjectURL(url)
+}
+
 async function downloadDoc(doc: Document) {
   downloading.value = doc.id
   const token = getApiToken()
@@ -260,13 +281,18 @@ onMounted(load)
     <UiCard v-if="submission?.abstracts?.length" class="p-5 mb-4">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide">Resumen</h2>
-        <UiButton
-          v-if="submission.status === 'abstract_submitted'"
-          size="sm"
-          @click="openAssignAbstractModal"
-        >
-          + Asignar revisor
-        </UiButton>
+        <div class="flex items-center gap-2">
+          <UiButton size="sm" variant="secondary" @click="downloadAbstract">
+            Descargar
+          </UiButton>
+          <UiButton
+            v-if="submission.status === 'abstract_submitted'"
+            size="sm"
+            @click="openAssignAbstractModal"
+          >
+            + Asignar revisor
+          </UiButton>
+        </div>
       </div>
       <div class="bg-cgr-section rounded-lg p-4 text-sm text-cgr-muted leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
         {{ submission.abstracts[0]?.content }}
