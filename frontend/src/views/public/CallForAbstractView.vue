@@ -67,7 +67,7 @@ const benefits = [
 
 const dates = [
   { date: '20 de marzo',         label: 'Apertura recepción de resúmenes' },
-  { date: '31 de mayo',          label: 'Cierre recepción de resúmenes' },
+  { date: '13 de junio',         label: 'Cierre recepción de resúmenes' },
   { date: '26 de junio',         label: 'Notificación de resúmenes aceptados (ISSN)' },
   { date: '1 — 30 de julio',     label: 'Envío de versiones finales' },
   { date: '28 de septiembre',    label: 'Cierre de videoponencias virtuales' },

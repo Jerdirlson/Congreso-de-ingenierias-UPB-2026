@@ -5,7 +5,7 @@ const { setRef } = useScrollReveal()
 
 const milestones = [
   { date: '20 de marzo', label: 'Apertura de recepción de resúmenes', status: 'active' },
-  { date: '31 de mayo', label: 'Cierre de recepción de resúmenes', status: 'upcoming' },
+  { date: '13 de junio', label: 'Cierre de recepción de resúmenes', status: 'upcoming' },
   { date: '26 de junio', label: 'Notificación de resúmenes aceptados (ISSN)', status: 'upcoming' },
   { date: '1 — 30 de julio', label: 'Envío de artículos completos (Solo invitados)', status: 'upcoming' },
   { date: '1 — 30 de julio', label: 'Envío de versiones finales de resúmenes aceptados', status: 'upcoming' },
