@@ -57,7 +57,7 @@ const ALL_OPTIONS: NrcOption[] = [
   {
     nrc: '51890',
     title: 'Egresados UPB',
-    description: 'Evento del viernes.',
+    description: 'Evento Viernes - Solo tiene derecho a la conferencia de Egresado y Coctel de Cierre.',
     price: '$50.000 COP',
     url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51890&period=202650',
     audiences: ['participante'],
