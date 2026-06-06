@@ -12,8 +12,9 @@ const route = useRoute()
 const links = computed(() => {
   if (props.role === 'ponente') {
     return [
-      { to: { name: 'ponente-home' }, label: 'Mis ponencias',   icon: 'list' },
-      { to: { name: 'ponente-new' },  label: 'Nueva ponencia',  icon: 'plus' },
+      { to: { name: 'ponente-home' },        label: 'Mis ponencias',  icon: 'list' },
+      { to: { name: 'ponente-new' },         label: 'Nueva ponencia', icon: 'plus' },
+      { to: { name: 'ponente-inscripcion' }, label: 'Inscripción',    icon: 'card' },
     ]
   }
   if (props.role === 'participante') {

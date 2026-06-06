@@ -74,6 +74,7 @@ const router = createRouter({
         { path: '', name: 'ponente-home', component: () => import('../views/ponente/PonenteHome.vue') },
         { path: 'submissions/new', name: 'ponente-new', component: () => import('../views/ponente/NuevaSubmission.vue') },
         { path: 'submissions/:id', name: 'ponente-detail', component: () => import('../views/ponente/SubmissionDetail.vue') },
+        { path: 'inscripcion', name: 'ponente-inscripcion', component: () => import('../views/ponente/PonenteInscripcion.vue') },
       ],
     },
     {
