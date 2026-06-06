@@ -64,6 +64,7 @@ async function loadData() {
 }
 
 function formatDate(dateStr: string) {
+  if (dateStr === '2026-10-14') return 'Del Miércoles 14 al Sábado 17 de Octubre del 2026'
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-CO', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   })
