@@ -11,6 +11,7 @@ interface NrcOption {
   price: string
   url: string
   audiences: Audience[]
+  unavailable?: boolean
 }
 
 const ALL_OPTIONS: NrcOption[] = [
@@ -53,6 +54,7 @@ const ALL_OPTIONS: NrcOption[] = [
     price: '$350.000 COP',
     url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51888&period=202650',
     audiences: ['participante'],
+    unavailable: true,
   },
   {
     nrc: '51890',
@@ -146,8 +148,16 @@ async function confirmExternal() {
       </label>
     </div>
 
+    <div v-if="selected?.unavailable" class="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-4 py-3 text-sm">
+      <svg class="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      </svg>
+      <p class="text-yellow-200/90 leading-relaxed">
+        Esta modalidad se habilitará únicamente cuando se completen los cupos de inscripción externa. Pronto estará disponible.
+      </p>
+    </div>
     <a
-      v-if="selected"
+      v-else-if="selected"
       :href="selected.url"
       target="_blank"
       rel="noopener noreferrer"
