@@ -22,7 +22,8 @@ const submissions = ref<Submission[]>([])
 const axes = ref<ThematicAxis[]>([])
 const loading = ref(true)
 const filterStatus = ref('')
-const filterAxis = ref('')
+const filterAxis   = ref('')
+const search       = ref('')
 
 const statusLabels: Record<string, string> = {
   draft: 'Borrador',
@@ -63,11 +64,20 @@ const stats = computed(() => {
   }
 })
 
-const filtered = computed(() => submissions.value.filter(s => {
-  if (filterStatus.value && s.status !== filterStatus.value) return false
-  if (filterAxis.value && s.thematic_axis?.id !== Number(filterAxis.value)) return false
-  return true
-}))
+const filtered = computed(() => {
+  const q = search.value.toLowerCase().trim()
+  return submissions.value.filter(s => {
+    if (filterStatus.value && s.status !== filterStatus.value) return false
+    if (filterAxis.value && s.thematic_axis?.id !== Number(filterAxis.value)) return false
+    if (q) {
+      const inTitle  = s.title.toLowerCase().includes(q)
+      const inAuthor = (s.user?.name ?? '').toLowerCase().includes(q)
+      const inEmail  = (s.user?.email ?? '').toLowerCase().includes(q)
+      if (!inTitle && !inAuthor && !inEmail) return false
+    }
+    return true
+  })
+})
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -120,6 +130,18 @@ onMounted(loadData)
 
       <!-- Filtros -->
       <div class="flex flex-wrap gap-3 mb-5">
+        <!-- Buscador -->
+        <div class="relative flex-1 min-w-48">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cgr-subtle pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Buscar por título o autor…"
+            class="w-full bg-cgr-section border border-cgr-border rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder:text-cgr-subtle focus:outline-none focus:border-cgr-purple transition-colors"
+          />
+        </div>
         <select
           v-model="filterStatus"
           class="bg-cgr-section border border-cgr-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cgr-purple"
@@ -135,11 +157,11 @@ onMounted(loadData)
           <option v-for="a in axes" :key="a.id" :value="a.id">{{ a.name }}</option>
         </select>
         <button
-          v-if="filterStatus || filterAxis"
+          v-if="search || filterStatus || filterAxis"
           class="text-xs text-cgr-muted hover:text-white transition-colors px-3 py-2"
-          @click="filterStatus = ''; filterAxis = ''"
+          @click="search = ''; filterStatus = ''; filterAxis = ''"
         >
-          Limpiar filtros
+          Limpiar
         </button>
         <span class="ml-auto text-xs text-cgr-subtle self-center">{{ filtered.length }} ponencias</span>
       </div>
