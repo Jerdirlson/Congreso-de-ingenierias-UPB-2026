@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import GuestLayout from '../../layouts/GuestLayout.vue'
 import { useAuthStore } from '../../stores/auth'
+import type { UserRole } from '../../stores/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -11,25 +12,65 @@ const auth = useAuthStore()
 const email = ref('')
 const password = ref('')
 const errorMessage = ref('')
+const showRoleModal = ref(false)
 
 const redirectTo = computed(() => (route.query.redirect as string) ?? '/')
+
+function redirectByRole(r: UserRole | null) {
+  if ((r === 'ponente' || r === 'participante') && !auth.isEmailVerified) {
+    router.push({ name: 'verify-email' })
+  } else if (r === 'ponente') router.push({ name: 'ponente-home' })
+  else if (r === 'participante') router.push({ name: 'participante-home' })
+  else if (r === 'revisor') router.push({ name: 'revisor-home' })
+  else if (r === 'admin' || r === 'administrativo') router.push({ name: 'admin-home' })
+  else router.push(redirectTo.value)
+}
 
 async function submit() {
   errorMessage.value = ''
   const result = await auth.login(email.value, password.value)
   if (result.ok) {
-    const r = auth.role
-    if ((r === 'ponente' || r === 'participante') && !auth.isEmailVerified) {
-      router.push({ name: 'verify-email' })
-    } else if (r === 'ponente') router.push({ name: 'ponente-home' })
-    else if (r === 'participante') router.push({ name: 'participante-home' })
-    else if (r === 'revisor') router.push({ name: 'revisor-home' })
-    else if (r === 'admin' || r === 'administrativo') router.push({ name: 'admin-home' })
-    else router.push(redirectTo.value)
+    if (auth.needsRoleSelection) {
+      showRoleModal.value = true
+    } else {
+      redirectByRole(auth.role)
+    }
   } else {
     errorMessage.value = result.message ?? 'Credenciales incorrectas'
   }
 }
+
+function selectRole(r: UserRole) {
+  auth.setActiveRole(r)
+  showRoleModal.value = false
+  redirectByRole(r)
+}
+
+const roleOptions = computed(() => {
+  const labels: Record<string, { label: string; desc: string; icon: string; color: string }> = {
+    participante: {
+      label: 'Participante',
+      desc: 'Accede a la inscripción y seguimiento del congreso',
+      icon: '🎓',
+      color: 'border-green-500/40 hover:border-green-500 hover:bg-green-500/10',
+    },
+    ponente: {
+      label: 'Ponente',
+      desc: 'Gestiona tus ponencias y envíos',
+      icon: '🎤',
+      color: 'border-cgr-purple/40 hover:border-cgr-purple hover:bg-cgr-purple/10',
+    },
+    revisor: {
+      label: 'Revisor',
+      desc: 'Revisa y evalúa ponencias asignadas',
+      icon: '🔍',
+      color: 'border-blue-500/40 hover:border-blue-500 hover:bg-blue-500/10',
+    },
+  }
+  return auth.allRoles
+    .filter(r => r !== 'admin' && r !== 'administrativo')
+    .map(r => ({ role: r as UserRole, ...(labels[r] ?? { label: r, desc: '', icon: '👤', color: '' }) }))
+})
 </script>
 
 <template>
@@ -89,5 +130,36 @@ async function submit() {
         {{ auth.loading ? 'Entrando…' : 'Entrar' }}
       </button>
     </form>
+
+    <!-- Modal de selección de rol -->
+    <Teleport to="body">
+      <div
+        v-if="showRoleModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+      >
+        <div class="bg-cgr-card border border-cgr-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <h3 class="text-lg font-bold text-white mb-1">¿Cómo deseas ingresar?</h3>
+          <p class="text-xs text-cgr-muted mb-5">
+            Tu cuenta tiene múltiples roles. Elige con cuál quieres trabajar ahora.
+          </p>
+
+          <div class="flex flex-col gap-3">
+            <button
+              v-for="opt in roleOptions"
+              :key="opt.role"
+              @click="selectRole(opt.role)"
+              class="flex items-center gap-4 w-full text-left border rounded-xl px-4 py-3.5 transition-all duration-150"
+              :class="opt.color"
+            >
+              <span class="text-2xl">{{ opt.icon }}</span>
+              <div>
+                <p class="text-sm font-semibold text-white">{{ opt.label }}</p>
+                <p class="text-xs text-cgr-muted mt-0.5">{{ opt.desc }}</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </GuestLayout>
 </template>

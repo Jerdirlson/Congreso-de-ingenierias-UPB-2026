@@ -112,6 +112,14 @@ const router = createRouter({
   ],
 })
 
+function redirectByRole(r: string | null | undefined) {
+  if (r === 'ponente') return { name: 'ponente-home' }
+  if (r === 'participante') return { name: 'participante-home' }
+  if (r === 'revisor') return { name: 'revisor-home' }
+  if (r === 'admin' || r === 'administrativo') return { name: 'admin-home' }
+  return { name: 'landing' }
+}
+
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
@@ -119,11 +127,9 @@ router.beforeEach(async (to) => {
     if (to.meta.guest && auth.token) {
       const ok = auth.user ? true : await auth.fetchMe()
       if (ok) {
-        const r = auth.role
-        if (r === 'ponente') return { name: 'ponente-home' }
-        if (r === 'participante') return { name: 'participante-home' }
-        if (r === 'revisor') return { name: 'revisor-home' }
-        if (r === 'admin' || r === 'administrativo') return { name: 'admin-home' }
+        // Si tiene doble rol y aún no eligió, dejarlo en login para que aparezca el modal
+        if (auth.needsRoleSelection) return
+        return redirectByRole(auth.role)
       }
     }
     return
@@ -135,18 +141,22 @@ router.beforeEach(async (to) => {
       const ok = await auth.fetchMe()
       if (!ok) return { name: 'login', query: { redirect: to.fullPath } }
     }
+
+    // Si tiene doble rol y no eligió aún, mandarlo al login para la selección
+    if (auth.needsRoleSelection) return { name: 'login' }
+
     if (!auth.isEmailVerified && !auth.impersonating && (auth.role === 'ponente' || auth.role === 'participante')) {
       return { name: 'verify-email', query: { redirect: to.fullPath } }
     }
+
     const requiredRole = to.meta.role as string | string[] | undefined
     if (requiredRole) {
-      const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
-      if (!roles.includes(auth.role ?? '')) {
-        if (auth.role === 'ponente') return { name: 'ponente-home' }
-        if (auth.role === 'participante') return { name: 'participante-home' }
-        if (auth.role === 'revisor') return { name: 'revisor-home' }
-        if (auth.role === 'admin' || auth.role === 'administrativo') return { name: 'admin-home' }
-        return { name: 'landing' }
+      const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
+
+      // Para usuarios con doble rol, verificar contra todos sus roles (no solo el activo)
+      // pero solo permitir la ruta si el rol activo coincide
+      if (!allowedRoles.includes(auth.role ?? '')) {
+        return redirectByRole(auth.role)
       }
     }
   }

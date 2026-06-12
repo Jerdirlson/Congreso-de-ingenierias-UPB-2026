@@ -127,10 +127,12 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::patch('/submissions/{submission}/video/approve',      [AdminSubmissionController::class, 'approveVideo']);
     Route::patch('/submissions/{submission}/video/reject',       [AdminSubmissionController::class, 'rejectVideo']);
     Route::apiResource('thematic-axes', ThematicAxisController::class);
-    Route::get('/users',                [AdminUserController::class, 'index']);
-    Route::get('/users/{user}',         [AdminUserController::class, 'show']);
-    Route::patch('/users/{user}/role',  [AdminUserController::class, 'updateRole']);
-    Route::post('/users/{user}/impersonate', [AdminImpersonateController::class, 'store']);
+    Route::get('/users',                         [AdminUserController::class, 'index']);
+    Route::get('/users/{user}',                  [AdminUserController::class, 'show']);
+    Route::patch('/users/{user}/role',           [AdminUserController::class, 'updateRole']);
+    Route::post('/users/{user}/assign-reviewer', [AdminUserController::class, 'assignReviewer']);
+    Route::delete('/users/{user}/remove-reviewer', [AdminUserController::class, 'removeReviewer']);
+    Route::post('/users/{user}/impersonate',     [AdminImpersonateController::class, 'store']);
     Route::post('/mail/preview',        [AdminMailController::class, 'preview']);
     Route::post('/mail/send',           [AdminMailController::class, 'send']);
 });

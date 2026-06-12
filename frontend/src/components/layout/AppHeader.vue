@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { AuthUser, UserRole } from '../../stores/auth'
 import { useAuthStore } from '../../stores/auth'
@@ -7,10 +7,19 @@ import ThemeControls from '../ThemeControls.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const showRoleSwitcher = ref(false)
 
 function stopImpersonation() {
   authStore.stopImpersonation()
   router.push({ name: 'admin-users' })
+}
+
+function switchToRole(r: UserRole) {
+  authStore.setActiveRole(r)
+  showRoleSwitcher.value = false
+  if (r === 'revisor') router.push({ name: 'revisor-home' })
+  else if (r === 'ponente') router.push({ name: 'ponente-home' })
+  else if (r === 'participante') router.push({ name: 'participante-home' })
 }
 
 const props = defineProps<{
@@ -97,6 +106,37 @@ const roleBadgeClass = computed(() => {
       >
         {{ roleLabel }}
       </span>
+
+      <!-- Cambiar rol (solo para usuarios con doble rol) -->
+      <div v-if="authStore.hasDualRole" class="relative hidden sm:block">
+        <button
+          type="button"
+          @click="showRoleSwitcher = !showRoleSwitcher"
+          class="text-xs px-3 py-1.5 rounded-lg border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple/50 transition-colors flex items-center gap-1.5"
+          title="Cambiar rol"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          Cambiar rol
+        </button>
+        <div
+          v-if="showRoleSwitcher"
+          class="absolute right-0 top-full mt-1 z-50 w-48 bg-cgr-card border border-cgr-border rounded-xl shadow-xl overflow-hidden"
+        >
+          <button
+            v-for="r in authStore.allRoles.filter(x => x !== 'admin' && x !== 'administrativo')"
+            :key="r"
+            @click="switchToRole(r as UserRole)"
+            class="w-full text-left px-4 py-2.5 text-xs transition-colors"
+            :class="r === authStore.role ? 'text-white bg-cgr-purple/20 font-semibold' : 'text-cgr-muted hover:text-white hover:bg-cgr-section'"
+          >
+            {{ r === 'revisor' ? '🔍 Revisor' : r === 'ponente' ? '🎤 Ponente' : '🎓 Participante' }}
+            <span v-if="r === authStore.role" class="ml-1 text-cgr-purple">(activo)</span>
+          </button>
+        </div>
+      </div>
+
       <RouterLink
         to="/"
         class="text-xs px-3 py-1.5 rounded-lg border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple transition-colors hidden sm:inline-flex"

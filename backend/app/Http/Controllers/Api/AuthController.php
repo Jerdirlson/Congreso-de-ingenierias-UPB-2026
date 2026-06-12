@@ -123,6 +123,8 @@ class AuthController extends Controller
 
     private function userPayload(User $user): array
     {
+        $roleNames = $user->getRoleNames()->values()->all();
+
         return [
             'id'                            => $user->id,
             'name'                          => $user->name,
@@ -136,7 +138,8 @@ class AuthController extends Controller
             'city'                          => $user->city,
             'external_registration_at'      => $user->external_registration_at?->toIso8601String(),
             'external_registration_paid_at' => $user->external_registration_paid_at?->toIso8601String(),
-            'role'                          => $user->getRoleNames()->first(),
+            'role'                          => collect($roleNames)->first(fn ($r) => $r !== 'revisor') ?? $roleNames[0] ?? null,
+            'roles'                         => $roleNames,
         ];
     }
 }

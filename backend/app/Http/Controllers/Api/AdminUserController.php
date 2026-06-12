@@ -38,21 +38,22 @@ class AdminUserController extends Controller
         }
 
         $users = $query->paginate(25)->through(fn (User $u) => [
-            'id'                => $u->id,
-            'name'              => $u->name,
-            'email'             => $u->email,
-            'role'              => $u->getRoleNames()->first(),
-            'institution'       => $u->institution,
-            'country'           => $u->country,
-            'city'              => $u->city,
-            'phone'             => $u->phone,
-            'document_type'     => $u->document_type,
-            'document_number'   => $u->document_number,
-            'email_verified_at' => $u->email_verified_at?->toIso8601String(),
-            'created_at'        => $u->created_at->toIso8601String(),
-            'submissions_count' => $u->submissions_count,
+            'id'                  => $u->id,
+            'name'                => $u->name,
+            'email'               => $u->email,
+            'role'                => collect($u->getRoleNames())->first(fn ($r) => $r !== 'revisor') ?? $u->getRoleNames()->first(),
+            'roles'               => $u->getRoleNames()->values()->all(),
+            'institution'         => $u->institution,
+            'country'             => $u->country,
+            'city'                => $u->city,
+            'phone'               => $u->phone,
+            'document_type'       => $u->document_type,
+            'document_number'     => $u->document_number,
+            'email_verified_at'   => $u->email_verified_at?->toIso8601String(),
+            'created_at'          => $u->created_at->toIso8601String(),
+            'submissions_count'   => $u->submissions_count,
             'registrations_count' => $u->registrations_count,
-            'payments_count'    => $u->payments_count,
+            'payments_count'      => $u->payments_count,
         ]);
 
         return response()->json($users);
@@ -63,11 +64,14 @@ class AdminUserController extends Controller
     {
         $user->load(['submissions:id,title,status,created_at,user_id', 'registrations:id,registration_type,modality,confirmed_at,user_id', 'payments:id,amount,currency,status,created_at,user_id']);
 
+        $roleNames = $user->getRoleNames()->values()->all();
+
         return response()->json([
             'id'                => $user->id,
             'name'              => $user->name,
             'email'             => $user->email,
-            'role'              => $user->getRoleNames()->first(),
+            'role'              => collect($roleNames)->first(fn ($r) => $r !== 'revisor') ?? $roleNames[0] ?? null,
+            'roles'             => $roleNames,
             'phone'             => $user->phone,
             'document_type'     => $user->document_type,
             'document_number'   => $user->document_number,
@@ -92,8 +96,31 @@ class AdminUserController extends Controller
         $user->syncRoles([$validated['role']]);
 
         return response()->json([
-            'id'   => $user->id,
-            'role' => $user->getRoleNames()->first(),
+            'id'    => $user->id,
+            'role'  => $user->getRoleNames()->first(),
+            'roles' => $user->getRoleNames()->values()->all(),
+        ]);
+    }
+
+    // POST /api/admin/users/{user}/assign-reviewer
+    public function assignReviewer(User $user): JsonResponse
+    {
+        $user->assignRole('revisor');
+
+        return response()->json([
+            'id'    => $user->id,
+            'roles' => $user->getRoleNames()->values()->all(),
+        ]);
+    }
+
+    // DELETE /api/admin/users/{user}/remove-reviewer
+    public function removeReviewer(User $user): JsonResponse
+    {
+        $user->removeRole('revisor');
+
+        return response()->json([
+            'id'    => $user->id,
+            'roles' => $user->getRoleNames()->values()->all(),
         ]);
     }
 }

@@ -10,6 +10,7 @@ interface User {
   name: string
   email: string
   role: string
+  roles?: string[]
   institution: string | null
   country: string | null
   city: string | null
@@ -51,6 +52,7 @@ const loadingDetail = ref(false)
 const editingRole = ref(false)
 const newRole   = ref('')
 const savingRole = ref(false)
+const togglingReviewer = ref(false)
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -113,14 +115,36 @@ async function saveRole() {
   if (!selected.value) return
   savingRole.value = true
   const api = useFetchApi()
-  const res = await api.patch<{ id: number; role: string }>(`/admin/users/${selected.value.id}/role`, { role: newRole.value })
+  const res = await api.patch<{ id: number; role: string; roles: string[] }>(`/admin/users/${selected.value.id}/role`, { role: newRole.value })
   if (res) {
-    selected.value.role = res.role
+    selected.value.role  = res.role
+    selected.value.roles = res.roles
     const idx = users.value.findIndex(u => u.id === selected.value!.id)
     if (idx !== -1) users.value[idx]!.role = res.role
   }
   savingRole.value  = false
   editingRole.value = false
+}
+
+async function toggleReviewer() {
+  if (!selected.value) return
+  togglingReviewer.value = true
+  const api = useFetchApi()
+  const isRevisor = selected.value.roles?.includes('revisor') ?? selected.value.role === 'revisor'
+
+  const res = isRevisor
+    ? await api.delete<{ id: number; roles: string[] }>(`/admin/users/${selected.value.id}/remove-reviewer`)
+    : await api.post<{ id: number; roles: string[] }>(`/admin/users/${selected.value.id}/assign-reviewer`, {})
+
+  if (res) {
+    selected.value.roles = res.roles
+    // Actualizar rol mostrado en la tabla (primer rol no-revisor, o revisor si es el único)
+    const primary = res.roles.find(r => r !== 'revisor') ?? res.roles[0] ?? ''
+    selected.value.role = primary
+    const idx = users.value.findIndex(u => u.id === selected.value!.id)
+    if (idx !== -1) users.value[idx]!.role = primary
+  }
+  togglingReviewer.value = false
 }
 
 async function impersonate() {
@@ -337,9 +361,11 @@ onMounted(load)
             <!-- Badges -->
             <div class="flex flex-wrap gap-2">
               <span
-                :class="roleColors[selected.role] ?? 'bg-cgr-border text-cgr-muted'"
+                v-for="r in (selected.roles?.length ? selected.roles : [selected.role])"
+                :key="r"
+                :class="roleColors[r] ?? 'bg-cgr-border text-cgr-muted'"
                 class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"
-              >{{ selected.role ?? '—' }}</span>
+              >{{ r ?? '—' }}</span>
               <span
                 :class="selected.email_verified_at ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-cgr-border/40 text-cgr-subtle border border-cgr-border'"
                 class="text-xs font-semibold px-3 py-1 rounded-full"
@@ -391,6 +417,39 @@ onMounted(load)
                   class="px-4 py-1.5 bg-cgr-purple text-white text-sm font-semibold rounded-lg hover:bg-cgr-purple/90 disabled:opacity-50 transition-colors"
                 >{{ savingRole ? '…' : 'Guardar' }}</button>
                 <button @click="editingRole = false" class="px-3 py-1.5 border border-cgr-border text-cgr-muted text-sm rounded-lg hover:text-white transition-colors">✕</button>
+              </div>
+            </div>
+
+            <!-- Rol Revisor -->
+            <div
+              v-if="selected.role !== 'admin' && selected.role !== 'administrativo'"
+              class="bg-cgr-card border border-cgr-border rounded-xl p-4"
+            >
+              <p class="text-cgr-subtle text-xs font-semibold uppercase tracking-widest mb-3">Rol de Revisor</p>
+              <p class="text-cgr-muted text-xs mb-3">
+                Asigna o revoca el acceso al panel de revisión de ponencias sin cambiar el rol principal del usuario.
+              </p>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span
+                    :class="(selected.roles?.includes('revisor') ?? selected.role === 'revisor')
+                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
+                      : 'bg-cgr-bg text-cgr-subtle border-cgr-border'"
+                    class="text-xs font-bold px-3 py-1 rounded-full border uppercase tracking-wide"
+                  >
+                    {{ (selected.roles?.includes('revisor') ?? selected.role === 'revisor') ? 'Revisor activo' : 'Sin rol revisor' }}
+                  </span>
+                </div>
+                <button
+                  @click="toggleReviewer"
+                  :disabled="togglingReviewer"
+                  class="text-xs px-4 py-1.5 rounded-lg font-semibold border transition-colors disabled:opacity-50"
+                  :class="(selected.roles?.includes('revisor') ?? selected.role === 'revisor')
+                    ? 'border-red-500/40 text-red-400 hover:bg-red-500/10'
+                    : 'border-blue-500/40 text-blue-400 hover:bg-blue-500/10'"
+                >
+                  {{ togglingReviewer ? '…' : (selected.roles?.includes('revisor') ?? selected.role === 'revisor') ? 'Quitar revisor' : 'Asignar revisor' }}
+                </button>
               </div>
             </div>
 

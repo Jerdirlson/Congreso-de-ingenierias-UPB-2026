@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             RevisorUserSeeder::class,
             CongressEventSeeder::class,
+            ScientificCommitteeSeeder::class,
         ]);
     }
 }
