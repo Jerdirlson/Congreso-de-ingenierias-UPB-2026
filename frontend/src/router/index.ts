@@ -67,6 +67,15 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/perfil',
+      name: 'perfil',
+      component: AppLayout,
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', component: () => import('../views/shared/ProfileView.vue') },
+      ],
+    },
+    {
       path: '/ponente',
       component: AppLayout,
       meta: { requiresAuth: true, role: 'ponente' },

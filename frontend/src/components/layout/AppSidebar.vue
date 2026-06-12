@@ -68,7 +68,7 @@ function isActive(to: { name: string }) {
     </div>
 
     <!-- Nav links -->
-    <nav class="flex-1 p-2 space-y-1">
+    <nav class="flex-1 p-2 space-y-1 flex flex-col">
       <RouterLink
         v-for="link in links"
         :key="link.to.name"
@@ -122,6 +122,23 @@ function isActive(to: { name: string }) {
         </span>
         <span v-if="open" class="truncate">{{ link.label }}</span>
       </RouterLink>
+
+      <!-- Perfil — siempre visible al fondo -->
+      <div class="mt-auto pt-2 border-t border-cgr-border">
+        <RouterLink
+          :to="{ name: 'perfil' }"
+          :title="!open ? 'Mi perfil' : undefined"
+          class="flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-sm font-medium transition-colors overflow-hidden whitespace-nowrap"
+          :class="route.name === 'perfil' ? 'bg-cgr-purple/20 text-cgr-purple' : 'text-cgr-muted hover:text-white hover:bg-cgr-card'"
+        >
+          <span class="shrink-0 w-5 h-5 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </span>
+          <span v-if="open" class="truncate">Mi perfil</span>
+        </RouterLink>
+      </div>
     </nav>
   </aside>
 
@@ -152,7 +169,7 @@ function isActive(to: { name: string }) {
       </button>
     </div>
 
-    <nav class="flex-1 p-2 space-y-1">
+    <nav class="flex-1 p-2 space-y-1 flex flex-col">
       <RouterLink
         v-for="link in links"
         :key="link.to.name"
@@ -163,6 +180,17 @@ function isActive(to: { name: string }) {
       >
         {{ link.label }}
       </RouterLink>
+
+      <div class="mt-auto pt-2 border-t border-cgr-border">
+        <RouterLink
+          :to="{ name: 'perfil' }"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+          :class="route.name === 'perfil' ? 'bg-cgr-purple/20 text-cgr-purple' : 'text-cgr-muted hover:text-white hover:bg-cgr-card'"
+          @click="$emit('close')"
+        >
+          Mi perfil
+        </RouterLink>
+      </div>
     </nav>
   </aside>
 </template>

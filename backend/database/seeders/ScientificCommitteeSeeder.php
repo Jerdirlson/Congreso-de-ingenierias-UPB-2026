@@ -87,8 +87,18 @@ class ScientificCommitteeSeeder extends Seeder
             ['name' => 'Jacqueline Santamaría Valbuena',     'email' => 'jacque.santamaria@upb.edu.co',     'institution' => 'Universidad Pontificia Bolivariana',               'country' => 'Colombia',       'city' => 'Bucaramanga'],
         ];
 
+        $emails   = array_map(fn ($m) => strtolower($m['email']), $members);
         $created  = 0;
         $updated  = 0;
+        $pwReset  = 0;
+
+        // Corregir contraseñas de cuentas del comité creadas por el seeder anterior
+        // (identificadas por phone = 'N/A', que solo usa este seeder)
+        User::whereIn('email', $emails)->where('phone', 'N/A')->each(function (User $u) use (&$pwReset) {
+            $u->password = 'Congreso2026!';
+            $u->save();
+            $pwReset++;
+        });
 
         foreach ($members as $data) {
             $email = strtolower($data['email']);
@@ -106,7 +116,7 @@ class ScientificCommitteeSeeder extends Seeder
                 $user = User::create([
                     'name'            => $data['name'],
                     'email'           => $email,
-                    'password'        => Hash::make('Congreso2026!'),
+                    'password'        => 'Congreso2026!',
                     'institution'     => $data['institution'],
                     'country'         => $data['country'],
                     'city'            => $data['city'],
@@ -122,6 +132,9 @@ class ScientificCommitteeSeeder extends Seeder
             }
         }
 
+        if ($pwReset > 0) {
+            $this->command->info("Contraseñas corregidas: {$pwReset} cuentas del comité.");
+        }
         $this->command->info("Comité Científico: {$created} cuentas nuevas, {$updated} existentes con rol revisor añadido.");
     }
 }
