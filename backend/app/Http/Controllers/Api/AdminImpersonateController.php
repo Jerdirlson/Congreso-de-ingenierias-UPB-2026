@@ -19,10 +19,13 @@ class AdminImpersonateController extends Controller
 
         $token = $user->createToken('impersonation')->plainTextToken;
 
+        $roleNames = $user->getRoleNames()->values()->all();
+
         return response()->json([
             'token' => $token,
             'user'  => array_merge($user->toArray(), [
-                'role' => $user->getRoleNames()->first(),
+                'role'  => collect($roleNames)->first(fn ($r) => $r !== 'revisor') ?? $roleNames[0] ?? null,
+                'roles' => $roleNames,
             ]),
         ]);
     }
