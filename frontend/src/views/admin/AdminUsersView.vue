@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFetchApi } from '../../composables/useFetchApi'
 import { useAuthStore } from '../../stores/auth'
+import type { UserRole } from '../../stores/auth'
 import UiCard from '../../components/ui/UiCard.vue'
 
 interface User {
@@ -147,6 +148,13 @@ async function toggleReviewer() {
   togglingReviewer.value = false
 }
 
+function redirectByRole(role: string | null) {
+  if (role === 'ponente') router.push({ name: 'ponente-home' })
+  else if (role === 'participante') router.push({ name: 'participante-home' })
+  else if (role === 'revisor') router.push({ name: 'revisor-home' })
+  else router.push({ name: 'ponente-home' })
+}
+
 async function impersonate() {
   if (!selected.value) return
   impersonating.value = true
@@ -154,14 +162,50 @@ async function impersonate() {
   const ok = await auth.startImpersonation(selected.value.id)
   impersonating.value = false
   if (ok) {
-    const role = selected.value.role
-    if (role === 'ponente') router.push({ name: 'ponente-home' })
-    else if (role === 'participante') router.push({ name: 'participante-home' })
-    else if (role === 'revisor') router.push({ name: 'revisor-home' })
-    else router.push({ name: 'ponente-home' })
+    // Si el usuario tiene doble rol (revisor + otro), pedir con cuál impersonar
+    if (auth.needsRoleSelection) {
+      showImpersonateRoleModal.value = true
+      return
+    }
+    redirectByRole(auth.role)
   } else {
     impersonateError.value = 'No se pudo iniciar la impersonación.'
   }
+}
+
+const showImpersonateRoleModal = ref(false)
+
+const impersonateRoleLabels: Record<string, { label: string; desc: string; icon: string; color: string }> = {
+  participante: {
+    label: 'Participante',
+    desc: 'Accede a la inscripción y seguimiento del congreso',
+    icon: '🎓',
+    color: 'border-green-500/40 hover:border-green-500 hover:bg-green-500/10',
+  },
+  ponente: {
+    label: 'Ponente',
+    desc: 'Gestiona sus ponencias y envíos',
+    icon: '🎤',
+    color: 'border-cgr-purple/40 hover:border-cgr-purple hover:bg-cgr-purple/10',
+  },
+  revisor: {
+    label: 'Revisor',
+    desc: 'Revisa y evalúa ponencias asignadas',
+    icon: '🔍',
+    color: 'border-blue-500/40 hover:border-blue-500 hover:bg-blue-500/10',
+  },
+}
+
+const impersonateRoleOptions = computed(() =>
+  auth.allRoles
+    .filter(r => r !== 'admin' && r !== 'administrativo')
+    .map(r => ({ role: r, ...(impersonateRoleLabels[r] ?? { label: r, desc: '', icon: '👤', color: '' }) })),
+)
+
+function selectImpersonateRole(role: string) {
+  auth.setActiveRole(role as UserRole)
+  showImpersonateRoleModal.value = false
+  redirectByRole(role)
 }
 
 function formatDate(d: string) {
@@ -534,6 +578,37 @@ onMounted(load)
           </div>
         </template>
       </aside>
+    </div>
+  </Teleport>
+
+  <!-- Modal: elegir rol para impersonar (usuarios con doble rol) -->
+  <Teleport to="body">
+    <div
+      v-if="showImpersonateRoleModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+    >
+      <div class="bg-cgr-card border border-cgr-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <h3 class="text-lg font-bold text-white mb-1">¿Cómo deseas impersonar?</h3>
+        <p class="text-xs text-cgr-muted mb-5">
+          Este usuario tiene múltiples roles. Elige con cuál quieres verlo.
+        </p>
+
+        <div class="flex flex-col gap-3">
+          <button
+            v-for="opt in impersonateRoleOptions"
+            :key="opt.role"
+            @click="selectImpersonateRole(opt.role)"
+            class="flex items-center gap-4 w-full text-left border rounded-xl px-4 py-3.5 transition-all duration-150"
+            :class="opt.color"
+          >
+            <span class="text-2xl">{{ opt.icon }}</span>
+            <div>
+              <p class="text-sm font-semibold text-white">{{ opt.label }}</p>
+              <p class="text-xs text-cgr-muted mt-0.5">{{ opt.desc }}</p>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   </Teleport>
 </template>
