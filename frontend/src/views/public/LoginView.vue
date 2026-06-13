@@ -15,6 +15,7 @@ const errorMessage = ref('')
 const showRoleModal = ref(false)
 
 const redirectTo = computed(() => (route.query.redirect as string) ?? '/')
+const justReset = computed(() => route.query.reset === '1')
 
 function redirectByRole(r: UserRole | null) {
   if ((r === 'ponente' || r === 'participante') && !auth.isEmailVerified) {
@@ -95,6 +96,13 @@ const roleOptions = computed(() => {
     <h2 class="text-xl font-bold text-white mb-1">Iniciar sesión</h2>
     <p class="text-sm text-cgr-muted mb-6">¿Ya tienes cuenta? Accede aquí</p>
 
+    <p
+      v-if="justReset"
+      class="mb-4 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2"
+    >
+      Tu contraseña fue actualizada. Inicia sesión con tu nueva contraseña.
+    </p>
+
     <form @submit.prevent="submit" class="space-y-4">
       <div>
         <label class="block text-xs font-medium text-cgr-muted mb-1.5">Correo electrónico</label>
@@ -107,7 +115,15 @@ const roleOptions = computed(() => {
         />
       </div>
       <div>
-        <label class="block text-xs font-medium text-cgr-muted mb-1.5">Contraseña</label>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="block text-xs font-medium text-cgr-muted">Contraseña</label>
+          <RouterLink
+            to="/forgot-password"
+            class="text-xs font-medium text-cgr-purple hover:text-cgr-accent transition-colors"
+          >
+            ¿Olvidaste tu contraseña?
+          </RouterLink>
+        </div>
         <input
           v-model="password"
           type="password"

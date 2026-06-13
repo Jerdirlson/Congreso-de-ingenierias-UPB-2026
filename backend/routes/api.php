@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\CloudflareVideoWebhookController;
 use App\Http\Controllers\Api\CongressEventController;
 use App\Http\Controllers\Api\DocumentSubmissionController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PublicDocController;
 use App\Http\Controllers\Api\ModalityController;
 use App\Http\Controllers\Api\PaymentController;
@@ -65,6 +66,23 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::patch('/me/password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
     Route::post('/me/confirm-external-registration', [AuthController::class, 'confirmExternalRegistration'])->middleware('auth:sanctum');
 });
+
+// ── Restablecer contraseña por código (olvidé mi contraseña) ──────────────────
+
+// Solicitar código: máximo 3 solicitudes/min (evita abuso y enumeración)
+Route::post('/password/forgot', [PasswordResetController::class, 'sendCode'])
+    ->middleware('throttle:3,1')
+    ->name('password.forgot');
+
+// Verificar código (paso intermedio): máximo 10 intentos/min
+Route::post('/password/verify-code', [PasswordResetController::class, 'verifyCode'])
+    ->middleware('throttle:10,1')
+    ->name('password.verify-code');
+
+// Restablecer contraseña: máximo 10 intentos/min
+Route::post('/password/reset', [PasswordResetController::class, 'reset'])
+    ->middleware('throttle:10,1')
+    ->name('password.reset');
 
 // ── Verificación de correo por código ─────────────────────────────────────────
 

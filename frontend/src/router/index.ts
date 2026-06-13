@@ -61,6 +61,12 @@ const router = createRouter({
       meta: { public: true, guest: true },
     },
     {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: () => import('../views/public/ForgotPasswordView.vue'),
+      meta: { public: true, guest: true },
+    },
+    {
       path: '/verify-email',
       name: 'verify-email',
       component: () => import('../views/public/VerifyEmailView.vue'),
