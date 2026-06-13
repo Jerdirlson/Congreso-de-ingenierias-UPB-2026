@@ -8,6 +8,7 @@ use App\Models\SubmissionAbstract;
 use App\Services\AbstractFileExtractorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class SubmissionController extends Controller
@@ -49,20 +50,26 @@ class SubmissionController extends Controller
             abort(422, "El archivo contiene muy poco texto legible ({$wordCount} palabras). Asegúrate de que el resumen tenga al menos 100 palabras y no sea un PDF escaneado.");
         }
 
-        $submission = $user->submissions()->create([
-            'title'             => $validated['title'],
-            'thematic_axis_id'  => $validated['thematic_axis_id'],
-            'status'            => Submission::STATUS_ABSTRACT_SUBMITTED,
-            'abstract_attempts' => 1,
-        ]);
+        // Atómico: si falla el guardado del resumen, NO debe quedar la ponencia
+        // huérfana en estado abstract_submitted sin resumen.
+        $submission = DB::transaction(function () use ($user, $validated, $abstractText) {
+            $submission = $user->submissions()->create([
+                'title'             => $validated['title'],
+                'thematic_axis_id'  => $validated['thematic_axis_id'],
+                'status'            => Submission::STATUS_ABSTRACT_SUBMITTED,
+                'abstract_attempts' => 1,
+            ]);
 
-        // llm_status='approved' aquí significa "no requiere clasificación pendiente"; la columna es NOT NULL en la BD.
-        $submission->abstracts()->create([
-            'content'      => $abstractText,
-            'version'      => 1,
-            'llm_status'   => SubmissionAbstract::LLM_STATUS_APPROVED,
-            'processed_at' => now(),
-        ]);
+            // llm_status='approved' aquí significa "no requiere clasificación pendiente"; la columna es NOT NULL en la BD.
+            $submission->abstracts()->create([
+                'content'      => $abstractText,
+                'version'      => 1,
+                'llm_status'   => SubmissionAbstract::LLM_STATUS_APPROVED,
+                'processed_at' => now(),
+            ]);
+
+            return $submission;
+        });
 
         return response()->json([
             'submission' => $submission->fresh(['thematicAxis', 'abstracts.llmAxis']),

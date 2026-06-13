@@ -8,6 +8,7 @@ use App\Models\SubmissionAbstract;
 use App\Services\AbstractFileExtractorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class AbstractController extends Controller
@@ -41,17 +42,23 @@ class AbstractController extends Controller
 
         $version = $submission->abstract_attempts + 1;
 
-        $abstract = $submission->abstracts()->create([
-            'content'      => $abstractText,
-            'version'      => $version,
-            'llm_status'   => SubmissionAbstract::LLM_STATUS_APPROVED,
-            'processed_at' => now(),
-        ]);
+        // Atómico: si falla el guardado del resumen, el estado de la ponencia
+        // no debe avanzar a abstract_submitted sin un resumen real.
+        $abstract = DB::transaction(function () use ($submission, $abstractText, $version) {
+            $abstract = $submission->abstracts()->create([
+                'content'      => $abstractText,
+                'version'      => $version,
+                'llm_status'   => SubmissionAbstract::LLM_STATUS_APPROVED,
+                'processed_at' => now(),
+            ]);
 
-        $submission->update([
-            'abstract_attempts' => $version,
-            'status'            => Submission::STATUS_ABSTRACT_SUBMITTED,
-        ]);
+            $submission->update([
+                'abstract_attempts' => $version,
+                'status'            => Submission::STATUS_ABSTRACT_SUBMITTED,
+            ]);
+
+            return $abstract;
+        });
 
         return response()->json([
             'abstract'   => $abstract->fresh('llmAxis'),
