@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\ModalityController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\ThematicAxisController;
 use App\Http\Controllers\Api\UploadTestController;
@@ -54,6 +55,7 @@ Route::get('/docs/{filename}', [PublicDocController::class, 'download'])->middle
 Route::middleware('throttle:120,1')->group(function () {
     Route::get('/thematic-axes', [ThematicAxisController::class, 'index']);
     Route::get('/events',        [CongressEventController::class, 'index']);
+    Route::get('/settings',      [SettingsController::class, 'publicSettings']);
 });
 
 // ── Auth (público) ────────────────────────────────────────────────────────
@@ -155,6 +157,8 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::post('/users/{user}/impersonate',     [AdminImpersonateController::class, 'store']);
     Route::post('/mail/preview',        [AdminMailController::class, 'preview']);
     Route::post('/mail/send',           [AdminMailController::class, 'send']);
+    Route::get('/settings',             [SettingsController::class, 'publicSettings']);
+    Route::put('/settings',             [SettingsController::class, 'update']);
 });
 
 // ── Webhooks (sin auth) ───────────────────────────────────────────────────

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Submission;
 use App\Models\SubmissionAbstract;
 use App\Services\AbstractFileExtractorService;
@@ -29,6 +30,13 @@ class SubmissionController extends Controller
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
+
+        // Cierre del periodo de ponencias: no se permiten nuevas ponencias.
+        abort_if(
+            ! AppSetting::getBool(AppSetting::SUBMISSIONS_OPEN, true),
+            422,
+            'El periodo para registrar nuevas ponencias está cerrado.'
+        );
 
         // Máximo 2 ponencias por ponente (las soft-deleted no cuentan)
         abort_if($user->submissions()->count() >= 2, 422, 'Ya tienes 2 ponencias registradas. El máximo permitido es 2 por ponente.');

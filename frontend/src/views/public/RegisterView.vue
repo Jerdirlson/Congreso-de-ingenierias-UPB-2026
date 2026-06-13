@@ -1,12 +1,24 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import GuestLayout from '../../layouts/GuestLayout.vue'
 import { useAuthStore } from '../../stores/auth'
+import { useSettingsStore } from '../../stores/settings'
 
 const router = useRouter()
 const auth = useAuthStore()
+const settings = useSettingsStore()
 const isSubmitting = computed(() => auth.loading)
+
+const ponenteRegistrationClosed = computed(() => settings.loaded && !settings.ponenteRegistrationOpen)
+
+onMounted(async () => {
+  await settings.fetch()
+  // Si el registro de ponentes está cerrado, forzar participante.
+  if (ponenteRegistrationClosed.value) {
+    registrationType.value = 'participante'
+  }
+})
 
 const registrationType = ref<'ponente' | 'participante'>('participante')
 const name = ref('')
@@ -76,8 +88,11 @@ async function submit() {
           class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cgr-purple transition-colors"
         >
           <option value="participante">Solo asistencia (participante)</option>
-          <option value="ponente">Presentar ponencia (ponente)</option>
+          <option v-if="!ponenteRegistrationClosed" value="ponente">Presentar ponencia (ponente)</option>
         </select>
+        <p v-if="ponenteRegistrationClosed" class="mt-1.5 text-xs text-amber-300/80">
+          El registro de ponentes ya cerró. Puedes inscribirte como participante.
+        </p>
       </div>
 
       <div>

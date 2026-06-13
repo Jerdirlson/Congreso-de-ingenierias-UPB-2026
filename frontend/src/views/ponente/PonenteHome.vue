@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFetchApi } from '../../composables/useFetchApi'
+import { useSettingsStore } from '../../stores/settings'
 import UiCard from '../../components/ui/UiCard.vue'
 import UiBadge from '../../components/ui/UiBadge.vue'
 import UiButton from '../../components/ui/UiButton.vue'
 
 const router = useRouter()
+const settings = useSettingsStore()
+
+const submissionsClosed = computed(() => settings.loaded && !settings.submissionsOpen)
 
 interface Submission {
   id: number
@@ -55,6 +59,7 @@ const statusVariants: Record<string, 'default' | 'warning' | 'danger' | 'success
 async function loadData() {
   loading.value = true
   const api = useFetchApi()
+  await settings.fetch()
   const subsData = await api.get<{ data: Submission[] } | Submission[]>('/submissions')
   if (subsData) {
     submissions.value = Array.isArray(subsData) ? subsData : (subsData as { data: Submission[] }).data ?? []
@@ -93,7 +98,7 @@ onMounted(loadData)
           </p>
         </div>
         <UiButton
-          v-if="submissions.length < 2"
+          v-if="submissions.length < 2 && !submissionsClosed"
           variant="primary"
           size="sm"
           @click="router.push({ name: 'ponente-new' })"
@@ -102,13 +107,30 @@ onMounted(loadData)
         </UiButton>
       </div>
 
+      <!-- Aviso: periodo de subida cerrado -->
+      <div
+        v-if="submissionsClosed"
+        class="mb-6 flex gap-3 text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3"
+      >
+        <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>
+          <strong class="font-semibold">Se acabó el tiempo para subir ponencias.</strong>
+          Ya no es posible registrar ponencias nuevas, pero puedes continuar con las que ya tienes en proceso.
+        </span>
+      </div>
+
       <!-- Sin ponencias -->
       <div v-if="submissions.length === 0" class="text-center py-12">
         <p class="text-cgr-muted mb-2">Aún no tienes ponencias registradas.</p>
-        <p class="text-xs text-cgr-subtle mb-6">Puedes registrar hasta 2 ponencias por ponente.</p>
-        <UiButton variant="primary" @click="router.push({ name: 'ponente-new' })">
-          Registrar mi ponencia
-        </UiButton>
+        <template v-if="!submissionsClosed">
+          <p class="text-xs text-cgr-subtle mb-6">Puedes registrar hasta 2 ponencias por ponente.</p>
+          <UiButton variant="primary" @click="router.push({ name: 'ponente-new' })">
+            Registrar mi ponencia
+          </UiButton>
+        </template>
+        <p v-else class="text-xs text-cgr-subtle">El periodo para registrar ponencias ya finalizó.</p>
       </div>
 
       <!-- Lista de ponencias -->

@@ -122,6 +122,7 @@ const router = createRouter({
         { path: 'thematic-axes', name: 'admin-axes', component: () => import('../views/admin/AdminAxes.vue') },
         { path: 'analytics', name: 'admin-analytics', component: () => import('../views/admin/AdminAnalytics.vue') },
         { path: 'mail', name: 'admin-mail', component: () => import('../views/admin/AdminMailView.vue') },
+        { path: 'settings', name: 'admin-settings', component: () => import('../views/admin/AdminSettingsView.vue') },
       ],
     },
   ],

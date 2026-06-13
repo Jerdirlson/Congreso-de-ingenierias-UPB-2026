@@ -1,10 +1,26 @@
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 import FooterSection from '../../components/FooterSection.vue'
 import { useScrollReveal } from '../../composables/useScrollReveal'
 import { registrationOpen } from '../../composables/useRegistration'
+import { useSettingsStore } from '../../stores/settings'
 
 const { setRef } = useScrollReveal()
+
+const settings = useSettingsStore()
+onMounted(() => settings.fetch())
+
+// Cierre por el admin (fin del periodo de subida)
+const submissionsClosed = computed(() => settings.loaded && !settings.submissionsOpen)
+// Se puede enviar solo si las inscripciones están abiertas y el periodo no cerró
+const canSubmit = computed(() => registrationOpen && !submissionsClosed.value)
+// Mensaje contextual debajo del botón cuando no se puede enviar
+const closedMessage = computed(() =>
+  !registrationOpen
+    ? 'Pronto serán activadas las inscripciones'
+    : 'Se acabó el tiempo para subir ponencias',
+)
 
 const profiles = [
   {
@@ -130,7 +146,7 @@ const steps = [
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
             <div class="flex flex-col items-center gap-1">
               <RouterLink
-                v-if="registrationOpen"
+                v-if="canSubmit"
                 to="/login"
                 class="bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
               >
@@ -143,7 +159,7 @@ const steps = [
               >
                 Enviar mi ponencia
               </button>
-              <span v-if="!registrationOpen" class="text-cgr-muted text-[10px]">Pronto serán activadas las inscripciones</span>
+              <span v-if="!canSubmit" class="text-cgr-muted text-[10px]">{{ closedMessage }}</span>
             </div>
 
             <a
@@ -509,7 +525,7 @@ const steps = [
 
           <div class="flex flex-col items-center gap-1.5 mb-8">
             <RouterLink
-              v-if="registrationOpen"
+              v-if="canSubmit"
               to="/login"
               class="bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white font-semibold px-10 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
             >
@@ -522,8 +538,8 @@ const steps = [
             >
               Enviar mi ponencia
             </button>
-            <span v-if="!registrationOpen" class="text-cgr-muted text-xs">
-              Pronto serán activadas las inscripciones
+            <span v-if="!canSubmit" class="text-cgr-muted text-xs">
+              {{ closedMessage }}
             </span>
           </div>
 

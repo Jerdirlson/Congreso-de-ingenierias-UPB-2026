@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
@@ -36,6 +37,16 @@ class AuthController extends Controller
             'country.required'         => 'El país es obligatorio.',
             'city.required'            => 'La ciudad es obligatoria.',
         ]);
+
+        // Cierre de inscripción de ponentes: solo se permite registrar participantes.
+        if (
+            $validated['registration_type'] === 'ponente' &&
+            ! AppSetting::getBool(AppSetting::PONENTE_REGISTRATION_OPEN, true)
+        ) {
+            throw ValidationException::withMessages([
+                'registration_type' => ['El registro de ponentes está cerrado. Puedes registrarte como participante.'],
+            ]);
+        }
 
         $user = User::create([
             'name'              => $validated['name'],

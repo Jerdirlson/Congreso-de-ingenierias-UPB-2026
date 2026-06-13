@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFetchApi } from '../../composables/useFetchApi'
+import { useSettingsStore } from '../../stores/settings'
 import UiCard from '../../components/ui/UiCard.vue'
 import UiButton from '../../components/ui/UiButton.vue'
 
@@ -25,6 +26,9 @@ interface SubmissionResult {
 const router = useRouter()
 const api = useFetchApi()
 const axisApi = useFetchApi()
+const settings = useSettingsStore()
+
+const submissionsClosed = computed(() => settings.loaded && !settings.submissionsOpen)
 
 const errorMessage = ref('')
 const axes = ref<ThematicAxis[]>([])
@@ -59,6 +63,8 @@ const isValid = computed(() => {
 })
 
 onMounted(async () => {
+  await settings.fetch()
+  if (submissionsClosed.value) return
   const data = await axisApi.get<{ data: ThematicAxis[] } | ThematicAxis[]>('/thematic-axes')
   if (data) {
     axes.value = Array.isArray(data) ? data : data.data
@@ -131,7 +137,25 @@ async function submit() {
       </p>
     </div>
 
-    <UiCard class="p-6">
+    <!-- Periodo de subida de ponencias cerrado -->
+    <UiCard v-if="submissionsClosed" class="p-8 text-center">
+      <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/15 flex items-center justify-center">
+        <svg class="w-7 h-7 text-amber-400" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <h2 class="text-lg font-bold text-white mb-2">Se acabó el tiempo para subir ponencias</h2>
+      <p class="text-sm text-cgr-muted max-w-md mx-auto mb-6">
+        El periodo para registrar nuevas ponencias ya finalizó, por lo que no es posible
+        crear una ponencia nueva. Si ya tenías una ponencia en proceso, puedes continuar
+        con ella desde "Mis ponencias".
+      </p>
+      <UiButton variant="secondary" @click="router.push({ name: 'ponente-home' })">
+        Volver a mis ponencias
+      </UiButton>
+    </UiCard>
+
+    <UiCard v-else class="p-6">
       <form @submit.prevent="submit" class="space-y-6">
 
         <!-- Título -->
