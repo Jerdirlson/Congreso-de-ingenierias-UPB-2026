@@ -151,8 +151,10 @@ router.beforeEach(async (to) => {
       if (!ok) return { name: 'login', query: { redirect: to.fullPath } }
     }
 
-    // Si tiene doble rol y no eligió aún, mandarlo al login para la selección
-    if (auth.needsRoleSelection) return { name: 'login' }
+    // Si tiene doble rol y no eligió aún, mandarlo al login para la selección.
+    // Durante la impersonación NO redirigir al login: el rol primario sirve de
+    // default y el admin elige rol con el modal / selector de la cabecera.
+    if (auth.needsRoleSelection && !auth.impersonating) return { name: 'login' }
 
     if (!auth.isEmailVerified && !auth.impersonating && (auth.role === 'ponente' || auth.role === 'participante')) {
       return { name: 'verify-email', query: { redirect: to.fullPath } }
