@@ -18,7 +18,12 @@ class AdminSubmissionController extends Controller
     /** GET /api/admin/submissions */
     public function index(Request $request): JsonResponse
     {
-        $query = Submission::with(['user:id,name,email', 'thematicAxis:id,name'])
+        $query = Submission::with([
+                'user:id,name,email',
+                'thematicAxis:id,name',
+                'reviews:id,submission_id,reviewer_id,status,decision',
+                'reviews.reviewer:id,name',
+            ])
             ->orderByDesc('updated_at');
 
         if ($request->status) {

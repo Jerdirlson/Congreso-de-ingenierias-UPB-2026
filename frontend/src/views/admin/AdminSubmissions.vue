@@ -202,10 +202,24 @@ onMounted(loadData)
                     {{ statusLabels[s.status] ?? s.status }}
                   </UiBadge>
                 </td>
-                <td class="px-5 py-4">
-                  <span v-if="s.reviews?.length" class="text-xs text-cgr-muted">
-                    {{ s.reviews.length }} asignado{{ s.reviews.length > 1 ? 's' : '' }}
-                  </span>
+                <td class="px-5 py-4 max-w-[180px]">
+                  <div v-if="s.reviews?.length" class="flex flex-wrap gap-1">
+                    <span
+                      v-for="rev in s.reviews"
+                      :key="rev.id"
+                      :title="rev.reviewer?.name ?? '—'"
+                      :class="[
+                        'text-[10px] font-medium rounded-full px-2 py-0.5 border truncate max-w-[160px]',
+                        rev.decision === 'approved'
+                          ? 'text-green-300 border-green-500/30 bg-green-500/10'
+                          : rev.decision === 'rejected'
+                          ? 'text-red-300 border-red-500/30 bg-red-500/10'
+                          : 'text-cgr-muted border-cgr-border bg-cgr-section'
+                      ]"
+                    >
+                      {{ rev.reviewer?.name ?? '—' }}
+                    </span>
+                  </div>
                   <span v-else class="text-xs text-cgr-subtle">—</span>
                 </td>
                 <td class="px-5 py-4 text-cgr-subtle text-xs">{{ formatDate(s.updated_at) }}</td>
