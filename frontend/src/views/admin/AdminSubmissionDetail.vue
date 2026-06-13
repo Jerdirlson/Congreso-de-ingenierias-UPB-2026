@@ -48,6 +48,11 @@ const showRejectVideoModal = ref(false)
 const videoRejectReason = ref('')
 const videoRejectError = ref('')
 
+const removeReviewModalOpen = ref(false)
+const reviewToRemove = ref<Review | null>(null)
+const removingReview = ref(false)
+const removeReviewError = ref('')
+
 const statusLabels: Record<string, string> = {
   draft: 'Borrador', abstract_submitted: 'Resumen enviado', abstract_rejected: 'Resumen rechazado',
   abstract_approved: 'Resumen aprobado', under_review: 'En revisión', revision_requested: 'Revisión solicitada',
@@ -203,6 +208,30 @@ async function downloadVideo() {
     document.body.appendChild(a); a.click()
     document.body.removeChild(a); URL.revokeObjectURL(url)
   } finally { downloadingVideo.value = false }
+}
+
+function openRemoveReviewModal(rev: Review) {
+  reviewToRemove.value = rev
+  removeReviewError.value = ''
+  removeReviewModalOpen.value = true
+}
+
+async function removeReview() {
+  if (!reviewToRemove.value) return
+  removingReview.value = true
+  removeReviewError.value = ''
+  const a = useFetchApi()
+  const data = await a.delete<{ ok: boolean }>(
+    `/admin/submissions/${route.params.id}/reviews/${reviewToRemove.value.id}`
+  )
+  removingReview.value = false
+  if (data) {
+    removeReviewModalOpen.value = false
+    reviewToRemove.value = null
+    await load()
+  } else {
+    removeReviewError.value = a.error.value?.message ?? 'Error al quitar el revisor.'
+  }
 }
 
 async function rejectVideo() {
@@ -368,6 +397,16 @@ onMounted(load)
             <UiBadge v-if="rev.decision" :variant="rev.decision === 'approved' ? 'success' : 'danger'">
               {{ rev.decision === 'approved' ? 'Aprobada' : 'Rechazada' }}
             </UiBadge>
+            <button
+              type="button"
+              class="text-cgr-subtle hover:text-red-400 transition-colors p-1 rounded"
+              title="Quitar revisor"
+              @click="openRemoveReviewModal(rev)"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -474,6 +513,37 @@ onMounted(load)
       <template #footer>
         <UiButton variant="secondary" @click="assignModalOpen = false">Cancelar</UiButton>
         <UiButton :loading="assigning" @click="assignReviewer">Asignar</UiButton>
+      </template>
+    </UiModal>
+
+    <!-- Modal confirmar quitar revisor -->
+    <UiModal v-model="removeReviewModalOpen" title="Quitar revisor">
+      <div class="space-y-3">
+        <p class="text-sm text-cgr-muted">
+          ¿Quitar a <span class="text-white font-medium">{{ reviewToRemove?.reviewer?.name ?? '—' }}</span>
+          de la revisión {{ reviewToRemove?.type === 'abstract' ? 'del resumen' : 'del documento' }}?
+        </p>
+        <p
+          v-if="reviewToRemove?.status === 'completed'"
+          class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2"
+        >
+          ⚠ Esta revisión ya está completada
+          ({{ reviewToRemove?.decision === 'approved' ? 'aprobó' : 'rechazó' }}).
+          Si la quitas se perderá el dictamen y sus comentarios.
+        </p>
+        <p
+          v-else-if="reviewToRemove?.status === 'in_progress'"
+          class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2"
+        >
+          ⚠ El revisor ya empezó a trabajar en esta revisión.
+        </p>
+        <p v-if="removeReviewError" class="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+          {{ removeReviewError }}
+        </p>
+      </div>
+      <template #footer>
+        <UiButton variant="secondary" @click="removeReviewModalOpen = false">Cancelar</UiButton>
+        <UiButton variant="danger" :loading="removingReview" @click="removeReview">Quitar</UiButton>
       </template>
     </UiModal>
 

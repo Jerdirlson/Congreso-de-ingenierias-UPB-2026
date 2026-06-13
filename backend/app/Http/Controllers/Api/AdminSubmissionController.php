@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Review;
 use App\Models\Submission;
+use App\Models\SubmissionDocument;
 use App\Models\SubmissionVideo;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -185,5 +186,27 @@ class AdminSubmissionController extends Controller
         $doc->update(['status' => 'under_review']);
 
         return response()->json($review->load(['reviewer:id,name', 'submissionDocument']), 201);
+    }
+
+    /** DELETE /api/admin/submissions/{submission}/reviews/{review} */
+    public function removeReview(Submission $submission, Review $review): JsonResponse
+    {
+        abort_unless($review->submission_id === $submission->id, 404);
+
+        $documentId = $review->submission_document_id;
+
+        $review->delete();
+
+        // Si era review de documento y ya no quedan revisores en ese doc, revertir el doc a pending_review
+        if ($documentId) {
+            $remaining = Review::where('submission_document_id', $documentId)->count();
+            if ($remaining === 0) {
+                SubmissionDocument::where('id', $documentId)
+                    ->where('status', SubmissionDocument::STATUS_UNDER_REVIEW)
+                    ->update(['status' => SubmissionDocument::STATUS_PENDING_REVIEW]);
+            }
+        }
+
+        return response()->json(['ok' => true]);
     }
 }

@@ -123,6 +123,7 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::patch('/submissions/{submission}/abstract/reject',            [AdminSubmissionController::class, 'rejectAbstract']);
     Route::post('/submissions/{submission}/assign-reviewer',             [AdminSubmissionController::class, 'assignReviewer']);
     Route::post('/submissions/{submission}/assign-abstract-reviewer',    [AdminSubmissionController::class, 'assignAbstractReviewer']);
+    Route::delete('/submissions/{submission}/reviews/{review}',          [AdminSubmissionController::class, 'removeReview']);
     Route::get('/submissions/{submission}/documents/{document}/download', [DocumentSubmissionController::class, 'download']);
     Route::get('/submissions/{submission}/video/stream',         [AdminSubmissionController::class, 'streamVideo']);
     Route::patch('/submissions/{submission}/video/approve',      [AdminSubmissionController::class, 'approveVideo']);
