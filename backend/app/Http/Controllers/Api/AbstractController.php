@@ -5,12 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Submission;
 use App\Models\SubmissionAbstract;
-use App\Models\ThematicAxis;
 use App\Services\AbstractFileExtractorService;
-use App\Services\LlmClassificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class AbstractController extends Controller
@@ -45,60 +42,16 @@ class AbstractController extends Controller
         $version = $submission->abstract_attempts + 1;
 
         $abstract = $submission->abstracts()->create([
-            'content'    => $abstractText,
-            'version'    => $version,
-            'llm_status' => SubmissionAbstract::LLM_STATUS_PENDING,
+            'content'      => $abstractText,
+            'version'      => $version,
+            'llm_status'   => SubmissionAbstract::LLM_STATUS_APPROVED,
+            'processed_at' => now(),
         ]);
 
         $submission->update([
             'abstract_attempts' => $version,
             'status'            => Submission::STATUS_ABSTRACT_SUBMITTED,
         ]);
-
-        // Clasificar de forma síncrona (sin cola)
-        try {
-        $llm  = app(LlmClassificationService::class);
-        $axes = ThematicAxis::active()->get();
-
-        if ($axes->isEmpty()) {
-            $abstract->update([
-                'llm_status'        => SubmissionAbstract::LLM_STATUS_REJECTED,
-                'llm_justification' => 'No hay ejes temáticos activos configurados.',
-                'processed_at'      => now(),
-            ]);
-        } else {
-            $result         = $llm->classify($abstractText, $axes);
-            $highConfidence = $llm->isApproved($result['confidence_score']) && $result['axis_id'] !== null;
-
-            $abstract->update([
-                'llm_status'           => $highConfidence
-                    ? SubmissionAbstract::LLM_STATUS_APPROVED
-                    : SubmissionAbstract::LLM_STATUS_REJECTED,
-                'llm_axis_id'          => $result['axis_id'],
-                'llm_confidence_score' => $result['confidence_score'],
-                'llm_justification'    => $result['justification'],
-                'llm_raw_response'     => $result['raw_response'],
-                'processed_at'         => now(),
-            ]);
-        }
-
-        // Siempre pasa a abstract_submitted: el ponente elige/confirma el eje
-        $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
-
-        } catch (RuntimeException $e) {
-            // La IA no está disponible: marcar como rejected para que el ponente elija manualmente
-            $abstract->update([
-                'llm_status'        => SubmissionAbstract::LLM_STATUS_REJECTED,
-                'llm_justification' => 'La clasificación automática no está disponible en este momento. Por favor selecciona el eje temático manualmente.',
-                'processed_at'      => now(),
-            ]);
-            $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
-            Log::warning('Clasificación IA falló al reenviar resumen', [
-                'submission_id' => $submission->id,
-                'abstract_id'   => $abstract->id,
-                'error'         => $e->getMessage(),
-            ]);
-        }
 
         return response()->json([
             'abstract'   => $abstract->fresh('llmAxis'),

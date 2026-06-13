@@ -5,12 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Submission;
 use App\Models\SubmissionAbstract;
-use App\Models\ThematicAxis;
 use App\Services\AbstractFileExtractorService;
-use App\Services\LlmClassificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class SubmissionController extends Controller
@@ -27,7 +24,7 @@ class SubmissionController extends Controller
         return response()->json($submissions);
     }
 
-    /** POST /api/submissions — crear ponencia con archivo de resumen y clasificación IA */
+    /** POST /api/submissions — crear ponencia con archivo de resumen (eje temático manual) */
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -36,8 +33,9 @@ class SubmissionController extends Controller
         abort_if($user->submissions()->count() >= 2, 422, 'Ya tienes 2 ponencias registradas. El máximo permitido es 2 por ponente.');
 
         $validated = $request->validate([
-            'title'         => 'required|string|max:500',
-            'abstract_file' => 'required|file|mimes:docx,pdf|max:10240',
+            'title'             => 'required|string|max:500',
+            'thematic_axis_id'  => 'required|exists:thematic_axes,id',
+            'abstract_file'     => 'required|file|mimes:docx,pdf|max:10240',
         ]);
 
         try {
@@ -52,34 +50,19 @@ class SubmissionController extends Controller
         }
 
         $submission = $user->submissions()->create([
-            'title'  => $validated['title'],
-            'status' => Submission::STATUS_DRAFT,
+            'title'             => $validated['title'],
+            'thematic_axis_id'  => $validated['thematic_axis_id'],
+            'status'            => Submission::STATUS_ABSTRACT_SUBMITTED,
+            'abstract_attempts' => 1,
         ]);
 
-        // Crear registro del resumen
-        $abstract = $submission->abstracts()->create([
-            'content'    => $abstractText,
-            'version'    => 1,
-            'llm_status' => SubmissionAbstract::LLM_STATUS_PENDING,
+        // llm_status='approved' aquí significa "no requiere clasificación pendiente"; la columna es NOT NULL en la BD.
+        $submission->abstracts()->create([
+            'content'      => $abstractText,
+            'version'      => 1,
+            'llm_status'   => SubmissionAbstract::LLM_STATUS_APPROVED,
+            'processed_at' => now(),
         ]);
-        $submission->update(['abstract_attempts' => 1]);
-
-        // Clasificar de forma síncrona (con reintentos internos)
-        try {
-            $this->classifyAbstract($abstract, $submission);
-        } catch (RuntimeException $e) {
-            // La IA no está disponible: marcar como rejected para que el ponente elija manualmente
-            $abstract->update([
-                'llm_status'        => SubmissionAbstract::LLM_STATUS_REJECTED,
-                'llm_justification' => 'La clasificación automática no está disponible en este momento. Por favor selecciona el eje temático manualmente.',
-                'processed_at'      => now(),
-            ]);
-            $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
-            Log::warning('Clasificación IA falló al crear ponencia', [
-                'submission_id' => $submission->id,
-                'error'         => $e->getMessage(),
-            ]);
-        }
 
         return response()->json([
             'submission' => $submission->fresh(['thematicAxis', 'abstracts.llmAxis']),
@@ -138,41 +121,5 @@ class SubmissionController extends Controller
         $submission->delete(); // SoftDelete: solo marca deleted_at
 
         return response()->json(['message' => 'Ponencia eliminada correctamente.']);
-    }
-
-    /** Clasificar resumen con IA de forma síncrona */
-    private function classifyAbstract(SubmissionAbstract $abstract, Submission $submission): void
-    {
-        $llm  = app(LlmClassificationService::class);
-        $axes = ThematicAxis::active()->get();
-
-        if ($axes->isEmpty()) {
-            $abstract->update([
-                'llm_status'        => SubmissionAbstract::LLM_STATUS_REJECTED,
-                'llm_justification' => 'No hay ejes temáticos activos configurados.',
-                'processed_at'      => now(),
-            ]);
-            $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
-            return;
-        }
-
-        $result = $llm->classify($abstract->content, $axes);
-
-        // llm_status es solo informativo (alta/baja confianza); el eje lo confirma el ponente
-        $highConfidence = $llm->isApproved($result['confidence_score']) && $result['axis_id'] !== null;
-
-        $abstract->update([
-            'llm_status'           => $highConfidence
-                ? SubmissionAbstract::LLM_STATUS_APPROVED
-                : SubmissionAbstract::LLM_STATUS_REJECTED,
-            'llm_axis_id'          => $result['axis_id'],
-            'llm_confidence_score' => $result['confidence_score'],
-            'llm_justification'    => $result['justification'],
-            'llm_raw_response'     => $result['raw_response'],
-            'processed_at'         => now(),
-        ]);
-
-        // Siempre pasa a abstract_submitted: el ponente elige/confirma el eje
-        $submission->advanceTo(Submission::STATUS_ABSTRACT_SUBMITTED);
     }
 }

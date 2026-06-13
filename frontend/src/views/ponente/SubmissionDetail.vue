@@ -473,14 +473,8 @@ watch(() => route.params.id, () => {
           Archivo seleccionado: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
         </p>
         <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
-          Analizar con IA
+          Enviar resumen
         </UiButton>
-      </div>
-
-      <!-- Clasificando con LLM (solo si realmente está pending y no hubo timeout) -->
-      <div v-else-if="showLlmSpinner" class="flex items-center gap-3 text-cgr-muted text-sm">
-        <div class="w-4 h-4 border-2 border-cgr-purple border-t-transparent rounded-full animate-spin shrink-0"></div>
-        Clasificando con IA… esto puede tomar unos segundos.
       </div>
 
       <!-- Pendiente de confirmación de eje (abstract_submitted) -->
@@ -577,7 +571,7 @@ watch(() => route.params.id, () => {
           </p>
           <div class="flex gap-3 mt-4">
             <UiButton :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
-              Analizar con IA
+              Enviar nuevo resumen
             </UiButton>
             <UiButton variant="secondary" @click="showResubmitForm = false">
               Cancelar
@@ -632,7 +626,7 @@ watch(() => route.params.id, () => {
           Archivo: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
         </p>
         <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
-          Analizar y reenviar resumen
+          Reenviar resumen
         </UiButton>
       </div>
 
