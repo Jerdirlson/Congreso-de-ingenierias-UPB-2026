@@ -596,22 +596,22 @@ watch(() => route.params.id, () => {
         </div>
       </div>
 
-      <!-- Resumen rechazado por revisor -->
+      <!-- Resumen pendiente de ajustes -->
       <div v-else-if="canResubmitAbstract">
-        <div class="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-4 mb-4">
+        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-4 mb-4">
           <div class="flex gap-3 items-start mb-3">
-            <svg class="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <svg class="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <div>
-              <p class="text-sm font-semibold text-red-300">Tu resumen fue rechazado por el comité</p>
-              <p class="text-xs text-red-200/70 mt-0.5">Revisa los comentarios y sube una nueva versión corregida.</p>
+              <p class="text-sm font-semibold text-yellow-300">El comité solicitó ajustes en tu resumen</p>
+              <p class="text-xs text-yellow-200/70 mt-0.5">Revisa los comentarios y sube una nueva versión corregida.</p>
             </div>
           </div>
-          <div v-if="abstractRejectionReview?.comments" class="bg-red-500/10 border border-red-400/20 rounded-lg px-3 py-3 text-sm text-red-100 whitespace-pre-wrap leading-relaxed">
+          <div v-if="abstractRejectionReview?.comments" class="bg-yellow-500/10 border border-yellow-400/20 rounded-lg px-3 py-3 text-sm text-yellow-100 whitespace-pre-wrap leading-relaxed">
             {{ abstractRejectionReview.comments }}
           </div>
-          <p v-else class="text-xs text-red-200/60">Sin comentarios adicionales del revisor.</p>
+          <p v-else class="text-xs text-yellow-200/60">Sin comentarios adicionales del revisor.</p>
         </div>
 
         <p class="text-xs text-cgr-muted mb-3">Sube una nueva versión del resumen:</p>
@@ -644,7 +644,7 @@ watch(() => route.params.id, () => {
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
         2. Documento PDF
         <UiBadge v-if="latestDocument?.status === 'approved'" variant="success">Aprobado</UiBadge>
-        <UiBadge v-else-if="latestDocument?.status === 'revision_requested'" variant="warning">Requiere revisión</UiBadge>
+        <UiBadge v-else-if="latestDocument?.status === 'revision_requested'" variant="warning">Pendiente de ajustes</UiBadge>
         <UiBadge v-else-if="latestDocument?.status === 'under_review'" variant="info">En revisión</UiBadge>
       </h2>
 
@@ -653,7 +653,7 @@ watch(() => route.params.id, () => {
           <div class="flex gap-3 items-start mb-3">
             <svg class="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <div>
-              <p class="text-sm font-semibold text-yellow-300">El comité solicitó correcciones en tu documento</p>
+              <p class="text-sm font-semibold text-yellow-300">El comité solicitó ajustes en tu documento</p>
               <p class="text-xs text-yellow-200/70 mt-0.5">
                 Revisor: {{ revisionReview?.reviewer?.name ?? 'Comité científico' }}
               </p>

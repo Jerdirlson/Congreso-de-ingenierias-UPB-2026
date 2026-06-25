@@ -29,10 +29,10 @@ const deleteError    = ref('')
 const statusLabels: Record<string, string> = {
   draft:               'Borrador',
   abstract_submitted:  'Resumen enviado',
-  abstract_rejected:   'Resumen rechazado',
+  abstract_rejected:   'Pendiente de ajustes',
   abstract_approved:   'Resumen aprobado',
   under_review:        'En revisión',
-  revision_requested:  'Revisión solicitada',
+  revision_requested:  'Pendiente de ajustes',
   document_approved:   'Documento aprobado',
   modality_selected:   'Modalidad elegida',
   video_pending:       'Video pendiente',
@@ -44,7 +44,7 @@ const statusLabels: Record<string, string> = {
 const statusVariants: Record<string, 'default' | 'warning' | 'danger' | 'success' | 'info' | 'purple'> = {
   draft:               'default',
   abstract_submitted:  'info',
-  abstract_rejected:   'danger',
+  abstract_rejected:   'warning',
   abstract_approved:   'success',
   under_review:        'info',
   revision_requested:  'warning',

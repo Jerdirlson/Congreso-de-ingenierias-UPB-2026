@@ -28,10 +28,10 @@ const search       = ref('')
 const statusLabels: Record<string, string> = {
   draft: 'Borrador',
   abstract_submitted: 'Resumen enviado',
-  abstract_rejected: 'Resumen rechazado',
+  abstract_rejected: 'Pendiente de ajustes',
   abstract_approved: 'Resumen aprobado',
   under_review: 'En revisión',
-  revision_requested: 'Revisión solicitada',
+  revision_requested: 'Pendiente de ajustes',
   document_approved: 'Doc. aprobado',
   modality_selected: 'Modalidad elegida',
   video_pending: 'Video pendiente',
@@ -42,7 +42,7 @@ const statusLabels: Record<string, string> = {
 const statusVariants: Record<string, 'default' | 'warning' | 'danger' | 'success' | 'info' | 'purple'> = {
   draft: 'default',
   abstract_submitted: 'info',
-  abstract_rejected: 'danger',
+  abstract_rejected: 'warning',
   abstract_approved: 'success',
   under_review: 'info',
   revision_requested: 'warning',
@@ -213,7 +213,7 @@ onMounted(loadData)
                         rev.decision === 'approved'
                           ? 'text-green-300 border-green-500/30 bg-green-500/10'
                           : rev.decision === 'rejected'
-                          ? 'text-red-300 border-red-500/30 bg-red-500/10'
+                          ? 'text-amber-300 border-amber-500/30 bg-amber-500/10'
                           : 'text-cgr-muted border-cgr-border bg-cgr-section'
                       ]"
                     >

@@ -227,29 +227,29 @@ watch(() => route.params.id, loadReview)
               <svg class="w-4 h-4 text-green-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               <span class="text-sm font-medium">Aprobar</span>
             </label>
-            <label :class="['flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors', decision === 'rejected' ? 'border-red-500/60 bg-red-500/10 text-white' : 'border-cgr-border bg-cgr-section text-cgr-muted hover:border-red-500/40']">
+            <label :class="['flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors', decision === 'rejected' ? 'border-amber-500/60 bg-amber-500/10 text-white' : 'border-cgr-border bg-cgr-section text-cgr-muted hover:border-amber-500/40']">
               <input type="radio" value="rejected" v-model="decision" class="hidden" />
-              <svg class="w-4 h-4 text-red-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              <span class="text-sm font-medium">Rechazar</span>
+              <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              <span class="text-sm font-medium">Solicitar ajustes</span>
             </label>
           </div>
           <div>
             <label class="block text-xs font-medium text-cgr-muted mb-2">
               Comentarios
-              <span v-if="commentsRequired" class="text-red-400 ml-1">* obligatorio al rechazar</span>
+              <span v-if="commentsRequired" class="text-amber-400 ml-1">* obligatorio al solicitar ajustes</span>
               <span v-else class="text-cgr-subtle ml-1">(opcional)</span>
             </label>
             <textarea
               v-model="comments"
               rows="5"
               placeholder="Escribe tus observaciones, correcciones o justificacion del dictamen..."
-              :class="['w-full bg-cgr-section border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple resize-y', commentsRequired && !comments.trim() ? 'border-red-500/60' : 'border-cgr-border']"
+              :class="['w-full bg-cgr-section border rounded-lg px-3 py-2.5 text-sm text-white placeholder-cgr-subtle focus:outline-none focus:border-cgr-purple resize-y', commentsRequired && !comments.trim() ? 'border-amber-500/60' : 'border-cgr-border']"
             />
           </div>
-          <UiButton :loading="api.loading.value" :variant="decision === 'rejected' ? 'danger' : 'primary'" @click="submitReview">
+          <UiButton :loading="api.loading.value" variant="primary" @click="submitReview">
             {{ decision === 'approved'
               ? (review?.type === 'abstract' ? 'Aprobar resumen' : 'Aprobar ponencia')
-              : (review?.type === 'abstract' ? 'Rechazar resumen' : 'Rechazar ponencia') }}
+              : (review?.type === 'abstract' ? 'Solicitar ajustes al resumen' : 'Solicitar ajustes a la ponencia') }}
           </UiButton>
         </div>
       </UiCard>
@@ -258,8 +258,8 @@ watch(() => route.params.id, loadReview)
       <UiCard v-else-if="review?.status === 'completed'" class="p-6">
         <h2 class="font-semibold text-white mb-4">Dictamen emitido</h2>
         <div class="flex items-center gap-3 mb-4">
-          <UiBadge :variant="review?.decision === 'approved' ? 'success' : 'danger'">
-            {{ review?.decision === 'approved' ? 'Aprobada' : 'Rechazada' }}
+          <UiBadge :variant="review?.decision === 'approved' ? 'success' : 'warning'">
+            {{ review?.decision === 'approved' ? 'Aprobada' : 'Ajustes solicitados' }}
           </UiBadge>
           <span class="text-xs text-cgr-subtle">{{ formatDate(review.completed_at) }}</span>
         </div>
@@ -284,8 +284,8 @@ watch(() => route.params.id, loadReview)
                   ? 'Resumen v' + (h.submission_abstract?.version ?? 1)
                   : h.submission_document ? 'Doc v' + h.submission_document.version : 'Sin documento' }}
               </span>
-              <UiBadge :variant="h.decision === 'approved' ? 'success' : h.decision === 'rejected' ? 'danger' : 'default'">
-                {{ h.decision === 'approved' ? 'Aprobada' : h.decision === 'rejected' ? 'Cambios solicitados' : 'Sin dictamen' }}
+              <UiBadge :variant="h.decision === 'approved' ? 'success' : h.decision === 'rejected' ? 'warning' : 'default'">
+                {{ h.decision === 'approved' ? 'Aprobada' : h.decision === 'rejected' ? 'Ajustes solicitados' : 'Sin dictamen' }}
               </UiBadge>
             </div>
             <span class="text-xs text-cgr-subtle shrink-0">{{ formatDate(h.completed_at) }}</span>

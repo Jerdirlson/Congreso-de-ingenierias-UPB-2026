@@ -54,13 +54,13 @@ const removingReview = ref(false)
 const removeReviewError = ref('')
 
 const statusLabels: Record<string, string> = {
-  draft: 'Borrador', abstract_submitted: 'Resumen enviado', abstract_rejected: 'Resumen rechazado',
-  abstract_approved: 'Resumen aprobado', under_review: 'En revisión', revision_requested: 'Revisión solicitada',
+  draft: 'Borrador', abstract_submitted: 'Resumen enviado', abstract_rejected: 'Pendiente de ajustes',
+  abstract_approved: 'Resumen aprobado', under_review: 'En revisión', revision_requested: 'Pendiente de ajustes',
   document_approved: 'Documento aprobado', modality_selected: 'Modalidad elegida',
   video_pending: 'Video pendiente', video_ready: 'Video listo', payment_pending: 'Pago pendiente', confirmed: 'Confirmado',
 }
 const statusVariants: Record<string, 'default' | 'warning' | 'danger' | 'success' | 'info' | 'purple'> = {
-  draft: 'default', abstract_submitted: 'info', abstract_rejected: 'danger', abstract_approved: 'success',
+  draft: 'default', abstract_submitted: 'info', abstract_rejected: 'warning', abstract_approved: 'success',
   under_review: 'info', revision_requested: 'warning', document_approved: 'success',
   modality_selected: 'purple', video_pending: 'warning', video_ready: 'success', payment_pending: 'warning', confirmed: 'success',
 }
@@ -385,7 +385,7 @@ onMounted(load)
                 </span>
               </div>
               <p class="text-xs text-cgr-subtle">Asignado {{ formatDate(rev.assigned_at) }}</p>
-              <p v-if="rev.comments && rev.decision === 'rejected'" class="text-xs text-red-300/70 mt-1 line-clamp-2">
+              <p v-if="rev.comments && rev.decision === 'rejected'" class="text-xs text-amber-300/70 mt-1 line-clamp-2">
                 "{{ rev.comments }}"
               </p>
             </div>
@@ -394,8 +394,8 @@ onMounted(load)
             <UiBadge :variant="reviewStatusVariants[rev.status]">
               {{ reviewStatusLabels[rev.status] }}
             </UiBadge>
-            <UiBadge v-if="rev.decision" :variant="rev.decision === 'approved' ? 'success' : 'danger'">
-              {{ rev.decision === 'approved' ? 'Aprobada' : 'Rechazada' }}
+            <UiBadge v-if="rev.decision" :variant="rev.decision === 'approved' ? 'success' : 'warning'">
+              {{ rev.decision === 'approved' ? 'Aprobada' : 'Ajustes solicitados' }}
             </UiBadge>
             <button
               type="button"

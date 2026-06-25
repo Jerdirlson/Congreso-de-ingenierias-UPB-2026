@@ -88,10 +88,10 @@ function fmtMoney(n: number, currency: string) {
 const statusLabel: Record<string, string> = {
   draft: 'Borrador',
   abstract_submitted: 'Abstract enviado',
-  abstract_rejected: 'Abstract rechazado',
+  abstract_rejected: 'Pendiente de ajustes (resumen)',
   abstract_approved: 'Abstract aprobado',
   under_review: 'En revisión',
-  revision_requested: 'Revisión solicitada',
+  revision_requested: 'Pendiente de ajustes (doc.)',
   document_approved: 'Documento aprobado',
   modality_selected: 'Modalidad seleccionada',
   video_pending: 'Video pendiente',
@@ -103,7 +103,7 @@ const statusLabel: Record<string, string> = {
 const statusColor: Record<string, string> = {
   draft: 'bg-zinc-500',
   abstract_submitted: 'bg-blue-500',
-  abstract_rejected: 'bg-red-500',
+  abstract_rejected: 'bg-amber-400',
   abstract_approved: 'bg-sky-400',
   under_review: 'bg-yellow-400',
   revision_requested: 'bg-orange-400',

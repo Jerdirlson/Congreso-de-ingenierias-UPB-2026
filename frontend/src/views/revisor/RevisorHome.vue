@@ -39,13 +39,13 @@ const statusVariants: Record<string, 'warning' | 'info' | 'success'> = {
   in_progress: 'info',
   completed:   'success',
 }
-const decisionVariants: Record<string, 'success' | 'danger'> = {
+const decisionVariants: Record<string, 'success' | 'warning'> = {
   approved: 'success',
-  rejected: 'danger',
+  rejected: 'warning',
 }
 const decisionLabels: Record<string, string> = {
   approved: 'Aprobada',
-  rejected: 'Rechazada',
+  rejected: 'Ajustes solicitados',
 }
 
 const stats = computed(() => ({
