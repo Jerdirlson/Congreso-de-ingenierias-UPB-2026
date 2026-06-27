@@ -125,6 +125,13 @@ const revisionReview = computed(() => {
     .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
 })
 
+const documentApprovalReview = computed(() => {
+  const reviews = submission.value?.reviews ?? []
+  return reviews
+    .filter(r => r.type === 'document' && r.status === 'completed' && r.decision === 'approved' && !!r.comments)
+    .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
+})
+
 const latestDocument = computed(() => {
   const docs = submission.value?.documents
   return docs?.length ? docs[0] : null
@@ -704,21 +711,39 @@ watch(() => route.params.id, () => {
       </div>
 
       <!-- Documento aprobado u otro estado con archivo -->
-      <div v-else-if="latestDocument" class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3">
-        <div class="flex items-center gap-3 min-w-0">
-          <svg class="w-5 h-5 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
-          <div class="min-w-0">
-            <p class="text-sm text-white truncate">{{ latestDocument.original_filename }}</p>
-            <p class="text-xs text-cgr-subtle">Versión {{ latestDocument.version }}</p>
+      <div v-else-if="latestDocument" class="space-y-3">
+        <!-- Comentarios del revisor cuando el documento fue aprobado -->
+        <div v-if="latestDocument.status === 'approved' && documentApprovalReview" class="bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-4">
+          <div class="flex gap-3 items-start mb-3">
+            <svg class="w-4 h-4 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+              <p class="text-sm font-semibold text-green-300">Comentarios del comité científico</p>
+              <p class="text-xs text-green-200/70 mt-0.5">
+                Revisor: {{ documentApprovalReview.reviewer?.name ?? 'Comité científico' }}
+              </p>
+            </div>
+          </div>
+          <div class="bg-green-500/10 border border-green-400/20 rounded-lg px-3 py-3 text-sm text-green-100 whitespace-pre-wrap leading-relaxed">
+            {{ documentApprovalReview.comments }}
           </div>
         </div>
-        <button
-          class="flex items-center gap-1.5 text-xs font-medium text-cgr-purple hover:text-cgr-accent border border-cgr-purple/30 hover:border-cgr-purple/60 rounded-lg px-3 py-1.5 transition-colors shrink-0"
-          @click="downloadDocument(latestDocument.id, latestDocument.original_filename)"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          Descargar PDF
-        </button>
+
+        <div class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <svg class="w-5 h-5 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
+            <div class="min-w-0">
+              <p class="text-sm text-white truncate">{{ latestDocument.original_filename }}</p>
+              <p class="text-xs text-cgr-subtle">Versión {{ latestDocument.version }}</p>
+            </div>
+          </div>
+          <button
+            class="flex items-center gap-1.5 text-xs font-medium text-cgr-purple hover:text-cgr-accent border border-cgr-purple/30 hover:border-cgr-purple/60 rounded-lg px-3 py-1.5 transition-colors shrink-0"
+            @click="downloadDocument(latestDocument.id, latestDocument.original_filename)"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Descargar PDF
+          </button>
+        </div>
       </div>
 
       <div v-else class="text-cgr-subtle text-sm">
