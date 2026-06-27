@@ -86,6 +86,13 @@ const abstractRejectionReview = computed(() => {
     .filter(r => r.type === 'abstract' && r.status === 'completed' && r.decision === 'rejected')
     .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
 })
+
+const abstractApprovalReview = computed(() => {
+  const reviews = submission.value?.reviews ?? []
+  return reviews
+    .filter(r => r.type === 'abstract' && r.status === 'completed' && r.decision === 'approved' && !!r.comments)
+    .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
+})
 const canConfirmAxis = computed(() =>
   submission.value?.status === 'abstract_submitted' && !submission.value?.thematic_axis
 )
@@ -638,11 +645,29 @@ watch(() => route.params.id, () => {
       </div>
 
       <!-- Eje confirmado (abstract_approved y más allá) -->
-      <div v-else-if="latestAbstract" class="text-sm text-cgr-muted space-y-1">
-        <p>Resumen enviado correctamente.</p>
-        <p v-if="submission?.thematic_axis" class="text-cgr-purple">
-          Eje temático: <strong>{{ submission.thematic_axis.name }}</strong>
-        </p>
+      <div v-else-if="latestAbstract" class="space-y-3">
+        <!-- Comentarios del revisor cuando el resumen fue aprobado -->
+        <div v-if="abstractApprovalReview" class="bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-4">
+          <div class="flex gap-3 items-start mb-3">
+            <svg class="w-4 h-4 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+              <p class="text-sm font-semibold text-green-300">Comentarios del comité científico</p>
+              <p class="text-xs text-green-200/70 mt-0.5">
+                Revisor: {{ abstractApprovalReview.reviewer?.name ?? 'Comité científico' }}
+              </p>
+            </div>
+          </div>
+          <div class="bg-green-500/10 border border-green-400/20 rounded-lg px-3 py-3 text-sm text-green-100 whitespace-pre-wrap leading-relaxed">
+            {{ abstractApprovalReview.comments }}
+          </div>
+        </div>
+
+        <div class="text-sm text-cgr-muted space-y-1">
+          <p>Resumen enviado correctamente.</p>
+          <p v-if="submission?.thematic_axis" class="text-cgr-purple">
+            Eje temático: <strong>{{ submission.thematic_axis.name }}</strong>
+          </p>
+        </div>
       </div>
     </UiCard>
 
