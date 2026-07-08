@@ -21,6 +21,11 @@ class Submission extends Model
         'modality',
         'abstract_attempts',
         'document_version',
+        'journal_opt_in_at',
+    ];
+
+    protected $casts = [
+        'journal_opt_in_at' => 'datetime',
     ];
 
     public const STATUS_DRAFT = 'draft';
@@ -64,6 +69,16 @@ class Submission extends Model
     public function latestDocument(): HasOne
     {
         return $this->hasOne(SubmissionDocument::class)->latestOfMany('version');
+    }
+
+    public function articles(): HasMany
+    {
+        return $this->hasMany(SubmissionArticle::class)->orderByDesc('version');
+    }
+
+    public function latestArticle(): HasOne
+    {
+        return $this->hasOne(SubmissionArticle::class)->latestOfMany('version');
     }
 
     public function reviews(): HasMany

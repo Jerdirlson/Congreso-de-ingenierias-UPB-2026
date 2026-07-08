@@ -15,6 +15,7 @@ class Review extends Model
     protected $fillable = [
         'submission_document_id',
         'submission_abstract_id',
+        'submission_article_id',
         'type',
         'submission_id',
         'reviewer_id',
@@ -43,6 +44,11 @@ class Review extends Model
         return $this->belongsTo(SubmissionAbstract::class, 'submission_abstract_id');
     }
 
+    public function submissionArticle(): BelongsTo
+    {
+        return $this->belongsTo(SubmissionArticle::class, 'submission_article_id');
+    }
+
     public function submission(): BelongsTo
     {
         return $this->belongsTo(Submission::class);
@@ -67,4 +73,5 @@ class Review extends Model
 
     public const TYPE_DOCUMENT = 'document';
     public const TYPE_ABSTRACT = 'abstract';
+    public const TYPE_ARTICLE = 'article';
 }

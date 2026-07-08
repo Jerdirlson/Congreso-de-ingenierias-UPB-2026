@@ -21,6 +21,7 @@ class ReviewController extends Controller
                 'submission.thematicAxis:id,name',
                 'submissionDocument',
                 'submissionAbstract',
+                'submissionArticle',
             ]);
 
         if ($request->filled('status')) {
@@ -50,6 +51,7 @@ class ReviewController extends Controller
             'submission.abstracts',
             'submissionDocument',
             'submissionAbstract',
+            'submissionArticle',
         ]);
 
         // Historial de revisiones anteriores del mismo revisor sobre la misma ponencia
@@ -59,6 +61,7 @@ class ReviewController extends Controller
             ->with([
                 'submissionDocument:id,version,original_filename',
                 'submissionAbstract:id,version',
+                'submissionArticle:id,version,original_filename',
             ])
             ->orderByDesc('assigned_at')
             ->get();
@@ -107,19 +110,21 @@ class ReviewController extends Controller
         return response()->json($review);
     }
 
-    /** GET /api/reviews/{review}/document — descargar PDF de la revisión */
+    /** GET /api/reviews/{review}/document — descargar el archivo de la revisión (PDF o artículo Word) */
     public function downloadDocument(Review $review): StreamedResponse
     {
         $this->authorize('view', $review);
 
-        $doc = $review->submissionDocument;
-        abort_if(! $doc, 404, 'No hay documento asociado a esta revisión.');
-        abort_unless(Storage::disk('local')->exists($doc->stored_path), 404, 'Archivo no encontrado.');
+        $file = $review->type === Review::TYPE_ARTICLE
+            ? $review->submissionArticle
+            : $review->submissionDocument;
+        abort_if(! $file, 404, 'No hay documento asociado a esta revisión.');
+        abort_unless(Storage::disk('local')->exists($file->stored_path), 404, 'Archivo no encontrado.');
 
         return Storage::disk('local')->download(
-            $doc->stored_path,
-            $doc->original_filename,
-            ['Content-Type' => 'application/pdf']
+            $file->stored_path,
+            $file->original_filename,
+            ['Content-Type' => $file->mime_type ?? 'application/pdf']
         );
     }
 
@@ -129,6 +134,11 @@ class ReviewController extends Controller
 
         if ($review->type === Review::TYPE_ABSTRACT) {
             $this->updateAbstractStatus($review, $submission);
+            return;
+        }
+
+        if ($review->type === Review::TYPE_ARTICLE) {
+            $this->updateArticleStatus($review, $submission);
             return;
         }
 
@@ -150,6 +160,35 @@ class ReviewController extends Controller
         if ($allCompleted && $allApproved) {
             $submission->advanceTo('document_approved');
             $submission->latestDocument?->update(['status' => 'approved']);
+        }
+    }
+
+    /**
+     * El artículo es un carril paralelo: su dictamen solo cambia el estado del
+     * artículo, nunca el estado de la ponencia (modalidad/video/pago siguen su curso).
+     */
+    private function updateArticleStatus(Review $review, \App\Models\Submission $submission): void
+    {
+        $article = $review->submissionArticle;
+        if (! $article) {
+            return;
+        }
+
+        if ($review->decision === Review::DECISION_REJECTED) {
+            $article->update(['status' => \App\Models\SubmissionArticle::STATUS_REVISION_REQUESTED]);
+            return;
+        }
+
+        // Solo evaluar las revisiones del artículo actual
+        $articleReviews = $submission->reviews
+            ->where('submission_article_id', $review->submission_article_id)
+            ->where('type', Review::TYPE_ARTICLE);
+
+        $allCompleted = $articleReviews->every(fn ($r) => $r->status === Review::STATUS_COMPLETED);
+        $allApproved  = $articleReviews->every(fn ($r) => $r->decision === Review::DECISION_APPROVED);
+
+        if ($allCompleted && $allApproved) {
+            $article->update(['status' => \App\Models\SubmissionArticle::STATUS_APPROVED]);
         }
     }
 

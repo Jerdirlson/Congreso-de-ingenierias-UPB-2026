@@ -13,12 +13,29 @@ resumen, documento completo, revisión del documento, modalidad, video/pago y co
 
 ## Máquina de estados (`Submission::STATUS_*`)
 ```
-draft → abstract_submitted → abstract_approved → under_review →
-  (revision_requested ⇄ under_review) → document_approved → modality_selected →
+draft → abstract_submitted → abstract_approved → modality_selected →
   [virtual] video_pending → video_ready → payment_pending → confirmed
   [presencial] payment_pending → confirmed
 abstract_submitted → abstract_rejected   (rechazo de resumen; permite reenvío)
 ```
+> **Cambio jul-2026**: con el resumen aprobado se pasa **directo a modalidad** — el
+> antiguo paso 2 obligatorio ("documento PDF") se eliminó. Los estados `under_review`,
+> `revision_requested` y `document_approved` son **legados**: se conservan por
+> compatibilidad con ponencias que quedaron a mitad de ese flujo (también permiten
+> elegir modalidad).
+
+## Artículo — publicación en revista científica (opcional, carril paralelo)
+- Disponible **desde `abstract_approved` en adelante** (incluye estados legados).
+- **Opt-in**: `POST/DELETE /submissions/{id}/journal-opt-in` marca `journal_opt_in_at`
+  en la ponencia ("quiero que mi trabajo sea considerado para revista"). Subir artículo
+  implica opt-in automático. El opt-out solo se permite si no ha subido artículo.
+- **Subir artículo** `POST /submissions/{id}/articles`: **Word** (`.doc/.docx`, máx 10 MB),
+  tabla `submission_articles` (versionado como los documentos). Descarga:
+  `GET /submissions/{id}/articles/{article}/download`.
+- **Revisión propia** (tipo `article`, ver revision.md): su dictamen **solo cambia el
+  estado del artículo** (`pending_review → under_review → approved | revision_requested`),
+  nunca el de la ponencia — modalidad, video y pago siguen su curso.
+- Resubida tras "pedir ajustes": re-asigna automáticamente los mismos revisores del artículo.
 
 ## Funcionalidades / endpoints (rol `ponente`, correo verificado)
 - **Crear ponencia** `POST /submissions`: título + eje + archivo de resumen. Extrae el texto
@@ -32,10 +49,10 @@ abstract_submitted → abstract_rejected   (rechazo de resumen; permite reenvío
 - **Confirmar eje** `PATCH /submissions/{id}/axis`: el ponente fija el `thematic_axis_id`.
   Existe sugerencia por IA (`ClassifyAbstractJob` + `LlmClassificationService`) que rellena
   `llm_axis_id` para recomendar un eje.
-- **Subir documento** `POST /submissions/{id}/documents`: PDF, solo en `abstract_approved` o
-  `revision_requested`. Pasa a `under_review`. Si es resubida tras correcciones, **re-asigna
-  automáticamente** los mismos revisores.
-- **Elegir modalidad** `PATCH /submissions/{id}/modality`: solo en `document_approved`.
+- **Subir documento** `POST /submissions/{id}/documents` (**legado**, ya sin UI): PDF, solo
+  en `abstract_approved` o `revision_requested`. La descarga sigue activa para históricos.
+- **Elegir modalidad** `PATCH /submissions/{id}/modality`: desde `abstract_approved`
+  (también estados legados `under_review`/`revision_requested`/`document_approved`).
   `virtual` → `video_pending`; presencial (oral/póster) → `payment_pending`.
 - **Video** `POST /submissions/{id}/videos` (+ `/videos/status`): ver video-streaming.md.
 - Gestión: `GET /submissions`, `GET/PATCH/DELETE /submissions/{id}` (editar título solo en

@@ -93,6 +93,7 @@ class SubmissionController extends Controller
             'thematicAxis',
             'abstracts.llmAxis',
             'documents',
+            'articles',
             'video',
             'reviews.reviewer:id,name',
         ]);

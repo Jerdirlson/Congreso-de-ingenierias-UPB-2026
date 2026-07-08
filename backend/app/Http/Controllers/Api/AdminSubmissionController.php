@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Review;
 use App\Models\Submission;
+use App\Models\SubmissionArticle;
 use App\Models\SubmissionDocument;
 use App\Models\SubmissionVideo;
 use App\Models\User;
@@ -23,6 +24,7 @@ class AdminSubmissionController extends Controller
                 'thematicAxis:id,name',
                 'reviews:id,submission_id,reviewer_id,status,decision',
                 'reviews.reviewer:id,name',
+                'latestArticle:id,submission_id,version,status,submitted_at',
             ])
             ->orderByDesc('updated_at');
 
@@ -46,6 +48,7 @@ class AdminSubmissionController extends Controller
             'thematicAxis',
             'abstracts.llmAxis',
             'documents',
+            'articles',
             'reviews.reviewer:id,name',
             'reviews.assignedBy:id,name',
             'video',
@@ -193,12 +196,46 @@ class AdminSubmissionController extends Controller
         return response()->json($review->load(['reviewer:id,name', 'submissionDocument']), 201);
     }
 
+    /** POST /api/admin/submissions/{submission}/assign-article-reviewer */
+    public function assignArticleReviewer(Request $request, Submission $submission): JsonResponse
+    {
+        $validated = $request->validate([
+            'reviewer_id' => 'required|exists:users,id',
+            'article_id'  => 'required|exists:submission_articles,id',
+        ]);
+
+        $reviewer = User::findOrFail($validated['reviewer_id']);
+        abort_unless($reviewer->hasRole('revisor'), 422, 'El usuario debe tener rol revisor.');
+
+        $article = $submission->articles()->findOrFail($validated['article_id']);
+
+        $alreadyAssigned = Review::where('submission_article_id', $article->id)
+            ->where('reviewer_id', $reviewer->id)
+            ->exists();
+        abort_if($alreadyAssigned, 422, 'Este revisor ya está asignado a este artículo.');
+
+        $review = Review::create([
+            'submission_article_id' => $article->id,
+            'submission_id'         => $submission->id,
+            'reviewer_id'           => $reviewer->id,
+            'assigned_by'           => $request->user()->id,
+            'type'                  => Review::TYPE_ARTICLE,
+            'status'                => Review::STATUS_PENDING,
+            'assigned_at'           => now(),
+        ]);
+
+        $article->update(['status' => SubmissionArticle::STATUS_UNDER_REVIEW]);
+
+        return response()->json($review->load(['reviewer:id,name', 'submissionArticle']), 201);
+    }
+
     /** DELETE /api/admin/submissions/{submission}/reviews/{review} */
     public function removeReview(Submission $submission, Review $review): JsonResponse
     {
         abort_unless($review->submission_id === $submission->id, 404);
 
         $documentId = $review->submission_document_id;
+        $articleId  = $review->submission_article_id;
 
         $review->delete();
 
@@ -209,6 +246,16 @@ class AdminSubmissionController extends Controller
                 SubmissionDocument::where('id', $documentId)
                     ->where('status', SubmissionDocument::STATUS_UNDER_REVIEW)
                     ->update(['status' => SubmissionDocument::STATUS_PENDING_REVIEW]);
+            }
+        }
+
+        // Lo mismo para artículos
+        if ($articleId) {
+            $remaining = Review::where('submission_article_id', $articleId)->count();
+            if ($remaining === 0) {
+                SubmissionArticle::where('id', $articleId)
+                    ->where('status', SubmissionArticle::STATUS_UNDER_REVIEW)
+                    ->update(['status' => SubmissionArticle::STATUS_PENDING_REVIEW]);
             }
         }
 

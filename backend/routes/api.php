@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AbstractController;
+use App\Http\Controllers\Api\ArticleSubmissionController;
 use App\Http\Controllers\Api\AdminAnalyticsController;
 use App\Http\Controllers\Api\AdminMetricsController;
 use App\Http\Controllers\Api\AdminSubmissionController;
@@ -110,6 +111,10 @@ Route::middleware(['auth:sanctum', 'verified', 'role:ponente', 'throttle:60,1'])
     Route::patch('/submissions/{submission}/axis',      [AxisConfirmationController::class, 'update']);
     Route::post('/submissions/{submission}/documents', [DocumentSubmissionController::class, 'store']);
     Route::get('/submissions/{submission}/documents/{document}/download', [DocumentSubmissionController::class, 'download']);
+    Route::post('/submissions/{submission}/journal-opt-in',   [ArticleSubmissionController::class, 'optIn']);
+    Route::delete('/submissions/{submission}/journal-opt-in', [ArticleSubmissionController::class, 'optOut']);
+    Route::post('/submissions/{submission}/articles',         [ArticleSubmissionController::class, 'store']);
+    Route::get('/submissions/{submission}/articles/{article}/download', [ArticleSubmissionController::class, 'download']);
     Route::patch('/submissions/{submission}/modality', [ModalityController::class, 'update']);
     Route::post('/submissions/{submission}/videos',        [VideoController::class, 'store']);
     Route::get('/submissions/{submission}/videos/status',  [VideoController::class, 'status']);
@@ -143,6 +148,8 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::patch('/submissions/{submission}/abstract/reject',            [AdminSubmissionController::class, 'rejectAbstract']);
     Route::post('/submissions/{submission}/assign-reviewer',             [AdminSubmissionController::class, 'assignReviewer']);
     Route::post('/submissions/{submission}/assign-abstract-reviewer',    [AdminSubmissionController::class, 'assignAbstractReviewer']);
+    Route::post('/submissions/{submission}/assign-article-reviewer',     [AdminSubmissionController::class, 'assignArticleReviewer']);
+    Route::get('/submissions/{submission}/articles/{article}/download',  [ArticleSubmissionController::class, 'download']);
     Route::delete('/submissions/{submission}/reviews/{review}',          [AdminSubmissionController::class, 'removeReview']);
     Route::get('/submissions/{submission}/documents/{document}/download', [DocumentSubmissionController::class, 'download']);
     Route::get('/submissions/{submission}/video/stream',         [AdminSubmissionController::class, 'streamVideo']);

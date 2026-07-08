@@ -18,16 +18,19 @@ const submission = ref<{
   title: string
   status: string
   modality: string | null
+  journal_opt_in_at?: string | null
   thematic_axis?: { id: number; name: string }
   abstracts?: { id: number; content: string; llm_status: string; llm_axis?: { id: number; name: string }; llm_justification?: string; llm_confidence_score?: number }[]
   documents?: { id: number; original_filename: string; version: number; status: string }[]
+  articles?: { id: number; original_filename: string; version: number; status: string }[]
   video?: { id: number; status: string; error_message?: string | null; original_filename?: string | null } | null
   reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; type?: string; reviewer?: { name: string } }[]
 } | null>(null)
 
 const abstractFile = ref<File | null>(null)
 const abstractFileError = ref('')
-const documentFile = ref<File | null>(null)
+const articleFile = ref<File | null>(null)
+const articleFileError = ref('')
 const modalityChoice = ref<string>('')
 const errorMessage = ref('')
 const confirmDelete = ref(false)
@@ -49,10 +52,10 @@ const showResubmitForm = ref(false)
 const deletableStatuses = ['draft', 'abstract_submitted']
 const canDelete = computed(() => deletableStatuses.includes(submission.value?.status ?? ''))
 
-// Flujo: Resumen → Documento → Modalidad → (Video si virtual) → Inscripción
+// Flujo: Resumen → Modalidad → (Video si virtual) → Inscripción.
+// El artículo para revista es un carril OPCIONAL paralelo (no es un paso).
 const STEPS = [
   { key: 'abstract', label: 'Resumen' },
-  { key: 'document', label: 'Documento' },
   { key: 'modality', label: 'Modalidad' },
   { key: 'payment', label: 'Inscripción' },
 ]
@@ -67,11 +70,10 @@ const currentStepIndex = computed(() => {
   const s = submission.value?.status
   if (!s) return 0
   if (['draft', 'abstract_submitted', 'abstract_rejected'].includes(s)) return 0
-  if (['abstract_approved', 'under_review', 'revision_requested'].includes(s)) return 1
-  if (s === 'document_approved') return 2
-  if (['modality_selected', 'video_pending', 'video_ready'].includes(s)) return 3
-  if (s === 'payment_pending') return 3
-  if (s === 'confirmed') return 4
+  // Estados del antiguo paso "documento" cuentan como resumen aprobado → elegir modalidad
+  if (['abstract_approved', 'under_review', 'revision_requested', 'document_approved'].includes(s)) return 1
+  if (['modality_selected', 'video_pending', 'video_ready', 'payment_pending'].includes(s)) return 2
+  if (s === 'confirmed') return 3
   return 0
 })
 
@@ -100,12 +102,43 @@ const awaitingAdminApproval = computed(() =>
   submission.value?.status === 'abstract_submitted' && !!submission.value?.thematic_axis
 )
 
-const canSubmitDocument = computed(() => {
-  const s = submission.value?.status
-  return s === 'abstract_approved' || s === 'revision_requested'
+// Con el resumen aprobado ya se elige modalidad; los estados del antiguo
+// paso "documento" se aceptan por compatibilidad con ponencias a mitad de flujo.
+const canSelectModality = computed(() =>
+  ['abstract_approved', 'under_review', 'revision_requested', 'document_approved'].includes(submission.value?.status ?? '')
+)
+
+// ── Artículo (opcional, publicación en revista) ──
+const ARTICLE_STATUSES = [
+  'abstract_approved', 'under_review', 'revision_requested', 'document_approved',
+  'modality_selected', 'video_pending', 'video_ready', 'payment_pending', 'confirmed',
+]
+const articleAvailable = computed(() => ARTICLE_STATUSES.includes(submission.value?.status ?? ''))
+const journalOptIn = computed(() => !!submission.value?.journal_opt_in_at)
+
+const latestArticle = computed(() => {
+  const arts = submission.value?.articles
+  return arts?.length ? arts[0] : null
 })
 
-const canSelectModality = computed(() => submission.value?.status === 'document_approved')
+const canUploadArticle = computed(() =>
+  articleAvailable.value && journalOptIn.value
+  && (!latestArticle.value || latestArticle.value.status === 'revision_requested')
+)
+
+const articleRevisionReview = computed(() => {
+  const reviews = submission.value?.reviews ?? []
+  return reviews
+    .filter(r => r.type === 'article' && r.status === 'completed' && r.decision === 'rejected')
+    .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
+})
+
+const articleApprovalReview = computed(() => {
+  const reviews = submission.value?.reviews ?? []
+  return reviews
+    .filter(r => r.type === 'article' && r.status === 'completed' && r.decision === 'approved' && !!r.comments)
+    .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
+})
 
 const isVirtual = computed(() => submission.value?.modality === 'virtual')
 const canUploadVideo = computed(() => {
@@ -128,7 +161,7 @@ const showLlmSpinner = computed(() => llmClassifying.value && !llmTimedOut.value
 const revisionReview = computed(() => {
   const reviews = submission.value?.reviews ?? []
   return reviews
-    .filter(r => r.status === 'completed' && r.decision === 'rejected')
+    .filter(r => r.type === 'document' && r.status === 'completed' && r.decision === 'rejected')
     .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
 })
 
@@ -216,17 +249,78 @@ async function confirmAxis() {
   }
 }
 
-async function submitDocument() {
-  if (!documentFile.value) return
+async function optInJournal() {
+  errorMessage.value = ''
+  const data = await api.post<unknown>(`/submissions/${route.params.id}/journal-opt-in`, {})
+  if (data) await loadSubmission()
+  else errorMessage.value = api.error.value?.message ?? 'Error al registrar tu interés de publicación'
+}
+
+async function optOutJournal() {
+  errorMessage.value = ''
+  const data = await api.delete<unknown>(`/submissions/${route.params.id}/journal-opt-in`)
+  if (data) await loadSubmission()
+  else errorMessage.value = api.error.value?.message ?? 'Error al retirar la opción de publicación'
+}
+
+function onArticleFileChange(event: Event) {
+  articleFileError.value = ''
+  const file = (event.target as HTMLInputElement).files?.[0] ?? null
+  if (!file) {
+    articleFile.value = null
+    return
+  }
+  const lower = file.name.toLowerCase()
+  if (!(lower.endsWith('.doc') || lower.endsWith('.docx'))) {
+    articleFile.value = null
+    articleFileError.value = 'El artículo debe subirse en formato Word (.doc o .docx).'
+    return
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    articleFile.value = null
+    articleFileError.value = 'El archivo no debe superar 10 MB.'
+    return
+  }
+  articleFile.value = file
+}
+
+async function submitArticle() {
+  if (!articleFile.value) return
   errorMessage.value = ''
   const form = new FormData()
-  form.append('file', documentFile.value)
-  const data = await api.postForm<unknown>(`/submissions/${route.params.id}/documents`, form)
+  form.append('file', articleFile.value)
+  const data = await api.postForm<unknown>(`/submissions/${route.params.id}/articles`, form)
   if (data) {
-    documentFile.value = null
+    articleFile.value = null
+    articleFileError.value = ''
     await loadSubmission()
   } else {
-    errorMessage.value = api.error.value?.message ?? 'Error al subir el documento'
+    errorMessage.value = api.error.value?.message ?? 'Error al subir el artículo'
+  }
+}
+
+async function downloadArticle(articleId: number, filename: string) {
+  const token = getApiToken()
+  try {
+    const res = await fetch(`/api/submissions/${route.params.id}/articles/${articleId}/download`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      errorMessage.value = json.message ?? `Error ${res.status} al descargar el archivo`
+      return
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    errorMessage.value = 'No se pudo descargar el archivo. Verifica tu conexión.'
   }
 }
 
@@ -459,7 +553,7 @@ watch(() => route.params.id, () => {
       </div>
     </div>
 
-    <UiSteps :steps="STEPS" :current="Math.min(currentStepIndex, 4)" class="mb-8" />
+    <UiSteps :steps="STEPS" :current="Math.min(currentStepIndex, 3)" class="mb-8" />
 
     <p v-if="errorMessage" class="mb-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
       {{ errorMessage }}
@@ -605,7 +699,7 @@ watch(() => route.params.id, () => {
             Eje confirmado: <span class="text-cgr-purple font-medium">{{ submission?.thematic_axis?.name }}</span>
           </p>
           <p class="text-cgr-muted text-xs leading-relaxed">
-            El comité revisará tu resumen. Una vez aprobado, podrás continuar con la carga del documento completo.
+            El comité revisará tu resumen. Una vez aprobado, podrás continuar eligiendo la modalidad de tu presentación.
           </p>
         </div>
       </div>
@@ -671,21 +765,22 @@ watch(() => route.params.id, () => {
       </div>
     </UiCard>
 
-    <!-- ── Paso 2: Documento PDF ── -->
-    <UiCard class="p-6 mb-4">
+    <!-- ── Documento del flujo anterior (solo histórico/lectura) ── -->
+    <UiCard v-if="latestDocument" class="p-6 mb-4">
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
-        2. Documento PDF
-        <UiBadge v-if="latestDocument?.status === 'approved'" variant="success">Aprobado</UiBadge>
-        <UiBadge v-else-if="latestDocument?.status === 'revision_requested'" variant="warning">Pendiente de ajustes</UiBadge>
-        <UiBadge v-else-if="latestDocument?.status === 'under_review'" variant="info">En revisión</UiBadge>
+        Documento enviado
+        <UiBadge v-if="latestDocument.status === 'approved'" variant="success">Aprobado</UiBadge>
+        <UiBadge v-else-if="latestDocument.status === 'revision_requested'" variant="warning">Pendiente de ajustes</UiBadge>
+        <UiBadge v-else-if="latestDocument.status === 'under_review'" variant="info">En revisión</UiBadge>
       </h2>
 
-      <div v-if="canSubmitDocument">
-        <div v-if="submission?.status === 'revision_requested'" class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-4 py-4 mb-4">
+      <div class="space-y-3">
+        <!-- Ajustes solicitados sobre el documento del flujo anterior -->
+        <div v-if="latestDocument.status === 'revision_requested'" class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-4 py-4">
           <div class="flex gap-3 items-start mb-3">
             <svg class="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <div>
-              <p class="text-sm font-semibold text-yellow-300">El comité solicitó ajustes en tu documento</p>
+              <p class="text-sm font-semibold text-yellow-300">El comité solicitó ajustes en este documento</p>
               <p class="text-xs text-yellow-200/70 mt-0.5">
                 Revisor: {{ revisionReview?.reviewer?.name ?? 'Comité científico' }}
               </p>
@@ -695,57 +790,11 @@ watch(() => route.params.id, () => {
             {{ revisionReview.comments }}
           </div>
           <p v-else class="text-xs text-yellow-200/60">Sin comentarios adicionales del revisor.</p>
-          <p class="text-xs text-yellow-200/60 mt-3">Realiza los cambios indicados y sube una nueva versión del PDF.</p>
-        </div>
-        <div class="flex gap-3 items-start bg-cgr-purple/10 border border-cgr-purple/30 rounded-lg px-4 py-3 mb-4">
-          <svg class="w-4 h-4 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <p class="text-sm text-cgr-muted leading-relaxed">
-            <strong class="text-white">¿Qué debes subir aquí?</strong>
-            Si tu ponencia es un <strong class="text-white">artículo</strong>, sube el documento completo;
-            en caso contrario, sube el <strong class="text-white">resumen</strong>.
-            En ambos casos el archivo debe estar en formato <strong class="text-white">PDF</strong>.
+          <p class="text-xs text-yellow-200/60 mt-3">
+            Sube la versión corregida en la sección <strong class="text-yellow-100">Publicación en revista científica</strong> (más abajo).
           </p>
         </div>
-        <input
-          type="file"
-          accept=".pdf"
-          class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
-          @change="documentFile = ($event.target as HTMLInputElement).files?.[0] ?? null"
-        />
-        <UiButton class="mt-4" :disabled="!documentFile" :loading="api.loading.value" @click="submitDocument">
-          Subir documento
-        </UiButton>
-      </div>
 
-      <!-- En revisión -->
-      <div v-else-if="latestDocument && submission?.status === 'under_review'" class="space-y-3">
-        <div class="flex gap-3 items-start bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3">
-          <svg class="w-5 h-5 text-blue-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <div>
-            <p class="text-sm font-semibold text-blue-300">Documento enviado — en espera de revisión</p>
-            <p class="text-xs text-blue-200/70 mt-1 leading-relaxed">Un miembro del comité científico revisará tu ponencia. Este proceso puede tardar varios días hábiles. Recibirás respuesta con la aprobación o correcciones necesarias.</p>
-          </div>
-        </div>
-        <div class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3">
-          <div class="flex items-center gap-3 min-w-0">
-            <svg class="w-5 h-5 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
-            <div class="min-w-0">
-              <p class="text-sm text-white truncate">{{ latestDocument.original_filename }}</p>
-              <p class="text-xs text-cgr-subtle">Versión {{ latestDocument.version }}</p>
-            </div>
-          </div>
-          <button
-            class="flex items-center gap-1.5 text-xs font-medium text-cgr-purple hover:text-cgr-accent border border-cgr-purple/30 hover:border-cgr-purple/60 rounded-lg px-3 py-1.5 transition-colors shrink-0"
-            @click="downloadDocument(latestDocument.id, latestDocument.original_filename)"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Descargar PDF
-          </button>
-        </div>
-      </div>
-
-      <!-- Documento aprobado u otro estado con archivo -->
-      <div v-else-if="latestDocument" class="space-y-3">
         <!-- Comentarios del revisor cuando el documento fue aprobado -->
         <div v-if="latestDocument.status === 'approved' && documentApprovalReview" class="bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-4">
           <div class="flex gap-3 items-start mb-3">
@@ -779,15 +828,11 @@ watch(() => route.params.id, () => {
           </button>
         </div>
       </div>
-
-      <div v-else class="text-cgr-subtle text-sm">
-        Completa el paso anterior primero.
-      </div>
     </UiCard>
 
-    <!-- ── Paso 3: Modalidad ── -->
+    <!-- ── Paso 2: Modalidad ── -->
     <UiCard class="p-6 mb-4">
-      <h2 class="font-semibold text-white mb-4">3. Modalidad de presentación</h2>
+      <h2 class="font-semibold text-white mb-4">2. Modalidad de presentación</h2>
 
       <div v-if="canSelectModality">
         <div class="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-4 text-amber-300 text-sm">
@@ -826,10 +871,135 @@ watch(() => route.params.id, () => {
       </div>
     </UiCard>
 
-    <!-- ── Paso 4 (solo virtual): Video ── -->
+    <!-- ── Artículo (opcional): publicación en revista científica ── -->
+    <UiCard v-if="articleAvailable" class="p-6 mb-4 border-cgr-purple/40">
+      <h2 class="font-semibold text-white mb-1 flex items-center gap-2 flex-wrap">
+        <svg class="w-5 h-5 text-cgr-purple shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Publicación en revista científica
+        <span class="text-[10px] font-medium text-cgr-muted border border-cgr-border bg-cgr-section rounded-full px-2 py-0.5">Opcional</span>
+        <UiBadge v-if="latestArticle?.status === 'approved'" variant="success">Artículo aprobado</UiBadge>
+        <UiBadge v-else-if="latestArticle?.status === 'revision_requested'" variant="warning">Pendiente de ajustes</UiBadge>
+        <UiBadge v-else-if="latestArticle?.status === 'under_review'" variant="info">En revisión</UiBadge>
+        <UiBadge v-else-if="latestArticle?.status === 'pending_review'" variant="info">Enviado</UiBadge>
+      </h2>
+      <p class="text-xs text-cgr-subtle mb-4">Este proceso es independiente: no afecta tu participación en el congreso.</p>
+
+      <!-- Invitación (sin opt-in) -->
+      <div v-if="!journalOptIn">
+        <div class="flex gap-3 items-start bg-cgr-purple/10 border border-cgr-purple/30 rounded-lg px-4 py-4 mb-4">
+          <svg class="w-5 h-5 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+          <div>
+            <p class="text-sm font-semibold text-white">¿Quieres que tu trabajo tenga la posibilidad de ser publicado en una revista científica?</p>
+            <p class="text-xs text-cgr-muted mt-1 leading-relaxed">
+              Si te interesa, podrás subir tu artículo completo en formato Word para que el comité lo revise y sea considerado para publicación.
+            </p>
+          </div>
+        </div>
+        <UiButton :loading="api.loading.value" @click="optInJournal">
+          Sí, quiero que sea considerado para publicación
+        </UiButton>
+      </div>
+
+      <!-- Con opt-in -->
+      <div v-else class="space-y-4">
+        <!-- Ajustes solicitados al artículo -->
+        <div v-if="latestArticle?.status === 'revision_requested'" class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-4 py-4">
+          <div class="flex gap-3 items-start mb-3">
+            <svg class="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+              <p class="text-sm font-semibold text-yellow-300">El comité solicitó ajustes en tu artículo</p>
+              <p class="text-xs text-yellow-200/70 mt-0.5">
+                Revisor: {{ articleRevisionReview?.reviewer?.name ?? 'Comité científico' }}
+              </p>
+            </div>
+          </div>
+          <div v-if="articleRevisionReview?.comments" class="bg-yellow-500/10 border border-yellow-400/20 rounded-lg px-3 py-3 text-sm text-yellow-100 whitespace-pre-wrap leading-relaxed">
+            {{ articleRevisionReview.comments }}
+          </div>
+          <p v-else class="text-xs text-yellow-200/60">Sin comentarios adicionales del revisor.</p>
+          <p class="text-xs text-yellow-200/60 mt-3">Realiza los cambios indicados y sube la versión corregida.</p>
+        </div>
+
+        <!-- Comentarios cuando el artículo fue aprobado -->
+        <div v-if="latestArticle?.status === 'approved' && articleApprovalReview" class="bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-4">
+          <div class="flex gap-3 items-start mb-3">
+            <svg class="w-4 h-4 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+              <p class="text-sm font-semibold text-green-300">Comentarios del comité científico</p>
+              <p class="text-xs text-green-200/70 mt-0.5">
+                Revisor: {{ articleApprovalReview.reviewer?.name ?? 'Comité científico' }}
+              </p>
+            </div>
+          </div>
+          <div class="bg-green-500/10 border border-green-400/20 rounded-lg px-3 py-3 text-sm text-green-100 whitespace-pre-wrap leading-relaxed">
+            {{ articleApprovalReview.comments }}
+          </div>
+        </div>
+
+        <!-- En espera de revisión -->
+        <div v-if="latestArticle && ['pending_review', 'under_review'].includes(latestArticle.status)" class="flex gap-3 items-start bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3">
+          <svg class="w-5 h-5 text-blue-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>
+            <p class="text-sm font-semibold text-blue-300">
+              {{ latestArticle.status === 'under_review' ? 'Artículo en revisión' : 'Artículo enviado — en espera de revisión' }}
+            </p>
+            <p class="text-xs text-blue-200/70 mt-1 leading-relaxed">El comité científico revisará tu artículo y te responderá con la aprobación o los ajustes necesarios.</p>
+          </div>
+        </div>
+
+        <!-- Archivo actual -->
+        <div v-if="latestArticle" class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <svg class="w-5 h-5 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>
+            <div class="min-w-0">
+              <p class="text-sm text-white truncate">{{ latestArticle.original_filename }}</p>
+              <p class="text-xs text-cgr-subtle">Versión {{ latestArticle.version }}</p>
+            </div>
+          </div>
+          <button
+            class="flex items-center gap-1.5 text-xs font-medium text-cgr-purple hover:text-cgr-accent border border-cgr-purple/30 hover:border-cgr-purple/60 rounded-lg px-3 py-1.5 transition-colors shrink-0"
+            @click="downloadArticle(latestArticle.id, latestArticle.original_filename)"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Descargar
+          </button>
+        </div>
+
+        <!-- Subir / resubir artículo -->
+        <div v-if="canUploadArticle">
+          <p class="text-xs text-cgr-muted mb-2">
+            {{ latestArticle ? 'Sube la versión corregida de tu artículo (Word .doc o .docx, máx. 10 MB):' : 'Sube tu artículo completo en formato Word (.doc o .docx, máx. 10 MB):' }}
+          </p>
+          <input
+            type="file"
+            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
+            @change="onArticleFileChange"
+          />
+          <p v-if="articleFileError" class="mt-2 text-xs text-red-400">{{ articleFileError }}</p>
+          <p v-if="articleFile" class="mt-2 text-xs text-cgr-subtle">
+            Archivo: {{ articleFile.name }} ({{ (articleFile.size / 1024 / 1024).toFixed(2) }} MB)
+          </p>
+          <div class="flex items-center gap-4 mt-4 flex-wrap">
+            <UiButton :disabled="!articleFile || !!articleFileError" :loading="api.loading.value" @click="submitArticle">
+              {{ latestArticle ? 'Subir versión corregida' : 'Subir artículo' }}
+            </UiButton>
+            <button
+              v-if="!latestArticle"
+              class="text-xs text-cgr-muted hover:text-white transition-colors"
+              @click="optOutJournal"
+            >
+              Ya no me interesa publicar
+            </button>
+          </div>
+        </div>
+      </div>
+    </UiCard>
+
+    <!-- ── Paso 3 (solo virtual): Video ── -->
     <UiCard v-if="isVirtual || canUploadVideo || submission?.video" class="p-6 mb-4">
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
-        4. Videoponencia
+        3. Videoponencia
         <UiBadge v-if="submission?.video?.status === 'ready'" variant="success">Lista</UiBadge>
         <UiBadge v-else-if="submission?.video?.status === 'processing'" variant="info">Procesando…</UiBadge>
       </h2>
@@ -921,10 +1091,10 @@ watch(() => route.params.id, () => {
       </div>
     </UiCard>
 
-    <!-- ── Paso 5: Inscripción y pago (portal UPB) ── -->
+    <!-- ── Paso 4: Inscripción y pago (portal UPB) ── -->
     <UiCard v-if="canPay || submission?.status === 'confirmed'" class="p-6 mb-4">
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
-        5. Inscripción y pago
+        4. Inscripción y pago
         <UiBadge v-if="submission?.status === 'confirmed'" variant="success">Completado</UiBadge>
         <UiBadge v-else variant="warning">Pendiente</UiBadge>
       </h2>

@@ -28,11 +28,13 @@ interface ReviewDetail {
   }
   submission_document?: { id: number; original_filename: string; version: number } | null
   submission_abstract?: { id: number; content: string; version: number } | null
+  submission_article?: { id: number; original_filename: string; version: number } | null
   history?: {
     id: number; status: string; decision: string | null; comments: string | null; type?: string
     completed_at: string | null
     submission_document?: { version: number; original_filename: string } | null
     submission_abstract?: { version: number } | null
+    submission_article?: { version: number; original_filename: string } | null
   }[]
 }
 
@@ -92,7 +94,9 @@ async function downloadDocument() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = review.value?.submission_document?.original_filename ?? 'documento.pdf'
+    a.download = review.value?.type === 'article'
+      ? (review.value?.submission_article?.original_filename ?? 'articulo.docx')
+      : (review.value?.submission_document?.original_filename ?? 'documento.pdf')
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -177,10 +181,18 @@ watch(() => route.params.id, loadReview)
           >
             El ponente envió la versión {{ review.submission_abstract?.version }} del resumen con los ajustes solicitados.
           </p>
+          <p
+            v-if="review.type === 'article' && (review.submission_article?.version ?? 1) > 1"
+            class="text-sm text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 mb-3"
+          >
+            El ponente envió la versión {{ review.submission_article?.version }} del artículo con los ajustes solicitados.
+          </p>
           <p class="text-sm text-cgr-muted mb-4">
             {{ review.type === 'abstract'
               ? 'Al iniciar, podrás leer el resumen del ponente y emitir tu dictamen.'
-              : 'Al iniciar, podrás leer el resumen y el documento PDF del ponente para emitir tu dictamen.' }}
+              : review.type === 'article'
+                ? 'Al iniciar, podrás descargar el artículo del ponente (candidato a publicación en revista) y emitir tu dictamen.'
+                : 'Al iniciar, podrás leer el resumen y el documento PDF del ponente para emitir tu dictamen.' }}
           </p>
           <UiButton :loading="api.loading.value" @click="startReview">Iniciar revision</UiButton>
         </div>
@@ -211,8 +223,8 @@ watch(() => route.params.id, loadReview)
         </div>
       </UiCard>
 
-      <!-- Documento PDF (solo para revisiones de tipo 'document') -->
-      <UiCard v-if="review?.type !== 'abstract'" class="p-6 mb-4">
+      <!-- Documento PDF (revisiones de tipo 'document') -->
+      <UiCard v-if="review?.type !== 'abstract' && review?.type !== 'article'" class="p-6 mb-4">
         <h2 class="font-semibold text-white mb-3">Documento PDF</h2>
         <div v-if="review?.submission_document" class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3">
           <div class="flex items-center gap-3 min-w-0">
@@ -227,6 +239,32 @@ watch(() => route.params.id, loadReview)
           <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">Descargar PDF</UiButton>
         </div>
         <p v-else class="text-cgr-subtle text-sm">No hay documento adjunto.</p>
+      </UiCard>
+
+      <!-- Artículo (revisiones de tipo 'article') -->
+      <UiCard v-if="review?.type === 'article'" class="p-6 mb-4">
+        <div class="flex items-center gap-2 mb-3">
+          <h2 class="font-semibold text-white">Artículo para revista científica</h2>
+          <span
+            v-if="(review?.submission_article?.version ?? 1) > 1"
+            class="text-[10px] font-medium text-amber-300 border border-amber-500/30 bg-amber-500/10 rounded-full px-2 py-0.5"
+          >
+            Versión {{ review?.submission_article?.version }} · corregida por el autor
+          </span>
+        </div>
+        <div v-if="review?.submission_article" class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <svg class="w-5 h-5 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
+            </svg>
+            <div class="min-w-0">
+              <p class="text-sm text-white truncate">{{ review.submission_article.original_filename }}</p>
+              <p class="text-xs text-cgr-subtle">Version {{ review.submission_article.version }} · Word</p>
+            </div>
+          </div>
+          <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">Descargar</UiButton>
+        </div>
+        <p v-else class="text-cgr-subtle text-sm">No hay artículo adjunto.</p>
       </UiCard>
 
       <!-- Dictamen (en progreso) -->
@@ -260,8 +298,8 @@ watch(() => route.params.id, loadReview)
           </div>
           <UiButton :loading="api.loading.value" variant="primary" @click="submitReview">
             {{ decision === 'approved'
-              ? (review?.type === 'abstract' ? 'Aprobar resumen' : 'Aprobar ponencia')
-              : (review?.type === 'abstract' ? 'Solicitar ajustes al resumen' : 'Solicitar ajustes a la ponencia') }}
+              ? (review?.type === 'abstract' ? 'Aprobar resumen' : review?.type === 'article' ? 'Aprobar artículo' : 'Aprobar ponencia')
+              : (review?.type === 'abstract' ? 'Solicitar ajustes al resumen' : review?.type === 'article' ? 'Solicitar ajustes al artículo' : 'Solicitar ajustes a la ponencia') }}
           </UiButton>
         </div>
       </UiCard>
@@ -296,7 +334,9 @@ watch(() => route.params.id, loadReview)
               <span class="text-xs text-cgr-subtle">
                 {{ h.type === 'abstract'
                   ? 'Resumen v' + (h.submission_abstract?.version ?? 1)
-                  : h.submission_document ? 'Doc v' + h.submission_document.version : 'Sin documento' }}
+                  : h.type === 'article'
+                    ? 'Artículo v' + (h.submission_article?.version ?? 1)
+                    : h.submission_document ? 'Doc v' + h.submission_document.version : 'Sin documento' }}
               </span>
               <UiBadge :variant="h.decision === 'approved' ? 'success' : h.decision === 'rejected' ? 'warning' : 'default'">
                 {{ h.decision === 'approved' ? 'Aprobada' : h.decision === 'rejected' ? 'Ajustes solicitados' : 'Sin dictamen' }}

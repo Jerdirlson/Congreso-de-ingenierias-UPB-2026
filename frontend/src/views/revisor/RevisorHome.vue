@@ -21,6 +21,7 @@ interface Review {
     thematic_axis?: { id: number; name: string }
   }
   submission_abstract?: { id: number; version: number } | null
+  submission_article?: { id: number; version: number } | null
 }
 
 const reviews = ref<Review[]>([])
@@ -193,8 +194,11 @@ onMounted(loadData)
                 <span v-if="r.type === 'abstract'" class="text-xs text-cgr-purple font-medium bg-cgr-purple/10 border border-cgr-purple/20 rounded-full px-2 py-0.5">
                   Resumen{{ (r.submission_abstract?.version ?? 1) > 1 ? ` v${r.submission_abstract?.version}` : '' }}
                 </span>
+                <span v-if="r.type === 'article'" class="text-xs text-blue-300 font-medium bg-blue-500/10 border border-blue-500/30 rounded-full px-2 py-0.5">
+                  Artículo{{ (r.submission_article?.version ?? 1) > 1 ? ` v${r.submission_article?.version}` : '' }}
+                </span>
                 <span
-                  v-if="r.type === 'abstract' && (r.submission_abstract?.version ?? 1) > 1 && r.status !== 'completed'"
+                  v-if="((r.type === 'abstract' && (r.submission_abstract?.version ?? 1) > 1) || (r.type === 'article' && (r.submission_article?.version ?? 1) > 1)) && r.status !== 'completed'"
                   class="text-xs text-amber-300 font-medium bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5"
                 >
                   Corregido por el autor

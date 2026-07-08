@@ -11,8 +11,8 @@ completo. El admin/comité asigna revisores; el revisor emite decisión (aprobar
   `views/admin/AdminSubmissionDetail` (asignar/quitar revisores).
 
 ## Modelo `Review`
-- `type`: `abstract` | `document`. Apunta a `submission_abstract_id` **o**
-  `submission_document_id`.
+- `type`: `abstract` | `document` | `article`. Apunta a `submission_abstract_id`,
+  `submission_document_id` **o** `submission_article_id`.
 - `status`: `pending` → `in_progress` → `completed`. `decision`: `approved` | `rejected`.
 - `comments` obligatorio al **rechazar**.
 
@@ -30,9 +30,12 @@ completo. El admin/comité asigna revisores; el revisor emite decisión (aprobar
 ## Avance automático de estado (al completar una revisión)
 - **Resumen**: si se rechaza → `abstract_rejected`. Si **todos** los revisores del resumen
   actual aprueban → `abstract_approved`.
-- **Documento**: si se rechaza → `revision_requested` (doc `revision_requested`). Si **todos**
-  los revisores del documento actual aprueban → `document_approved` (doc `approved`).
-- Solo se evalúan las revisiones del resumen/documento **actual** (no versiones anteriores).
+- **Documento** (flujo legado): si se rechaza → `revision_requested`. Si **todos** aprueban
+  → `document_approved` (doc `approved`).
+- **Artículo** (revista): el dictamen **solo cambia el estado del artículo**
+  (`revision_requested` o `approved`), nunca el de la ponencia.
+  Asignación: `POST /admin/submissions/{id}/assign-article-reviewer` (`article_id`).
+- Solo se evalúan las revisiones del resumen/documento/artículo **actual** (no versiones anteriores).
 
 ## Notas
 - **Resumen corregido**: cuando el ponente reenvía el resumen tras un rechazo, se crea

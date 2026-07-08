@@ -12,18 +12,22 @@ const router = useRouter()
 const api = useFetchApi()
 
 interface Document { id: number; original_filename: string; version: number; status: string; submitted_at: string }
+interface Article { id: number; original_filename: string; version: number; status: string; submitted_at: string }
 interface Review {
   id: number; status: string; decision: string | null; type?: string; comments?: string | null
+  submission_article_id?: number | null
   reviewer?: { id: number; name: string }
   assignedBy?: { name: string }
   assigned_at: string | null; completed_at: string | null
 }
 interface Submission {
   id: number; title: string; status: string; updated_at: string
+  journal_opt_in_at?: string | null
   user?: { id: number; name: string; email: string; institution?: string; country?: string }
   thematic_axis?: { id: number; name: string }
   abstracts?: { content: string; version: number; llm_status: string }[]
   documents?: Document[]
+  articles?: Article[]
   reviews?: Review[]
   video?: { id: number; status: string; original_filename?: string; file_size?: number; uploaded_at?: string; error_message?: string | null } | null
 }
@@ -41,6 +45,13 @@ const assignAbstractModalOpen = ref(false)
 const selectedAbstractReviewerId = ref<number | null>(null)
 const assignAbstractError = ref('')
 const assigningAbstract = ref(false)
+
+const assignArticleModalOpen = ref(false)
+const selectedArticleReviewerId = ref<number | null>(null)
+const selectedArticleId = ref<number | null>(null)
+const assignArticleError = ref('')
+const assigningArticle = ref(false)
+const downloadingArticle = ref<number | null>(null)
 const downloading = ref<number | null>(null)
 const downloadingVideo = ref(false)
 const rejectingVideo = ref(false)
@@ -152,7 +163,58 @@ async function downloadDoc(doc: Document) {
 }
 
 function isAlreadyAssignedToDoc(reviewerId: number) {
-  return submission.value?.reviews?.some(r => r.reviewer?.id === reviewerId && r.type !== 'abstract') ?? false
+  return submission.value?.reviews?.some(r => r.reviewer?.id === reviewerId && r.type !== 'abstract' && r.type !== 'article') ?? false
+}
+
+function isAlreadyAssignedToArticle(reviewerId: number) {
+  return submission.value?.reviews?.some(
+    r => r.reviewer?.id === reviewerId && r.type === 'article' && r.submission_article_id === selectedArticleId.value
+  ) ?? false
+}
+
+function openAssignArticleModal(articleId: number) {
+  selectedArticleReviewerId.value = null
+  selectedArticleId.value = articleId
+  assignArticleError.value = ''
+  assignArticleModalOpen.value = true
+}
+
+async function assignArticleReviewer() {
+  if (!selectedArticleReviewerId.value || !selectedArticleId.value) {
+    assignArticleError.value = 'Selecciona un revisor.'
+    return
+  }
+  assigningArticle.value = true
+  assignArticleError.value = ''
+  const a = useFetchApi()
+  const data = await a.post<unknown>(`/admin/submissions/${route.params.id}/assign-article-reviewer`, {
+    reviewer_id: selectedArticleReviewerId.value,
+    article_id: selectedArticleId.value,
+  })
+  assigningArticle.value = false
+  if (data) {
+    assignArticleModalOpen.value = false
+    await load()
+  } else {
+    assignArticleError.value = a.error.value?.message ?? 'Error al asignar el revisor.'
+  }
+}
+
+async function downloadArticleFile(art: Article) {
+  downloadingArticle.value = art.id
+  const token = getApiToken()
+  try {
+    const res = await fetch(`/api/admin/submissions/${route.params.id}/articles/${art.id}/download`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) { downloadingArticle.value = null; return }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = art.original_filename
+    document.body.appendChild(a); a.click()
+    document.body.removeChild(a); URL.revokeObjectURL(url)
+  } finally { downloadingArticle.value = null }
 }
 
 function isAlreadyAssignedToAbstract(reviewerId: number) {
@@ -358,6 +420,52 @@ onMounted(load)
       </div>
     </UiCard>
 
+    <!-- Artículo para revista científica -->
+    <UiCard v-if="submission?.journal_opt_in_at || submission?.articles?.length" class="p-5 mb-4 border-cgr-purple/40">
+      <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide">Artículo — revista científica</h2>
+        <span class="text-[10px] font-medium text-cgr-purple border border-cgr-purple/30 bg-cgr-purple/10 rounded-full px-2 py-0.5">
+          Quiere publicar{{ submission?.journal_opt_in_at ? ' · desde ' + formatDate(submission.journal_opt_in_at) : '' }}
+        </span>
+      </div>
+
+      <div v-if="submission?.articles?.length" class="space-y-2">
+        <div
+          v-for="art in submission.articles"
+          :key="art.id"
+          class="flex items-center justify-between gap-4 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <svg class="w-4 h-4 text-blue-400 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
+            </svg>
+            <div class="min-w-0">
+              <p class="text-sm text-white truncate">{{ art.original_filename }}</p>
+              <p class="text-xs text-cgr-subtle">Versión {{ art.version }} · Word · {{ formatDate(art.submitted_at) }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <UiBadge :variant="art.status === 'approved' ? 'success' : art.status === 'revision_requested' ? 'warning' : 'info'">
+              {{ docStatusLabels[art.status] ?? art.status }}
+            </UiBadge>
+            <UiButton size="sm" variant="secondary" :loading="downloadingArticle === art.id" @click="downloadArticleFile(art)">
+              Descargar
+            </UiButton>
+            <UiButton
+              v-if="['pending_review', 'under_review'].includes(art.status)"
+              size="sm"
+              @click="openAssignArticleModal(art.id)"
+            >
+              + Asignar revisor
+            </UiButton>
+          </div>
+        </div>
+      </div>
+      <p v-else class="text-sm text-cgr-muted py-2">
+        El ponente marcó que quiere publicar en revista, pero aún no ha subido su artículo.
+      </p>
+    </UiCard>
+
     <!-- Revisores asignados -->
     <UiCard class="p-5 mb-4">
       <div class="flex items-center justify-between mb-3">
@@ -379,9 +487,9 @@ onMounted(load)
               <div class="flex items-center gap-2 mb-0.5">
                 <p class="text-sm text-white font-medium">{{ rev.reviewer?.name ?? 'Revisor #' + rev.id }}</p>
                 <span
-                  :class="['text-[10px] font-medium rounded-full px-2 py-0.5 border', rev.type === 'abstract' ? 'text-cgr-purple border-cgr-purple/30 bg-cgr-purple/10' : 'text-cgr-muted border-cgr-border bg-cgr-section']"
+                  :class="['text-[10px] font-medium rounded-full px-2 py-0.5 border', rev.type === 'abstract' ? 'text-cgr-purple border-cgr-purple/30 bg-cgr-purple/10' : rev.type === 'article' ? 'text-blue-300 border-blue-500/30 bg-blue-500/10' : 'text-cgr-muted border-cgr-border bg-cgr-section']"
                 >
-                  {{ rev.type === 'abstract' ? 'Resumen' : 'Documento' }}
+                  {{ rev.type === 'abstract' ? 'Resumen' : rev.type === 'article' ? 'Artículo' : 'Documento' }}
                 </span>
               </div>
               <p class="text-xs text-cgr-subtle">Asignado {{ formatDate(rev.assigned_at) }}</p>
@@ -521,7 +629,7 @@ onMounted(load)
       <div class="space-y-3">
         <p class="text-sm text-cgr-muted">
           ¿Quitar a <span class="text-white font-medium">{{ reviewToRemove?.reviewer?.name ?? '—' }}</span>
-          de la revisión {{ reviewToRemove?.type === 'abstract' ? 'del resumen' : 'del documento' }}?
+          de la revisión {{ reviewToRemove?.type === 'abstract' ? 'del resumen' : reviewToRemove?.type === 'article' ? 'del artículo' : 'del documento' }}?
         </p>
         <p
           v-if="reviewToRemove?.status === 'completed'"
@@ -544,6 +652,37 @@ onMounted(load)
       <template #footer>
         <UiButton variant="secondary" @click="removeReviewModalOpen = false">Cancelar</UiButton>
         <UiButton variant="danger" :loading="removingReview" @click="removeReview">Quitar</UiButton>
+      </template>
+    </UiModal>
+
+    <!-- Modal asignar revisor al artículo -->
+    <UiModal v-model="assignArticleModalOpen" title="Asignar revisor al artículo">
+      <div class="space-y-4">
+        <p class="text-xs text-cgr-muted">El revisor podrá descargar el artículo (Word) y emitir su dictamen: aprobarlo para publicación o solicitar ajustes con comentarios.</p>
+        <div>
+          <label class="block text-xs font-medium text-cgr-muted mb-2">Revisor</label>
+          <select
+            v-model="selectedArticleReviewerId"
+            class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-cgr-purple"
+          >
+            <option :value="null" disabled>Selecciona un revisor...</option>
+            <option
+              v-for="r in reviewers"
+              :key="r.id"
+              :value="r.id"
+              :disabled="isAlreadyAssignedToArticle(r.id)"
+            >
+              {{ r.name }}{{ isAlreadyAssignedToArticle(r.id) ? ' (ya asignado)' : '' }}
+            </option>
+          </select>
+        </div>
+        <p v-if="assignArticleError" class="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+          {{ assignArticleError }}
+        </p>
+      </div>
+      <template #footer>
+        <UiButton variant="secondary" @click="assignArticleModalOpen = false">Cancelar</UiButton>
+        <UiButton :loading="assigningArticle" @click="assignArticleReviewer">Asignar</UiButton>
       </template>
     </UiModal>
 

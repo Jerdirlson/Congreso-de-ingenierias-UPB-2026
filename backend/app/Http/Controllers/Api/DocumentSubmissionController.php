@@ -51,6 +51,7 @@ class DocumentSubmissionController extends Controller
         // los mismos revisores al nuevo documento
         if ($isResubmission) {
             $previousReviewerIds = $submission->reviews()
+                ->where('type', Review::TYPE_DOCUMENT)
                 ->pluck('reviewer_id')
                 ->unique();
 
@@ -60,6 +61,7 @@ class DocumentSubmissionController extends Controller
                     'submission_id'          => $submission->id,
                     'reviewer_id'            => $reviewerId,
                     'assigned_by'            => null,
+                    'type'                   => Review::TYPE_DOCUMENT,
                     'status'                 => Review::STATUS_PENDING,
                     'assigned_at'            => now(),
                 ]);
