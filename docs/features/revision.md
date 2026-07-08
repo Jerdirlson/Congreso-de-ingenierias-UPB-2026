@@ -35,5 +35,9 @@ completo. El admin/comité asigna revisores; el revisor emite decisión (aprobar
 - Solo se evalúan las revisiones del resumen/documento **actual** (no versiones anteriores).
 
 ## Notas
+- **Resumen corregido**: cuando el ponente reenvía el resumen tras un rechazo, se crea
+  automáticamente una nueva revisión `pending` para los mismos revisores (ver
+  ponencias-flujo.md). El panel del revisor marca estas versiones como
+  "Corregido por el autor" y muestra el historial de dictámenes anteriores.
 - Roles con `revisor` + ponente: el revisor opera con su rol activo (ver auth-y-roles.md).
 - Lista de revisores disponibles: `GET /admin/reviewers` (usuarios con rol `revisor`).

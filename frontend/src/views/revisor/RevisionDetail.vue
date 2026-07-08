@@ -171,6 +171,12 @@ watch(() => route.params.id, loadReview)
         </div>
         <div class="flex-1">
           <p class="font-medium text-white mb-1">Revision pendiente de iniciar</p>
+          <p
+            v-if="review.type === 'abstract' && (review.submission_abstract?.version ?? 1) > 1"
+            class="text-sm text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 mb-3"
+          >
+            El ponente envió la versión {{ review.submission_abstract?.version }} del resumen con los ajustes solicitados.
+          </p>
           <p class="text-sm text-cgr-muted mb-4">
             {{ review.type === 'abstract'
               ? 'Al iniciar, podrás leer el resumen del ponente y emitir tu dictamen.'
@@ -190,6 +196,12 @@ watch(() => route.params.id, loadReview)
           </h2>
           <span v-if="review?.type === 'abstract'" class="text-[10px] font-medium text-cgr-purple border border-cgr-purple/30 bg-cgr-purple/10 rounded-full px-2 py-0.5">
             Objeto de revisión
+          </span>
+          <span
+            v-if="review?.type === 'abstract' && (review?.submission_abstract?.version ?? 1) > 1"
+            class="text-[10px] font-medium text-amber-300 border border-amber-500/30 bg-amber-500/10 rounded-full px-2 py-0.5"
+          >
+            Versión {{ review?.submission_abstract?.version }} · corregida por el autor
           </span>
         </div>
         <div class="bg-cgr-section rounded-lg p-4 text-sm text-cgr-muted leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
@@ -268,6 +280,8 @@ watch(() => route.params.id, loadReview)
         </div>
         <p v-else class="text-sm text-cgr-subtle">Sin comentarios adicionales.</p>
       </UiCard>
+    </template>
+
     <!-- Historial de revisiones anteriores -->
     <UiCard v-if="review?.history?.length" class="p-5 mt-4">
       <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide mb-4">Historial de revisiones</h2>
@@ -297,6 +311,5 @@ watch(() => route.params.id, loadReview)
         </div>
       </div>
     </UiCard>
-    </template>
   </div>
 </template>

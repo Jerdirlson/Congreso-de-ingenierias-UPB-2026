@@ -697,6 +697,15 @@ watch(() => route.params.id, () => {
           <p v-else class="text-xs text-yellow-200/60">Sin comentarios adicionales del revisor.</p>
           <p class="text-xs text-yellow-200/60 mt-3">Realiza los cambios indicados y sube una nueva versión del PDF.</p>
         </div>
+        <div class="flex gap-3 items-start bg-cgr-purple/10 border border-cgr-purple/30 rounded-lg px-4 py-3 mb-4">
+          <svg class="w-4 h-4 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p class="text-sm text-cgr-muted leading-relaxed">
+            <strong class="text-white">¿Qué debes subir aquí?</strong>
+            Si tu ponencia es un <strong class="text-white">artículo</strong>, sube el documento completo;
+            en caso contrario, sube el <strong class="text-white">resumen</strong>.
+            En ambos casos el archivo debe estar en formato <strong class="text-white">PDF</strong>.
+          </p>
+        </div>
         <input
           type="file"
           accept=".pdf"

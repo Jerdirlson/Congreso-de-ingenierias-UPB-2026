@@ -25,7 +25,10 @@ abstract_submitted → abstract_rejected   (rechazo de resumen; permite reenvío
   del `.docx/.pdf` (no guarda el archivo, solo el texto en `submission_abstracts.content`),
   exige ≥100 palabras, crea ponencia + resumen **en una transacción**. Pasa a `abstract_submitted`.
 - **Reenviar resumen** `POST /submissions/{id}/abstracts`: permitido en `draft`,
-  `abstract_submitted`, `abstract_rejected` (también transaccional).
+  `abstract_submitted`, `abstract_rejected` (también transaccional). Si es reenvío tras
+  `abstract_rejected`, **re-asigna automáticamente** a los revisores que ya dictaminaron
+  (nueva revisión `pending` sobre la nueva versión); las revisiones de resumen aún abiertas
+  pasan a apuntar a la última versión.
 - **Confirmar eje** `PATCH /submissions/{id}/axis`: el ponente fija el `thematic_axis_id`.
   Existe sugerencia por IA (`ClassifyAbstractJob` + `LlmClassificationService`) que rellena
   `llm_axis_id` para recomendar un eje.

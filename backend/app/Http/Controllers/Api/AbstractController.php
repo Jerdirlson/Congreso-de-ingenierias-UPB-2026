@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Review;
 use App\Models\Submission;
 use App\Models\SubmissionAbstract;
 use App\Services\AbstractFileExtractorService;
@@ -41,10 +42,11 @@ class AbstractController extends Controller
         }
 
         $version = $submission->abstract_attempts + 1;
+        $isResubmission = $submission->status === Submission::STATUS_ABSTRACT_REJECTED;
 
         // Atómico: si falla el guardado del resumen, el estado de la ponencia
         // no debe avanzar a abstract_submitted sin un resumen real.
-        $abstract = DB::transaction(function () use ($submission, $abstractText, $version) {
+        $abstract = DB::transaction(function () use ($submission, $abstractText, $version, $isResubmission) {
             $abstract = $submission->abstracts()->create([
                 'content'      => $abstractText,
                 'version'      => $version,
@@ -56,6 +58,36 @@ class AbstractController extends Controller
                 'abstract_attempts' => $version,
                 'status'            => Submission::STATUS_ABSTRACT_SUBMITTED,
             ]);
+
+            // Si es una resubida tras "pedir ajustes", re-asignar automáticamente
+            // una nueva revisión a los revisores que ya dictaminaron el resumen anterior
+            if ($isResubmission) {
+                $completedReviewerIds = $submission->reviews()
+                    ->where('type', Review::TYPE_ABSTRACT)
+                    ->where('status', Review::STATUS_COMPLETED)
+                    ->pluck('reviewer_id')
+                    ->unique();
+
+                foreach ($completedReviewerIds as $reviewerId) {
+                    Review::create([
+                        'submission_abstract_id' => $abstract->id,
+                        'submission_id'          => $submission->id,
+                        'reviewer_id'            => $reviewerId,
+                        'assigned_by'            => null,
+                        'type'                   => Review::TYPE_ABSTRACT,
+                        'status'                 => Review::STATUS_PENDING,
+                        'assigned_at'            => now(),
+                    ]);
+                }
+            }
+
+            // Las revisiones de resumen aún abiertas (pendientes o en curso) pasan
+            // a apuntar a la nueva versión, para que el revisor dictamine la última
+            $submission->reviews()
+                ->where('type', Review::TYPE_ABSTRACT)
+                ->whereIn('status', [Review::STATUS_PENDING, Review::STATUS_IN_PROGRESS])
+                ->where('submission_abstract_id', '!=', $abstract->id)
+                ->update(['submission_abstract_id' => $abstract->id]);
 
             return $abstract;
         });
