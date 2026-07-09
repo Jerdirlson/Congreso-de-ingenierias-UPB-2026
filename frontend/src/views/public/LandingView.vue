@@ -4,7 +4,6 @@ import StatsBar from '../../components/StatsBar.vue'
 import HeroSection from '../../components/HeroSection.vue'
 import AboutSection from '../../components/AboutSection.vue'
 import TracksSection from '../../components/TracksSection.vue'
-import LiveStreamSection from '../../components/LiveStreamSection.vue'
 import SpeakersSection from '../../components/SpeakersSection.vue'
 import TimelineSection from '../../components/TimelineSection.vue'
 import PricingSection from '../../components/PricingSection.vue'
@@ -20,7 +19,6 @@ import FooterSection from '../../components/FooterSection.vue'
       <StatsBar />
       <AboutSection />
       <TracksSection />
-      <LiveStreamSection />
       <SpeakersSection />
       <TimelineSection />
       <PricingSection />
