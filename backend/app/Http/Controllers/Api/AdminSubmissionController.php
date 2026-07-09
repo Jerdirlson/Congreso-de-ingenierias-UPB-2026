@@ -24,7 +24,7 @@ class AdminSubmissionController extends Controller
                 'thematicAxis:id,name',
                 'reviews:id,submission_id,reviewer_id,status,decision',
                 'reviews.reviewer:id,name',
-                'latestArticle:id,submission_id,version,status,submitted_at',
+                'latestArticle',
             ])
             ->orderByDesc('updated_at');
 
