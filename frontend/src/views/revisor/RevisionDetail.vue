@@ -27,7 +27,7 @@ interface ReviewDetail {
     abstracts?: { content: string; version: number }[]
   }
   submission_document?: { id: number; original_filename: string; version: number } | null
-  submission_abstract?: { id: number; content: string; version: number } | null
+  submission_abstract?: { id: number; content: string; version: number; original_filename?: string | null; stored_path?: string | null; mime_type?: string | null } | null
   submission_article?: { id: number; original_filename: string; version: number } | null
   history?: {
     id: number; status: string; decision: string | null; comments: string | null; type?: string
@@ -96,7 +96,9 @@ async function downloadDocument() {
     a.href = url
     a.download = review.value?.type === 'article'
       ? (review.value?.submission_article?.original_filename ?? 'articulo.docx')
-      : (review.value?.submission_document?.original_filename ?? 'documento.pdf')
+      : review.value?.type === 'abstract'
+        ? (review.value?.submission_abstract?.original_filename ?? 'resumen')
+        : (review.value?.submission_document?.original_filename ?? 'documento.pdf')
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -139,7 +141,10 @@ async function togglePreview() {
     }
     const blob = await res.blob()
     previewOpen.value = true
-    if (review.value?.type === 'article') {
+    // El artículo siempre es Word; el resumen original puede ser Word o PDF
+    const isWord = review.value?.type === 'article'
+      || (review.value?.type === 'abstract' && !(review.value?.submission_abstract?.mime_type ?? '').includes('pdf'))
+    if (isWord) {
       await nextTick()
       const { renderAsync } = await import('docx-preview')
       if (docxPreviewContainer.value) {
@@ -265,12 +270,39 @@ onUnmounted(closePreview)
           >
             Versión {{ review?.submission_abstract?.version }} · corregida por el autor
           </span>
+          <div
+            v-if="review?.type === 'abstract' && review?.submission_abstract?.stored_path"
+            class="ml-auto flex items-center gap-2"
+          >
+            <UiButton size="sm" variant="secondary" :loading="previewLoading" @click="togglePreview">
+              {{ previewOpen ? 'Ocultar' : 'Vista previa' }}
+            </UiButton>
+            <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">
+              Descargar original
+            </UiButton>
+          </div>
         </div>
         <div class="bg-cgr-section rounded-lg p-4 text-sm text-cgr-muted leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
           {{ (review?.type === 'abstract' ? review?.submission_abstract?.content : null)
              ?? review?.submission?.abstracts?.[0]?.content
              ?? 'Sin resumen.' }}
         </div>
+        <template v-if="review?.type === 'abstract'">
+          <p v-if="previewError" class="mt-2 text-xs text-red-400">{{ previewError }}</p>
+          <div v-if="previewOpen && previewPdfUrl" class="mt-3">
+            <iframe
+              :src="previewPdfUrl"
+              title="Vista previa del resumen original"
+              class="w-full h-[75vh] rounded-lg border border-cgr-border bg-white"
+            />
+          </div>
+          <div v-show="previewOpen && !previewPdfUrl" class="mt-3">
+            <div
+              ref="docxPreviewContainer"
+              class="w-full max-h-[75vh] overflow-auto rounded-lg border border-cgr-border bg-white"
+            />
+          </div>
+        </template>
       </UiCard>
 
       <!-- Documento PDF (revisiones de tipo 'document') -->

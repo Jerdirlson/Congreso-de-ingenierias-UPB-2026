@@ -110,20 +110,27 @@ class ReviewController extends Controller
         return response()->json($review);
     }
 
-    /** GET /api/reviews/{review}/document — descargar el archivo de la revisión (PDF o artículo Word) */
+    /** GET /api/reviews/{review}/document — descargar el archivo de la revisión (PDF, artículo Word o resumen original) */
     public function downloadDocument(Review $review): StreamedResponse
     {
         $this->authorize('view', $review);
 
-        $file = $review->type === Review::TYPE_ARTICLE
-            ? $review->submissionArticle
-            : $review->submissionDocument;
+        $file = match ($review->type) {
+            Review::TYPE_ARTICLE  => $review->submissionArticle,
+            Review::TYPE_ABSTRACT => $review->submissionAbstract,
+            default               => $review->submissionDocument,
+        };
         abort_if(! $file, 404, 'No hay documento asociado a esta revisión.');
+        abort_if(
+            ! $file->stored_path,
+            404,
+            'Este resumen no tiene archivo original guardado (fue subido antes de que se conservaran los archivos).'
+        );
         abort_unless(Storage::disk('local')->exists($file->stored_path), 404, 'Archivo no encontrado.');
 
         return Storage::disk('local')->download(
             $file->stored_path,
-            $file->original_filename,
+            $file->original_filename ?? 'archivo',
             ['Content-Type' => $file->mime_type ?? 'application/pdf']
         );
     }
