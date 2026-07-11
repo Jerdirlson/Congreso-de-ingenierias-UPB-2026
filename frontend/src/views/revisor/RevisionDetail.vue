@@ -28,7 +28,7 @@ interface ReviewDetail {
   }
   submission_document?: { id: number; original_filename: string; version: number } | null
   submission_abstract?: { id: number; content: string; version: number; original_filename?: string | null; stored_path?: string | null; mime_type?: string | null } | null
-  submission_article?: { id: number; original_filename: string; version: number } | null
+  submission_article?: { id: number; original_filename: string; version: number; mime_type?: string | null } | null
   history?: {
     id: number; status: string; decision: string | null; comments: string | null; type?: string
     completed_at: string | null
@@ -142,10 +142,28 @@ function closePreview() {
   if (docxPreviewContainer.value) docxPreviewContainer.value.innerHTML = ''
 }
 
+/** Formato renderizable del archivo de la revisión: 'pdf', 'docx' u 'otro' */
+function previewKind(): 'pdf' | 'docx' | 'otro' {
+  const r = review.value
+  const meta = r?.type === 'article' ? r?.submission_article
+    : r?.type === 'abstract' ? r?.submission_abstract
+    : { mime_type: 'application/pdf', original_filename: '' }
+  const mime = meta?.mime_type ?? ''
+  const name = ('original_filename' in (meta ?? {}) ? (meta as { original_filename?: string }).original_filename : '')?.toLowerCase() ?? ''
+  if (mime.includes('pdf') || name.endsWith('.pdf')) return 'pdf'
+  if (mime.includes('wordprocessingml') || name.endsWith('.docx')) return 'docx'
+  return 'otro'
+}
+
 async function togglePreview() {
   if (previewOpen.value) { closePreview(); return }
-  previewLoading.value = true
   previewError.value = ''
+  const kind = previewKind()
+  if (kind === 'otro') {
+    previewError.value = 'La vista previa no está disponible para este formato. Descarga el archivo original para revisarlo.'
+    return
+  }
+  previewLoading.value = true
   const token = getApiToken()
   try {
     const res = await fetch(`/api/reviews/${route.params.id}/document`, {
@@ -158,10 +176,7 @@ async function togglePreview() {
     }
     const blob = await res.blob()
     previewOpen.value = true
-    // El artículo siempre es Word; el resumen original puede ser Word o PDF
-    const isWord = review.value?.type === 'article'
-      || (review.value?.type === 'abstract' && !(review.value?.submission_abstract?.mime_type ?? '').includes('pdf'))
-    if (isWord) {
+    if (kind === 'docx') {
       await nextTick()
       const { renderAsync } = await import('docx-preview')
       if (docxPreviewContainer.value) {
@@ -173,7 +188,7 @@ async function togglePreview() {
     }
   } catch {
     closePreview()
-    previewError.value = 'No se pudo previsualizar este archivo (los .doc antiguos no se pueden renderizar). Descárgalo para verlo.'
+    previewError.value = 'No se pudo previsualizar este archivo. Descárgalo para revisarlo.'
   } finally {
     previewLoading.value = false
   }
@@ -387,7 +402,14 @@ onUnmounted(closePreview)
         </div>
         <p v-else class="text-cgr-subtle text-sm">No hay artículo adjunto.</p>
         <p v-if="previewError" class="mt-2 text-xs text-red-400">{{ previewError }}</p>
-        <div v-show="previewOpen && review?.type === 'article'" class="mt-3">
+        <div v-if="previewOpen && previewPdfUrl" class="mt-3">
+          <iframe
+            :src="previewPdfUrl"
+            title="Vista previa del artículo"
+            class="w-full h-[75vh] rounded-lg border border-cgr-border bg-white"
+          />
+        </div>
+        <div v-show="previewOpen && !previewPdfUrl && review?.type === 'article'" class="mt-3">
           <div
             ref="docxPreviewContainer"
             class="w-full max-h-[75vh] overflow-auto rounded-lg border border-cgr-border bg-white"

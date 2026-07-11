@@ -270,12 +270,6 @@ function onArticleFileChange(event: Event) {
     articleFile.value = null
     return
   }
-  const lower = file.name.toLowerCase()
-  if (!(lower.endsWith('.doc') || lower.endsWith('.docx'))) {
-    articleFile.value = null
-    articleFileError.value = 'El artículo debe subirse en formato Word (.doc o .docx).'
-    return
-  }
   if (file.size > 10 * 1024 * 1024) {
     articleFile.value = null
     articleFileError.value = 'El archivo no debe superar 10 MB.'
@@ -906,7 +900,7 @@ watch(() => route.params.id, () => {
           <div>
             <p class="text-sm font-semibold text-white">¿Quieres que tu trabajo tenga la posibilidad de ser publicado en una revista científica?</p>
             <p class="text-xs text-cgr-muted mt-1 leading-relaxed">
-              Si te interesa, podrás subir tu artículo completo en formato Word para que el comité lo revise y sea considerado para publicación.
+              Si te interesa, podrás subir tu artículo completo para que el comité lo revise y sea considerado para publicación.
             </p>
           </div>
         </div>
@@ -983,11 +977,10 @@ watch(() => route.params.id, () => {
         <!-- Subir / resubir artículo -->
         <div v-if="canUploadArticle">
           <p class="text-xs text-cgr-muted mb-2">
-            {{ latestArticle ? 'Sube la versión corregida de tu artículo (Word .doc o .docx, máx. 10 MB):' : 'Sube tu artículo completo en formato Word (.doc o .docx, máx. 10 MB):' }}
+            {{ latestArticle ? 'Sube la versión corregida de tu artículo (cualquier formato, máx. 10 MB):' : 'Sube tu artículo completo (cualquier formato, máx. 10 MB):' }}
           </p>
           <input
             type="file"
-            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
             @change="onArticleFileChange"
           />

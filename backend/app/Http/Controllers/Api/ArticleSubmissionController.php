@@ -67,10 +67,10 @@ class ArticleSubmissionController extends Controller
             'Su artículo actual está en revisión o ya fue aprobado; no puede reemplazarlo por ahora.'
         );
 
+        // El artículo se acepta en cualquier formato (máx. 10 MB); el comité
+        // revisa el formato manualmente con el archivo original.
         $request->validate([
-            'file' => 'required|file|mimes:doc,docx|max:10240',
-        ], [
-            'file.mimes' => 'El artículo debe subirse en formato Word (.doc o .docx).',
+            'file' => 'required|file|max:10240',
         ]);
 
         $isResubmission = $latest && $latest->status === SubmissionArticle::STATUS_REVISION_REQUESTED;

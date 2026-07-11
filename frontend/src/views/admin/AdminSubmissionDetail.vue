@@ -12,7 +12,7 @@ const router = useRouter()
 const api = useFetchApi()
 
 interface Document { id: number; original_filename: string; version: number; status: string; submitted_at: string }
-interface Article { id: number; original_filename: string; version: number; status: string; submitted_at: string }
+interface Article { id: number; original_filename: string; version: number; status: string; submitted_at: string; mime_type?: string | null }
 interface Review {
   id: number; status: string; decision: string | null; type?: string; comments?: string | null
   submission_article_id?: number | null
@@ -202,6 +202,7 @@ const loadingPreviewDoc = ref<number | null>(null)
 const previewArticleId = ref<number | null>(null)
 const loadingPreviewArticle = ref<number | null>(null)
 const articlePreviewContainer = ref<HTMLElement | null>(null)
+const articlePreviewPdfUrl = ref<string | null>(null)
 const previewArticleError = ref('')
 
 async function fetchFileBlob(path: string): Promise<Blob | null> {
@@ -230,27 +231,47 @@ async function toggleDocPreview(doc: Document) {
 }
 
 function closeArticlePreview() {
+  if (articlePreviewPdfUrl.value) URL.revokeObjectURL(articlePreviewPdfUrl.value)
+  articlePreviewPdfUrl.value = null
   previewArticleId.value = null
   previewArticleError.value = ''
   if (articlePreviewContainer.value) articlePreviewContainer.value.innerHTML = ''
 }
 
+/** Formato renderizable del artículo: 'pdf', 'docx' u 'otro' */
+function articleKind(art: Article): 'pdf' | 'docx' | 'otro' {
+  const mime = art.mime_type ?? ''
+  const name = art.original_filename?.toLowerCase() ?? ''
+  if (mime.includes('pdf') || name.endsWith('.pdf')) return 'pdf'
+  if (mime.includes('wordprocessingml') || name.endsWith('.docx')) return 'docx'
+  return 'otro'
+}
+
 async function toggleArticlePreview(art: Article) {
   if (previewArticleId.value === art.id) { closeArticlePreview(); return }
   closeArticlePreview()
+  const kind = articleKind(art)
+  if (kind === 'otro') {
+    previewArticleError.value = `La vista previa no está disponible para este formato (${art.original_filename}). Descarga el archivo para revisarlo.`
+    return
+  }
   loadingPreviewArticle.value = art.id
   try {
     const blob = await fetchFileBlob(`/admin/submissions/${route.params.id}/articles/${art.id}/download`)
     if (!blob) { previewArticleError.value = 'No se pudo cargar el artículo.'; return }
     previewArticleId.value = art.id
-    await nextTick()
-    const { renderAsync } = await import('docx-preview')
-    if (articlePreviewContainer.value) {
-      articlePreviewContainer.value.innerHTML = ''
-      await renderAsync(await blob.arrayBuffer(), articlePreviewContainer.value)
+    if (kind === 'pdf') {
+      articlePreviewPdfUrl.value = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    } else {
+      await nextTick()
+      const { renderAsync } = await import('docx-preview')
+      if (articlePreviewContainer.value) {
+        articlePreviewContainer.value.innerHTML = ''
+        await renderAsync(await blob.arrayBuffer(), articlePreviewContainer.value)
+      }
     }
   } catch {
-    previewArticleError.value = 'No se pudo previsualizar este archivo (los .doc antiguos no se pueden renderizar). Descárgalo para verlo.'
+    previewArticleError.value = 'No se pudo previsualizar este archivo. Descárgalo para revisarlo.'
     previewArticleId.value = null
   } finally { loadingPreviewArticle.value = null }
 }
@@ -693,7 +714,14 @@ onMounted(load)
             · {{ submission.articles.find(a => a.id === previewArticleId)?.original_filename }}
           </span>
         </p>
+        <iframe
+          v-if="articlePreviewPdfUrl"
+          :src="articlePreviewPdfUrl"
+          title="Vista previa del artículo"
+          class="w-full h-[75vh] rounded-lg border border-cgr-border bg-white"
+        />
         <div
+          v-show="!articlePreviewPdfUrl"
           ref="articlePreviewContainer"
           class="w-full max-h-[75vh] overflow-auto rounded-lg border border-cgr-border bg-white"
         />
