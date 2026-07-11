@@ -7,6 +7,7 @@ use App\Models\AppSetting;
 use App\Models\Submission;
 use App\Models\SubmissionAbstract;
 use App\Services\AbstractFileExtractorService;
+use App\Services\AbstractTemplateValidatorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,8 +48,10 @@ class SubmissionController extends Controller
             'abstract_file'     => 'required|file|mimes:docx,pdf|max:10240',
         ]);
 
+        $file = $validated['abstract_file'];
+
         try {
-            $abstractText = app(AbstractFileExtractorService::class)->extractText($validated['abstract_file']);
+            $abstractText = app(AbstractFileExtractorService::class)->extractText($file);
         } catch (RuntimeException $e) {
             abort(422, $e->getMessage());
         }
@@ -58,9 +61,22 @@ class SubmissionController extends Controller
             abort(422, "El archivo contiene muy poco texto legible ({$wordCount} palabras). Asegúrate de que el resumen tenga al menos 100 palabras y no sea un PDF escaneado.");
         }
 
+        try {
+            app(AbstractTemplateValidatorService::class)->validateOrFail($abstractText);
+        } catch (RuntimeException $e) {
+            abort(422, $e->getMessage());
+        }
+
+        // Metadatos antes de store(): al mover el archivo, el temporal deja de existir
+        $fileMeta = [
+            'original_filename' => $file->getClientOriginalName(),
+            'mime_type'         => $file->getMimeType(),
+            'file_size'         => $file->getSize(),
+        ];
+
         // Atómico: si falla el guardado del resumen, NO debe quedar la ponencia
         // huérfana en estado abstract_submitted sin resumen.
-        $submission = DB::transaction(function () use ($user, $validated, $abstractText) {
+        $submission = DB::transaction(function () use ($user, $validated, $abstractText, $file, $fileMeta) {
             $submission = $user->submissions()->create([
                 'title'             => $validated['title'],
                 'thematic_axis_id'  => $validated['thematic_axis_id'],
@@ -68,12 +84,15 @@ class SubmissionController extends Controller
                 'abstract_attempts' => 1,
             ]);
 
+            $fileMeta['stored_path'] = $file->store('submission_abstracts/' . $submission->id, 'local');
+
             // llm_status='approved' aquí significa "no requiere clasificación pendiente"; la columna es NOT NULL en la BD.
             $submission->abstracts()->create([
                 'content'      => $abstractText,
                 'version'      => 1,
                 'llm_status'   => SubmissionAbstract::LLM_STATUS_APPROVED,
                 'processed_at' => now(),
+                ...$fileMeta,
             ]);
 
             return $submission;

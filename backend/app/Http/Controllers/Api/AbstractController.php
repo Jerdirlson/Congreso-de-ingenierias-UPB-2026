@@ -7,6 +7,7 @@ use App\Models\Review;
 use App\Models\Submission;
 use App\Models\SubmissionAbstract;
 use App\Services\AbstractFileExtractorService;
+use App\Services\AbstractTemplateValidatorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,8 +31,10 @@ class AbstractController extends Controller
             'abstract_file' => 'required|file|mimes:docx,pdf|max:10240',
         ]);
 
+        $file = $validated['abstract_file'];
+
         try {
-            $abstractText = app(AbstractFileExtractorService::class)->extractText($validated['abstract_file']);
+            $abstractText = app(AbstractFileExtractorService::class)->extractText($file);
         } catch (RuntimeException $e) {
             abort(422, $e->getMessage());
         }
@@ -41,17 +44,32 @@ class AbstractController extends Controller
             abort(422, "El archivo contiene muy poco texto legible ({$wordCount} palabras). Asegúrate de que el resumen tenga al menos 100 palabras y no sea un PDF escaneado.");
         }
 
+        try {
+            app(AbstractTemplateValidatorService::class)->validateOrFail($abstractText);
+        } catch (RuntimeException $e) {
+            abort(422, $e->getMessage());
+        }
+
         $version = $submission->abstract_attempts + 1;
         $isResubmission = $submission->status === Submission::STATUS_ABSTRACT_REJECTED;
 
+        // Metadatos antes de store(): al mover el archivo, el temporal deja de existir
+        $fileMeta = [
+            'original_filename' => $file->getClientOriginalName(),
+            'mime_type'         => $file->getMimeType(),
+            'file_size'         => $file->getSize(),
+        ];
+        $fileMeta['stored_path'] = $file->store('submission_abstracts/' . $submission->id, 'local');
+
         // Atómico: si falla el guardado del resumen, el estado de la ponencia
         // no debe avanzar a abstract_submitted sin un resumen real.
-        $abstract = DB::transaction(function () use ($submission, $abstractText, $version, $isResubmission) {
+        $abstract = DB::transaction(function () use ($submission, $abstractText, $version, $isResubmission, $fileMeta) {
             $abstract = $submission->abstracts()->create([
                 'content'      => $abstractText,
                 'version'      => $version,
                 'llm_status'   => SubmissionAbstract::LLM_STATUS_APPROVED,
                 'processed_at' => now(),
+                ...$fileMeta,
             ]);
 
             $submission->update([

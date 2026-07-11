@@ -144,6 +144,7 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::get('/submissions',                          [AdminSubmissionController::class, 'index']);
     Route::get('/reviewers',                            [AdminSubmissionController::class, 'reviewers']);
     Route::get('/submissions/{submission}',             [AdminSubmissionController::class, 'show']);
+    Route::get('/submissions/{submission}/abstracts/{abstract}/download', [AdminSubmissionController::class, 'downloadAbstractFile']);
     Route::patch('/submissions/{submission}/abstract/approve',           [AdminSubmissionController::class, 'approveAbstract']);
     Route::patch('/submissions/{submission}/abstract/reject',            [AdminSubmissionController::class, 'rejectAbstract']);
     Route::post('/submissions/{submission}/assign-reviewer',             [AdminSubmissionController::class, 'assignReviewer']);

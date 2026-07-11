@@ -339,6 +339,12 @@ async function submit() {
             <input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" class="hidden" @change="onFileChange" />
           </label>
           <p v-if="abstractFileError" class="mt-1 text-xs text-red-400">{{ abstractFileError }}</p>
+          <p class="mt-1.5 text-xs text-cgr-subtle">
+            El archivo debe seguir la
+            <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>
+            (secciones Resumen, Palabras claves, Abstract, Key Words y Referencias).
+            Si no conserva esa estructura, el sistema lo rechazará.
+          </p>
         </div>
 
         <p v-if="errorMessage" class="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">

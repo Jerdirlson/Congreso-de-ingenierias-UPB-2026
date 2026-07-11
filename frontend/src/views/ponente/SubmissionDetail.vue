@@ -580,6 +580,11 @@ watch(() => route.params.id, () => {
         <p v-if="abstractFile" class="mt-2 text-xs text-cgr-subtle">
           Archivo seleccionado: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
         </p>
+        <p class="mt-2 text-xs text-cgr-subtle">
+          El archivo debe seguir la
+          <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>
+          (secciones Resumen, Palabras claves, Abstract, Key Words y Referencias); de lo contrario será rechazado.
+        </p>
         <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
           Enviar resumen
         </UiButton>
@@ -677,6 +682,11 @@ watch(() => route.params.id, () => {
           <p v-if="abstractFile" class="mt-2 text-xs text-cgr-subtle">
             Archivo seleccionado: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
           </p>
+          <p class="mt-2 text-xs text-cgr-subtle">
+            El archivo debe seguir la
+            <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>
+            (secciones Resumen, Palabras claves, Abstract, Key Words y Referencias); de lo contrario será rechazado.
+          </p>
           <div class="flex gap-3 mt-4">
             <UiButton :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
               Enviar nuevo resumen
@@ -732,6 +742,11 @@ watch(() => route.params.id, () => {
         <p v-if="abstractFileError" class="mt-2 text-xs text-red-400">{{ abstractFileError }}</p>
         <p v-if="abstractFile" class="mt-2 text-xs text-cgr-subtle">
           Archivo: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
+        </p>
+        <p class="mt-2 text-xs text-cgr-subtle">
+          El archivo debe seguir la
+          <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>
+          (secciones Resumen, Palabras claves, Abstract, Key Words y Referencias); de lo contrario será rechazado.
         </p>
         <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
           Reenviar resumen

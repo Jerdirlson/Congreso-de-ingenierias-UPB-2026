@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Review;
 use App\Models\Submission;
+use App\Models\SubmissionAbstract;
 use App\Models\SubmissionArticle;
 use App\Models\SubmissionDocument;
 use App\Models\SubmissionVideo;
@@ -66,6 +67,20 @@ class AdminSubmissionController extends Controller
             ->get();
 
         return response()->json($reviewers);
+    }
+
+    /** GET /api/admin/submissions/{submission}/abstracts/{abstract}/download — archivo original del resumen */
+    public function downloadAbstractFile(Submission $submission, SubmissionAbstract $abstract): StreamedResponse
+    {
+        abort_if($abstract->submission_id !== $submission->id, 404);
+        abort_if(! $abstract->stored_path, 404, 'Este resumen no tiene archivo guardado (fue subido antes de que se conservaran los archivos).');
+        abort_unless(Storage::disk('local')->exists($abstract->stored_path), 404, 'Archivo no encontrado.');
+
+        return Storage::disk('local')->download(
+            $abstract->stored_path,
+            $abstract->original_filename ?? 'resumen',
+            ['Content-Type' => $abstract->mime_type ?? 'application/octet-stream']
+        );
     }
 
     /** GET /api/admin/submissions/{submission}/video/stream — descarga del video */
