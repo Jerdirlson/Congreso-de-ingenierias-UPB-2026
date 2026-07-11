@@ -86,6 +86,12 @@ class Submission extends Model
         return $this->hasMany(Review::class);
     }
 
+    /** Bitácora de trazabilidad (más reciente primero) */
+    public function events(): HasMany
+    {
+        return $this->hasMany(SubmissionEvent::class)->orderByDesc('created_at')->orderByDesc('id');
+    }
+
     public function video(): HasOne
     {
         return $this->hasOne(SubmissionVideo::class);

@@ -34,12 +34,8 @@ class VideoController extends Controller
         $file = $request->file('file');
         $dir  = "submission_videos/{$submission->id}";
 
-        // Remove any previous video file
-        $existing = SubmissionVideo::where('submission_id', $submission->id)->first();
-        if ($existing?->stored_path) {
-            Storage::disk('local')->delete($existing->stored_path);
-        }
-
+        // Trazabilidad: el video anterior NO se borra; el reemplazo queda
+        // registrado en la bitácora (submission_events) con la ruta previa.
         $path = Storage::disk('local')->putFile($dir, $file);
 
         $video = SubmissionVideo::updateOrCreate(

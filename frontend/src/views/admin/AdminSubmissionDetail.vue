@@ -30,6 +30,14 @@ interface Submission {
   articles?: Article[]
   reviews?: Review[]
   video?: { id: number; status: string; original_filename?: string; file_size?: number; uploaded_at?: string; error_message?: string | null } | null
+  events?: SubmissionEvent[]
+}
+interface SubmissionEvent {
+  id: number
+  event: string
+  details?: Record<string, string | number | null> | null
+  created_at: string
+  user?: { id: number; name: string } | null
 }
 interface Reviewer { id: number; name: string; email: string }
 
@@ -288,6 +296,26 @@ function cleanupPreviews() {
 }
 
 onUnmounted(cleanupPreviews)
+
+// ── Trazabilidad: etiquetas legibles para la bitácora ──
+function eventLabel(ev: SubmissionEvent): string {
+  const d = ev.details ?? {}
+  const st = (v: unknown) => statusLabels[String(v)] ?? String(v ?? '—')
+  switch (ev.event) {
+    case 'ponencia_creada':      return `Ponencia creada (${st(d.estado)})`
+    case 'estado_cambiado':      return `Estado: ${st(d.de)} → ${st(d.a)}`
+    case 'modalidad_elegida':    return `Modalidad elegida: ${d.a ?? '—'}`
+    case 'ponencia_eliminada':   return 'Ponencia eliminada'
+    case 'resumen_subido':       return `Resumen v${d.version} subido${d.archivo ? ` · ${d.archivo}` : ''}`
+    case 'documento_subido':     return `Documento v${d.version} subido · ${d.archivo ?? ''}`
+    case 'articulo_subido':      return `Artículo v${d.version} subido · ${d.archivo ?? ''}`
+    case 'video_subido':         return `Video subido · ${d.archivo ?? ''}`
+    case 'video_reemplazado':    return `Video reemplazado · ${d.archivo ?? ''} (anterior conservado)`
+    case 'revision_asignada':    return `Revisión asignada (${d.tipo}) a ${d.revisor ?? '—'}`
+    case 'revision_completada':  return `Dictamen (${d.tipo}): ${d.decision === 'approved' ? 'aprobado' : 'ajustes solicitados'} por ${d.revisor ?? '—'}`
+    default:                     return ev.event
+  }
+}
 
 function isAlreadyAssignedToDoc(reviewerId: number) {
   return submission.value?.reviews?.some(r => r.reviewer?.id === reviewerId && r.type !== 'abstract' && r.type !== 'article') ?? false
@@ -647,6 +675,27 @@ onMounted(load)
           class="w-full max-h-[75vh] overflow-auto rounded-lg border border-cgr-border bg-white"
         />
       </div>
+    </UiCard>
+
+    <!-- Trazabilidad -->
+    <UiCard v-if="submission?.events?.length" class="p-5 mb-4">
+      <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide mb-3">
+        Trazabilidad
+        <span class="ml-2 normal-case font-normal text-cgr-subtle">bitácora completa de la ponencia</span>
+      </h2>
+      <ol class="max-h-80 overflow-y-auto pr-2">
+        <li
+          v-for="ev in submission.events"
+          :key="ev.id"
+          class="relative ml-1.5 pl-5 pb-3 border-l border-cgr-border last:pb-0 last:border-transparent"
+        >
+          <span class="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-cgr-purple/70 border border-cgr-purple" />
+          <p class="text-sm text-white leading-snug">{{ eventLabel(ev) }}</p>
+          <p class="text-xs text-cgr-subtle mt-0.5">
+            {{ formatDate(ev.created_at) }}<span v-if="ev.user"> · por {{ ev.user.name }}</span>
+          </p>
+        </li>
+      </ol>
     </UiCard>
 
     <!-- Revisores asignados -->

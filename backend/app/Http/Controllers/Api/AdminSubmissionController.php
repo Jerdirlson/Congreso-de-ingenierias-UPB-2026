@@ -53,6 +53,7 @@ class AdminSubmissionController extends Controller
             'reviews.reviewer:id,name',
             'reviews.assignedBy:id,name',
             'video',
+            'events.user:id,name',
         ]);
 
         return response()->json($submission);
