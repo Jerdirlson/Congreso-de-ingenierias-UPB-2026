@@ -25,7 +25,7 @@ interface Submission {
   journal_opt_in_at?: string | null
   user?: { id: number; name: string; email: string; institution?: string; country?: string }
   thematic_axis?: { id: number; name: string }
-  abstracts?: { id: number; content: string; version: number; llm_status: string; original_filename?: string | null; stored_path?: string | null }[]
+  abstracts?: { id: number; content: string; version: number; llm_status: string; original_filename?: string | null; stored_path?: string | null; mime_type?: string | null }[]
   documents?: Document[]
   articles?: Article[]
   reviews?: Review[]
@@ -241,7 +241,53 @@ async function toggleArticlePreview(art: Article) {
   } finally { loadingPreviewArticle.value = null }
 }
 
-onUnmounted(closeDocPreview)
+// ── Vista previa del archivo original del resumen (Word o PDF) ──
+const previewAbstractOpen = ref(false)
+const loadingPreviewAbstract = ref(false)
+const abstractPreviewPdfUrl = ref<string | null>(null)
+const abstractDocxContainer = ref<HTMLElement | null>(null)
+const previewAbstractError = ref('')
+
+function closeAbstractPreview() {
+  if (abstractPreviewPdfUrl.value) URL.revokeObjectURL(abstractPreviewPdfUrl.value)
+  abstractPreviewPdfUrl.value = null
+  previewAbstractOpen.value = false
+  previewAbstractError.value = ''
+  if (abstractDocxContainer.value) abstractDocxContainer.value.innerHTML = ''
+}
+
+async function toggleAbstractPreview() {
+  const abs = submission.value?.abstracts?.[0]
+  if (!abs?.stored_path) return
+  if (previewAbstractOpen.value) { closeAbstractPreview(); return }
+  loadingPreviewAbstract.value = true
+  previewAbstractError.value = ''
+  try {
+    const blob = await fetchFileBlob(`/admin/submissions/${route.params.id}/abstracts/${abs.id}/download`)
+    if (!blob) { previewAbstractError.value = 'No se pudo cargar el archivo.'; return }
+    previewAbstractOpen.value = true
+    if ((abs.mime_type ?? '').includes('pdf')) {
+      abstractPreviewPdfUrl.value = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    } else {
+      await nextTick()
+      const { renderAsync } = await import('docx-preview')
+      if (abstractDocxContainer.value) {
+        abstractDocxContainer.value.innerHTML = ''
+        await renderAsync(await blob.arrayBuffer(), abstractDocxContainer.value)
+      }
+    }
+  } catch {
+    closeAbstractPreview()
+    previewAbstractError.value = 'No se pudo previsualizar el archivo. Descárgalo para verlo.'
+  } finally { loadingPreviewAbstract.value = false }
+}
+
+function cleanupPreviews() {
+  closeDocPreview()
+  closeAbstractPreview()
+}
+
+onUnmounted(cleanupPreviews)
 
 function isAlreadyAssignedToDoc(reviewerId: number) {
   return submission.value?.reviews?.some(r => r.reviewer?.id === reviewerId && r.type !== 'abstract' && r.type !== 'article') ?? false
@@ -458,6 +504,15 @@ onMounted(load)
             v-if="submission.abstracts[0]?.stored_path"
             size="sm"
             variant="secondary"
+            :loading="loadingPreviewAbstract"
+            @click="toggleAbstractPreview"
+          >
+            {{ previewAbstractOpen ? 'Ocultar' : 'Vista previa' }}
+          </UiButton>
+          <UiButton
+            v-if="submission.abstracts[0]?.stored_path"
+            size="sm"
+            variant="secondary"
             :loading="downloadingAbstractFile"
             @click="downloadAbstractOriginal"
           >
@@ -477,6 +532,24 @@ onMounted(load)
       </div>
       <div class="bg-cgr-section rounded-lg p-4 text-sm text-cgr-muted leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
         {{ submission.abstracts[0]?.content }}
+      </div>
+      <p v-if="!submission.abstracts[0]?.stored_path" class="mt-2 text-xs text-cgr-subtle">
+        Este resumen se subió antes del 10 de julio de 2026, cuando la plataforma no conservaba el
+        archivo original (Word/PDF): solo existe el texto extraído, por eso no hay vista previa del documento.
+      </p>
+      <p v-if="previewAbstractError" class="mt-2 text-xs text-red-400">{{ previewAbstractError }}</p>
+      <div v-if="previewAbstractOpen && abstractPreviewPdfUrl" class="mt-3">
+        <iframe
+          :src="abstractPreviewPdfUrl"
+          title="Vista previa del resumen original"
+          class="w-full h-[75vh] rounded-lg border border-cgr-border bg-white"
+        />
+      </div>
+      <div v-show="previewAbstractOpen && !abstractPreviewPdfUrl" class="mt-3">
+        <div
+          ref="abstractDocxContainer"
+          class="w-full max-h-[75vh] overflow-auto rounded-lg border border-cgr-border bg-white"
+        />
       </div>
     </UiCard>
 

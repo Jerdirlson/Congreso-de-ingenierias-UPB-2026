@@ -288,6 +288,10 @@ onUnmounted(closePreview)
              ?? 'Sin resumen.' }}
         </div>
         <template v-if="review?.type === 'abstract'">
+          <p v-if="!review?.submission_abstract?.stored_path" class="mt-2 text-xs text-cgr-subtle">
+            Este resumen se subió antes del 10 de julio de 2026, cuando la plataforma no conservaba
+            el archivo original: solo existe el texto extraído.
+          </p>
           <p v-if="previewError" class="mt-2 text-xs text-red-400">{{ previewError }}</p>
           <div v-if="previewOpen && previewPdfUrl" class="mt-3">
             <iframe
