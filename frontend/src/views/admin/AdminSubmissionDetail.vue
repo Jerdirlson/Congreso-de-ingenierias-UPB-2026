@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFetchApi, getApiToken } from '../../composables/useFetchApi'
 import UiCard from '../../components/ui/UiCard.vue'
@@ -25,7 +25,7 @@ interface Submission {
   journal_opt_in_at?: string | null
   user?: { id: number; name: string; email: string; institution?: string; country?: string }
   thematic_axis?: { id: number; name: string }
-  abstracts?: { content: string; version: number; llm_status: string }[]
+  abstracts?: { id: number; content: string; version: number; llm_status: string; original_filename?: string | null; stored_path?: string | null }[]
   documents?: Document[]
   articles?: Article[]
   reviews?: Review[]
@@ -132,6 +132,24 @@ function slugify(text: string) {
     .slice(0, 80) || 'resumen'
 }
 
+const downloadingAbstractFile = ref(false)
+
+/** Descarga el Word/PDF original del resumen (solo existe para resúmenes subidos desde jul 2026) */
+async function downloadAbstractOriginal() {
+  const abs = submission.value?.abstracts?.[0]
+  if (!abs?.stored_path) return
+  downloadingAbstractFile.value = true
+  try {
+    const blob = await fetchFileBlob(`/admin/submissions/${route.params.id}/abstracts/${abs.id}/download`)
+    if (!blob) return
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = abs.original_filename ?? 'resumen'
+    document.body.appendChild(a); a.click()
+    document.body.removeChild(a); URL.revokeObjectURL(url)
+  } finally { downloadingAbstractFile.value = false }
+}
+
 function downloadAbstract() {
   const content = submission.value?.abstracts?.[0]?.content
   if (!content) return
@@ -161,6 +179,69 @@ async function downloadDoc(doc: Document) {
     document.body.removeChild(a); URL.revokeObjectURL(url)
   } finally { downloading.value = null }
 }
+
+// ── Vista previa (ponencia PDF / artículo Word) ──
+const previewDocId = ref<number | null>(null)
+const previewDocUrl = ref<string | null>(null)
+const loadingPreviewDoc = ref<number | null>(null)
+
+const previewArticleId = ref<number | null>(null)
+const loadingPreviewArticle = ref<number | null>(null)
+const articlePreviewContainer = ref<HTMLElement | null>(null)
+const previewArticleError = ref('')
+
+async function fetchFileBlob(path: string): Promise<Blob | null> {
+  const token = getApiToken()
+  const res = await fetch(`/api${path}`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) return null
+  return await res.blob()
+}
+
+function closeDocPreview() {
+  if (previewDocUrl.value) URL.revokeObjectURL(previewDocUrl.value)
+  previewDocUrl.value = null
+  previewDocId.value = null
+}
+
+async function toggleDocPreview(doc: Document) {
+  if (previewDocId.value === doc.id) { closeDocPreview(); return }
+  closeDocPreview()
+  loadingPreviewDoc.value = doc.id
+  try {
+    const blob = await fetchFileBlob(`/admin/submissions/${route.params.id}/documents/${doc.id}/download`)
+    if (!blob) return
+    previewDocUrl.value = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    previewDocId.value = doc.id
+  } finally { loadingPreviewDoc.value = null }
+}
+
+function closeArticlePreview() {
+  previewArticleId.value = null
+  previewArticleError.value = ''
+  if (articlePreviewContainer.value) articlePreviewContainer.value.innerHTML = ''
+}
+
+async function toggleArticlePreview(art: Article) {
+  if (previewArticleId.value === art.id) { closeArticlePreview(); return }
+  closeArticlePreview()
+  loadingPreviewArticle.value = art.id
+  try {
+    const blob = await fetchFileBlob(`/admin/submissions/${route.params.id}/articles/${art.id}/download`)
+    if (!blob) { previewArticleError.value = 'No se pudo cargar el artículo.'; return }
+    previewArticleId.value = art.id
+    await nextTick()
+    const { renderAsync } = await import('docx-preview')
+    if (articlePreviewContainer.value) {
+      articlePreviewContainer.value.innerHTML = ''
+      await renderAsync(await blob.arrayBuffer(), articlePreviewContainer.value)
+    }
+  } catch {
+    previewArticleError.value = 'No se pudo previsualizar este archivo (los .doc antiguos no se pueden renderizar). Descárgalo para verlo.'
+    previewArticleId.value = null
+  } finally { loadingPreviewArticle.value = null }
+}
+
+onUnmounted(closeDocPreview)
 
 function isAlreadyAssignedToDoc(reviewerId: number) {
   return submission.value?.reviews?.some(r => r.reviewer?.id === reviewerId && r.type !== 'abstract' && r.type !== 'article') ?? false
@@ -373,8 +454,17 @@ onMounted(load)
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide">Resumen</h2>
         <div class="flex items-center gap-2">
+          <UiButton
+            v-if="submission.abstracts[0]?.stored_path"
+            size="sm"
+            variant="secondary"
+            :loading="downloadingAbstractFile"
+            @click="downloadAbstractOriginal"
+          >
+            Descargar original
+          </UiButton>
           <UiButton size="sm" variant="secondary" @click="downloadAbstract">
-            Descargar
+            {{ submission.abstracts[0]?.stored_path ? 'Descargar texto' : 'Descargar' }}
           </UiButton>
           <UiButton
             v-if="submission.status === 'abstract_submitted'"
@@ -412,11 +502,21 @@ onMounted(load)
             <UiBadge :variant="doc.status === 'approved' ? 'success' : doc.status === 'revision_requested' ? 'warning' : 'info'">
               {{ docStatusLabels[doc.status] ?? doc.status }}
             </UiBadge>
+            <UiButton size="sm" variant="secondary" :loading="loadingPreviewDoc === doc.id" @click="toggleDocPreview(doc)">
+              {{ previewDocId === doc.id ? 'Ocultar' : 'Vista previa' }}
+            </UiButton>
             <UiButton size="sm" variant="secondary" :loading="downloading === doc.id" @click="downloadDoc(doc)">
               Descargar
             </UiButton>
           </div>
         </div>
+      </div>
+      <div v-if="previewDocUrl" class="mt-3">
+        <iframe
+          :src="previewDocUrl"
+          title="Vista previa del documento de la ponencia"
+          class="w-full h-[75vh] rounded-lg border border-cgr-border bg-white"
+        />
       </div>
     </UiCard>
 
@@ -448,6 +548,9 @@ onMounted(load)
             <UiBadge :variant="art.status === 'approved' ? 'success' : art.status === 'revision_requested' ? 'warning' : 'info'">
               {{ docStatusLabels[art.status] ?? art.status }}
             </UiBadge>
+            <UiButton size="sm" variant="secondary" :loading="loadingPreviewArticle === art.id" @click="toggleArticlePreview(art)">
+              {{ previewArticleId === art.id ? 'Ocultar' : 'Vista previa' }}
+            </UiButton>
             <UiButton size="sm" variant="secondary" :loading="downloadingArticle === art.id" @click="downloadArticleFile(art)">
               Descargar
             </UiButton>
@@ -464,6 +567,13 @@ onMounted(load)
       <p v-else class="text-sm text-cgr-muted py-2">
         El ponente marcó que quiere publicar en revista, pero aún no ha subido su artículo.
       </p>
+      <p v-if="previewArticleError" class="mt-2 text-xs text-red-400">{{ previewArticleError }}</p>
+      <div v-show="previewArticleId !== null" class="mt-3">
+        <div
+          ref="articlePreviewContainer"
+          class="w-full max-h-[75vh] overflow-auto rounded-lg border border-cgr-border bg-white"
+        />
+      </div>
     </UiCard>
 
     <!-- Revisores asignados -->

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFetchApi, getApiToken } from '../../composables/useFetchApi'
 import UiCard from '../../components/ui/UiCard.vue'
@@ -108,8 +108,58 @@ async function downloadDocument() {
   }
 }
 
+// ── Vista previa del archivo asignado (PDF de la ponencia o Word del artículo) ──
+const previewOpen = ref(false)
+const previewLoading = ref(false)
+const previewPdfUrl = ref<string | null>(null)
+const previewError = ref('')
+const docxPreviewContainer = ref<HTMLElement | null>(null)
+
+function closePreview() {
+  if (previewPdfUrl.value) URL.revokeObjectURL(previewPdfUrl.value)
+  previewPdfUrl.value = null
+  previewOpen.value = false
+  previewError.value = ''
+  if (docxPreviewContainer.value) docxPreviewContainer.value.innerHTML = ''
+}
+
+async function togglePreview() {
+  if (previewOpen.value) { closePreview(); return }
+  previewLoading.value = true
+  previewError.value = ''
+  const token = getApiToken()
+  try {
+    const res = await fetch(`/api/reviews/${route.params.id}/document`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      previewError.value = json.message ?? `Error ${res.status} al cargar la vista previa`
+      return
+    }
+    const blob = await res.blob()
+    previewOpen.value = true
+    if (review.value?.type === 'article') {
+      await nextTick()
+      const { renderAsync } = await import('docx-preview')
+      if (docxPreviewContainer.value) {
+        docxPreviewContainer.value.innerHTML = ''
+        await renderAsync(await blob.arrayBuffer(), docxPreviewContainer.value)
+      }
+    } else {
+      previewPdfUrl.value = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    }
+  } catch {
+    closePreview()
+    previewError.value = 'No se pudo previsualizar este archivo (los .doc antiguos no se pueden renderizar). Descárgalo para verlo.'
+  } finally {
+    previewLoading.value = false
+  }
+}
+
 onMounted(loadReview)
-watch(() => route.params.id, loadReview)
+watch(() => route.params.id, () => { closePreview(); loadReview() })
+onUnmounted(closePreview)
 </script>
 
 <template>
@@ -236,9 +286,22 @@ watch(() => route.params.id, loadReview)
               <p class="text-xs text-cgr-subtle">Version {{ review.submission_document.version }}</p>
             </div>
           </div>
-          <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">Descargar PDF</UiButton>
+          <div class="flex items-center gap-3 shrink-0">
+            <UiButton size="sm" variant="secondary" :loading="previewLoading" @click="togglePreview">
+              {{ previewOpen ? 'Ocultar' : 'Vista previa' }}
+            </UiButton>
+            <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">Descargar PDF</UiButton>
+          </div>
         </div>
         <p v-else class="text-cgr-subtle text-sm">No hay documento adjunto.</p>
+        <p v-if="previewError" class="mt-2 text-xs text-red-400">{{ previewError }}</p>
+        <div v-if="previewOpen && previewPdfUrl" class="mt-3">
+          <iframe
+            :src="previewPdfUrl"
+            title="Vista previa del documento de la ponencia"
+            class="w-full h-[75vh] rounded-lg border border-cgr-border bg-white"
+          />
+        </div>
       </UiCard>
 
       <!-- Artículo (revisiones de tipo 'article') -->
@@ -262,9 +325,21 @@ watch(() => route.params.id, loadReview)
               <p class="text-xs text-cgr-subtle">Version {{ review.submission_article.version }} · Word</p>
             </div>
           </div>
-          <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">Descargar</UiButton>
+          <div class="flex items-center gap-3 shrink-0">
+            <UiButton size="sm" variant="secondary" :loading="previewLoading" @click="togglePreview">
+              {{ previewOpen ? 'Ocultar' : 'Vista previa' }}
+            </UiButton>
+            <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">Descargar</UiButton>
+          </div>
         </div>
         <p v-else class="text-cgr-subtle text-sm">No hay artículo adjunto.</p>
+        <p v-if="previewError" class="mt-2 text-xs text-red-400">{{ previewError }}</p>
+        <div v-show="previewOpen && review?.type === 'article'" class="mt-3">
+          <div
+            ref="docxPreviewContainer"
+            class="w-full max-h-[75vh] overflow-auto rounded-lg border border-cgr-border bg-white"
+          />
+        </div>
       </UiCard>
 
       <!-- Dictamen (en progreso) -->
