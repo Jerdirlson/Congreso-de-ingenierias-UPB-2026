@@ -102,6 +102,12 @@ async function load() {
   if (subData) submission.value = subData
   else router.push({ name: 'admin-submissions' })
   if (revData) reviewers.value = revData
+
+  // Vista previa automática de la última versión del documento final y del artículo
+  const lastDoc = submission.value?.documents?.[0]
+  if (lastDoc && previewDocId.value !== lastDoc.id) toggleDocPreview(lastDoc)
+  const lastArt = submission.value?.articles?.[0]
+  if (lastArt && previewArticleId.value !== lastArt.id) toggleArticlePreview(lastArt)
 }
 
 function openAssignModal() {
@@ -581,9 +587,12 @@ onMounted(load)
       </div>
     </UiCard>
 
-    <!-- Documentos -->
-    <UiCard v-if="submission?.documents?.length" class="p-5 mb-4">
-      <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide mb-3">Documentos</h2>
+    <!-- Documento final de la ponencia -->
+    <UiCard v-if="submission?.documents?.length" class="p-5 mb-4 border-red-400/30">
+      <div class="flex items-center gap-2 mb-3">
+        <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide">Documento final de la ponencia</h2>
+        <span class="text-[10px] font-medium text-red-300 border border-red-400/30 bg-red-500/10 rounded-full px-2 py-0.5">PDF</span>
+      </div>
       <div class="space-y-2">
         <div
           v-for="doc in submission.documents"
@@ -613,9 +622,16 @@ onMounted(load)
         </div>
       </div>
       <div v-if="previewDocUrl" class="mt-3">
+        <p class="text-xs text-cgr-subtle mb-1.5">
+          Vista previa — documento final
+          <span v-if="submission?.documents?.find(d => d.id === previewDocId)">
+            · versión {{ submission.documents.find(d => d.id === previewDocId)?.version }}
+            · {{ submission.documents.find(d => d.id === previewDocId)?.original_filename }}
+          </span>
+        </p>
         <iframe
           :src="previewDocUrl"
-          title="Vista previa del documento de la ponencia"
+          title="Vista previa del documento final de la ponencia"
           class="w-full h-[75vh] rounded-lg border border-cgr-border bg-white"
         />
       </div>
@@ -670,6 +686,13 @@ onMounted(load)
       </p>
       <p v-if="previewArticleError" class="mt-2 text-xs text-red-400">{{ previewArticleError }}</p>
       <div v-show="previewArticleId !== null" class="mt-3">
+        <p class="text-xs text-cgr-subtle mb-1.5">
+          Vista previa — artículo para revista científica
+          <span v-if="submission?.articles?.find(a => a.id === previewArticleId)">
+            · versión {{ submission.articles.find(a => a.id === previewArticleId)?.version }}
+            · {{ submission.articles.find(a => a.id === previewArticleId)?.original_filename }}
+          </span>
+        </p>
         <div
           ref="articlePreviewContainer"
           class="w-full max-h-[75vh] overflow-auto rounded-lg border border-cgr-border bg-white"

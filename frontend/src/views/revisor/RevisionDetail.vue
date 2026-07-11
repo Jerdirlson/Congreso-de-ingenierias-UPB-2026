@@ -53,8 +53,25 @@ function formatDate(d: string | null) {
 
 async function loadReview() {
   const data = await api.get<ReviewDetail>(`/reviews/${route.params.id}`)
-  if (data) review.value = data
-  else router.push({ name: 'revisor-home' })
+  if (data) {
+    review.value = data
+    autoPreview()
+  } else {
+    router.push({ name: 'revisor-home' })
+  }
+}
+
+/** Abre la vista previa automáticamente si la revisión tiene archivo previsualizable */
+function autoPreview() {
+  if (previewOpen.value || previewLoading.value) return
+  const r = review.value
+  if (!r) return
+  const hasFile = r.type === 'article'
+    ? !!r.submission_article
+    : r.type === 'abstract'
+      ? !!r.submission_abstract?.stored_path
+      : !!r.submission_document
+  if (hasFile) togglePreview()
 }
 
 async function startReview() {
