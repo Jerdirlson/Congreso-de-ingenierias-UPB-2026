@@ -90,8 +90,8 @@ async function confirmExternal() {
 </script>
 
 <template>
-  <!-- ── Estado: ya confirmó la inscripción externa ── -->
-  <div v-if="alreadyConfirmed">
+  <!-- ── Estado: pago verificado ── -->
+  <div v-if="alreadyPaid">
     <div class="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-5 py-5">
       <svg class="w-6 h-6 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -99,20 +99,29 @@ async function confirmExternal() {
       <div>
         <p class="text-base font-semibold text-green-300 mb-1">Estás totalmente inscrito al Congreso</p>
         <p class="text-sm text-green-200/80 leading-relaxed">
-          <template v-if="alreadyPaid">
-            Confirmamos la recepción de tu pago. ¡Te esperamos en el congreso!
-          </template>
-          <template v-else>
-            Registramos tu inscripción en la plataforma institucional UPB.
-            Recibirás un correo de confirmación cuando se complete el pago.
-          </template>
+          Confirmamos la recepción de tu pago. ¡Te esperamos en el congreso!
         </p>
       </div>
     </div>
   </div>
 
-  <!-- ── Selector + botón "ya terminé" ── -->
+  <!-- ── Selector (visible mientras el pago no esté verificado) ── -->
   <div v-else>
+    <div v-if="alreadyConfirmed" class="flex items-start gap-3 bg-cgr-purple/10 border border-cgr-purple/30 rounded-xl px-5 py-5 mb-5">
+      <svg class="w-6 h-6 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div>
+        <p class="text-base font-semibold text-white mb-1">Registramos tu confirmación de inscripción</p>
+        <p class="text-sm text-cgr-muted leading-relaxed">
+          El pago se realiza <strong class="text-white">directamente en el portal de la UPB</strong>,
+          no por correo. Si ya completaste el formulario y el pago allá, no debes hacer nada más:
+          cuando verifiquemos tu pago verás aquí la confirmación. Si aún no lo has hecho,
+          usa los enlaces de abajo para completarlo.
+        </p>
+      </div>
+    </div>
+
     <div class="flex items-start gap-3 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3 mb-5 text-sm">
       <svg class="w-4 h-4 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -178,7 +187,7 @@ async function confirmExternal() {
     </button>
 
     <!-- ── Confirmación de inscripción externa ── -->
-    <div class="mt-6 pt-5 border-t border-cgr-border">
+    <div v-if="!alreadyConfirmed" class="mt-6 pt-5 border-t border-cgr-border">
       <p class="text-sm text-cgr-muted mb-3">
         ¿Ya terminaste la inscripción en la plataforma institucional?
       </p>
