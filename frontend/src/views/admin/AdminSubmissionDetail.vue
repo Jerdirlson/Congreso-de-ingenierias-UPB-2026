@@ -25,7 +25,7 @@ interface Submission {
   journal_opt_in_at?: string | null
   user?: { id: number; name: string; email: string; institution?: string; country?: string }
   thematic_axis?: { id: number; name: string }
-  abstracts?: { id: number; content: string; version: number; llm_status: string; original_filename?: string | null; stored_path?: string | null; mime_type?: string | null }[]
+  abstracts?: { id: number; content: string; version: number; llm_status: string; original_filename?: string | null; stored_path?: string | null; mime_type?: string | null; generated_path?: string | null; template_problems?: string[] | null }[]
   documents?: Document[]
   articles?: Article[]
   reviews?: Review[]
@@ -148,17 +148,20 @@ function slugify(text: string) {
 
 const downloadingAbstractFile = ref(false)
 
-/** Descarga el Word/PDF original del resumen (solo existe para resúmenes subidos desde jul 2026) */
+/** Descarga el archivo del resumen: el original si se guardó, o el reconstruido en la plantilla */
 async function downloadAbstractOriginal() {
   const abs = submission.value?.abstracts?.[0]
-  if (!abs?.stored_path) return
+  if (!abs?.stored_path && !abs?.generated_path) return
   downloadingAbstractFile.value = true
   try {
     const blob = await fetchFileBlob(`/admin/submissions/${route.params.id}/abstracts/${abs.id}/download`)
     if (!blob) return
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url; a.download = abs.original_filename ?? 'resumen'
+    a.href = url
+    a.download = abs.stored_path
+      ? (abs.original_filename ?? 'resumen')
+      : `Resumen_reconstruido_v${abs.version}.docx`
     document.body.appendChild(a); a.click()
     document.body.removeChild(a); URL.revokeObjectURL(url)
   } finally { downloadingAbstractFile.value = false }
@@ -293,7 +296,7 @@ function closeAbstractPreview() {
 
 async function toggleAbstractPreview() {
   const abs = submission.value?.abstracts?.[0]
-  if (!abs?.stored_path) return
+  if (!abs?.stored_path && !abs?.generated_path) return
   if (previewAbstractOpen.value) { closeAbstractPreview(); return }
   loadingPreviewAbstract.value = true
   previewAbstractError.value = ''
@@ -301,7 +304,7 @@ async function toggleAbstractPreview() {
     const blob = await fetchFileBlob(`/admin/submissions/${route.params.id}/abstracts/${abs.id}/download`)
     if (!blob) { previewAbstractError.value = 'No se pudo cargar el archivo.'; return }
     previewAbstractOpen.value = true
-    if ((abs.mime_type ?? '').includes('pdf')) {
+    if (abs.stored_path && (abs.mime_type ?? '').includes('pdf')) {
       abstractPreviewPdfUrl.value = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
     } else {
       await nextTick()
@@ -334,6 +337,7 @@ function eventLabel(ev: SubmissionEvent): string {
     case 'modalidad_elegida':    return `Modalidad elegida: ${d.a ?? '—'}`
     case 'ponencia_eliminada':   return 'Ponencia eliminada'
     case 'resumen_subido':       return `Resumen v${d.version} subido${d.archivo ? ` · ${d.archivo}` : ''}`
+    case 'resumen_reconstruido': return `Documento del resumen v${d.version} reconstruido sobre la plantilla oficial${String(d.coincide_plantilla) === 'false' ? ' (con advertencia de estructura)' : ''}`
     case 'documento_subido':     return `Documento v${d.version} subido · ${d.archivo ?? ''}`
     case 'articulo_subido':      return `Artículo v${d.version} subido · ${d.archivo ?? ''}`
     case 'video_subido':         return `Video subido · ${d.archivo ?? ''}`
@@ -556,7 +560,7 @@ onMounted(load)
         <h2 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide">Resumen</h2>
         <div class="flex items-center gap-2">
           <UiButton
-            v-if="submission.abstracts[0]?.stored_path"
+            v-if="submission.abstracts[0]?.stored_path || submission.abstracts[0]?.generated_path"
             size="sm"
             variant="secondary"
             :loading="loadingPreviewAbstract"
@@ -565,13 +569,13 @@ onMounted(load)
             {{ previewAbstractOpen ? 'Ocultar' : 'Vista previa' }}
           </UiButton>
           <UiButton
-            v-if="submission.abstracts[0]?.stored_path"
+            v-if="submission.abstracts[0]?.stored_path || submission.abstracts[0]?.generated_path"
             size="sm"
             variant="secondary"
             :loading="downloadingAbstractFile"
             @click="downloadAbstractOriginal"
           >
-            Descargar original
+            {{ submission.abstracts[0]?.stored_path ? 'Descargar original' : 'Descargar reconstruido' }}
           </UiButton>
           <UiButton size="sm" variant="secondary" @click="downloadAbstract">
             {{ submission.abstracts[0]?.stored_path ? 'Descargar texto' : 'Descargar' }}
@@ -588,7 +592,20 @@ onMounted(load)
       <div class="bg-cgr-section rounded-lg p-4 text-sm text-cgr-muted leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
         {{ submission.abstracts[0]?.content }}
       </div>
-      <p v-if="!submission.abstracts[0]?.stored_path" class="mt-2 text-xs text-cgr-subtle">
+      <p v-if="!submission.abstracts[0]?.stored_path && submission.abstracts[0]?.generated_path" class="mt-2 text-xs text-cgr-subtle">
+        El archivo original no se conservó (subido antes del 10 de julio de 2026). La vista previa y la
+        descarga corresponden a un <strong>documento reconstruido sobre la plantilla oficial</strong> a
+        partir del texto guardado, sin modificar el contenido.
+      </p>
+      <div
+        v-if="!submission.abstracts[0]?.stored_path && (submission.abstracts[0]?.template_problems?.length ?? 0) > 0"
+        class="mt-2 text-xs text-amber-300 border border-amber-400/30 bg-amber-500/10 rounded-lg px-3 py-2"
+      >
+        ⚠ El texto de este resumen no coincide del todo con la estructura de la plantilla:
+        {{ submission.abstracts[0]?.template_problems?.join('; ') }}.
+        El documento reconstruido lo muestra tal cual fue enviado.
+      </div>
+      <p v-if="!submission.abstracts[0]?.stored_path && !submission.abstracts[0]?.generated_path" class="mt-2 text-xs text-cgr-subtle">
         Este resumen se subió antes del 10 de julio de 2026, cuando la plataforma no conservaba el
         archivo original (Word/PDF): solo existe el texto extraído, por eso no hay vista previa del documento.
       </p>

@@ -45,13 +45,16 @@ class SubmissionController extends Controller
         $validated = $request->validate([
             'title'             => 'required|string|max:500',
             'thematic_axis_id'  => 'required|exists:thematic_axes,id',
-            'abstract_file'     => 'required|file|mimes:docx,pdf|max:10240',
+            'abstract_file'     => 'required|file|mimes:pdf|max:10240',
+        ], [
+            'abstract_file.mimes' => 'El resumen debe subirse en formato PDF: diligencia la plantilla oficial en Word y expórtala/guárdala como PDF.',
         ]);
 
-        $file = $validated['abstract_file'];
+        $file      = $validated['abstract_file'];
+        $extractor = app(AbstractFileExtractorService::class);
 
         try {
-            $abstractText = app(AbstractFileExtractorService::class)->extractText($file);
+            $abstractText = $extractor->extractText($file);
         } catch (RuntimeException $e) {
             abort(422, $e->getMessage());
         }
@@ -65,6 +68,10 @@ class SubmissionController extends Controller
             app(AbstractTemplateValidatorService::class)->validateOrFail($abstractText);
         } catch (RuntimeException $e) {
             abort(422, $e->getMessage());
+        }
+
+        if (! $extractor->pdfContainsTemplateLogo($file)) {
+            abort(422, 'El archivo no parece estar hecho sobre la plantilla oficial del congreso: no contiene el encabezado con el logo. Descarga la plantilla oficial (Plantilla_Resumen.docx), escribe tu contenido sobre ella y expórtala a PDF sin quitar el encabezado.');
         }
 
         // Metadatos antes de store(): al mover el archivo, el temporal deja de existir

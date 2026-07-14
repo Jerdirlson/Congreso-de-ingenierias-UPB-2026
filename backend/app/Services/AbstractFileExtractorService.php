@@ -8,6 +8,16 @@ use Smalot\PdfParser\Parser as PdfParser;
 
 class AbstractFileExtractorService
 {
+    /**
+     * Ancho en píxeles del logo del encabezado de la plantilla oficial
+     * (word/media/image1.png de Plantilla_Resumen.docx). Word conserva las
+     * dimensiones originales de la imagen al exportar a PDF, así que es el
+     * marcador confiable de que el PDF proviene de la plantilla — las fuentes
+     * no sirven porque "Spranq eco sans" casi nunca está instalada y se
+     * sustituye al exportar.
+     */
+    private const TEMPLATE_LOGO_WIDTH = 1213;
+
     public function extractText(UploadedFile $file): string
     {
         $extension = strtolower($file->getClientOriginalExtension());
@@ -35,6 +45,44 @@ class AbstractFileExtractorService
             throw $e;
         } catch (\Throwable $e) {
             throw new RuntimeException('No se pudo leer el archivo PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Verifica que el PDF contenga el logo del encabezado de la plantilla
+     * oficial. Acepta el ancho exacto del logo o, como respaldo por si la
+     * herramienta de exportación re-muestrea la imagen, cualquier imagen
+     * grande con la proporción vertical del logo. Si el PDF no se puede
+     * inspeccionar, no bloquea (el revisor lo verifica en la vista previa).
+     */
+    public function pdfContainsTemplateLogo(UploadedFile $file): bool
+    {
+        try {
+            $pdf = (new PdfParser())->parseFile($file->getRealPath());
+
+            foreach ($pdf->getObjectsByType('XObject') as $object) {
+                $header = $object->getHeader();
+                if ((string) $header->get('Subtype') !== 'Image') {
+                    continue;
+                }
+
+                $width  = (int) (string) $header->get('Width');
+                $height = (int) (string) $header->get('Height');
+
+                if ($width === self::TEMPLATE_LOGO_WIDTH) {
+                    return true;
+                }
+                if ($width >= 400 && $height > 0) {
+                    $ratio = $width / $height;
+                    if ($ratio >= 0.72 && $ratio <= 0.92) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        } catch (\Throwable) {
+            return true;
         }
     }
 

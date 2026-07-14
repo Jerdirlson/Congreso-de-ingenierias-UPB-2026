@@ -27,7 +27,7 @@ interface ReviewDetail {
     abstracts?: { content: string; version: number }[]
   }
   submission_document?: { id: number; original_filename: string; version: number } | null
-  submission_abstract?: { id: number; content: string; version: number; original_filename?: string | null; stored_path?: string | null; mime_type?: string | null } | null
+  submission_abstract?: { id: number; content: string; version: number; original_filename?: string | null; stored_path?: string | null; mime_type?: string | null; generated_path?: string | null; template_problems?: string[] | null } | null
   submission_article?: { id: number; original_filename: string; version: number; mime_type?: string | null } | null
   history?: {
     id: number; status: string; decision: string | null; comments: string | null; type?: string
@@ -69,7 +69,7 @@ function autoPreview() {
   const hasFile = r.type === 'article'
     ? !!r.submission_article
     : r.type === 'abstract'
-      ? !!r.submission_abstract?.stored_path
+      ? !!(r.submission_abstract?.stored_path || r.submission_abstract?.generated_path)
       : !!r.submission_document
   if (hasFile) togglePreview()
 }
@@ -114,7 +114,9 @@ async function downloadDocument() {
     a.download = review.value?.type === 'article'
       ? (review.value?.submission_article?.original_filename ?? 'articulo.docx')
       : review.value?.type === 'abstract'
-        ? (review.value?.submission_abstract?.original_filename ?? 'resumen')
+        ? (review.value?.submission_abstract?.stored_path
+            ? (review.value?.submission_abstract?.original_filename ?? 'resumen')
+            : `Resumen_reconstruido_v${review.value?.submission_abstract?.version ?? 1}.docx`)
         : (review.value?.submission_document?.original_filename ?? 'documento.pdf')
     document.body.appendChild(a)
     a.click()
@@ -145,6 +147,10 @@ function closePreview() {
 /** Formato renderizable del archivo de la revisión: 'pdf', 'docx' u 'otro' */
 function previewKind(): 'pdf' | 'docx' | 'otro' {
   const r = review.value
+  // Resumen histórico sin archivo original: el documento reconstruido siempre es docx
+  if (r?.type === 'abstract' && !r?.submission_abstract?.stored_path && r?.submission_abstract?.generated_path) {
+    return 'docx'
+  }
   const meta = r?.type === 'article' ? r?.submission_article
     : r?.type === 'abstract' ? r?.submission_abstract
     : { mime_type: 'application/pdf', original_filename: '' }
@@ -303,14 +309,14 @@ onUnmounted(closePreview)
             Versión {{ review?.submission_abstract?.version }} · corregida por el autor
           </span>
           <div
-            v-if="review?.type === 'abstract' && review?.submission_abstract?.stored_path"
+            v-if="review?.type === 'abstract' && (review?.submission_abstract?.stored_path || review?.submission_abstract?.generated_path)"
             class="ml-auto flex items-center gap-2"
           >
             <UiButton size="sm" variant="secondary" :loading="previewLoading" @click="togglePreview">
               {{ previewOpen ? 'Ocultar' : 'Vista previa' }}
             </UiButton>
             <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">
-              Descargar original
+              {{ review?.submission_abstract?.stored_path ? 'Descargar original' : 'Descargar reconstruido' }}
             </UiButton>
           </div>
         </div>
@@ -320,7 +326,20 @@ onUnmounted(closePreview)
              ?? 'Sin resumen.' }}
         </div>
         <template v-if="review?.type === 'abstract'">
-          <p v-if="!review?.submission_abstract?.stored_path" class="mt-2 text-xs text-cgr-subtle">
+          <p v-if="!review?.submission_abstract?.stored_path && review?.submission_abstract?.generated_path" class="mt-2 text-xs text-cgr-subtle">
+            El archivo original de este resumen no se conservó: la vista previa y la descarga
+            corresponden a un <strong>documento reconstruido sobre la plantilla oficial</strong> a partir
+            del texto enviado por el autor, sin modificar el contenido.
+          </p>
+          <div
+            v-if="!review?.submission_abstract?.stored_path && (review?.submission_abstract?.template_problems?.length ?? 0) > 0"
+            class="mt-2 text-xs text-amber-300 border border-amber-400/30 bg-amber-500/10 rounded-lg px-3 py-2"
+          >
+            ⚠ El texto de este resumen no coincide del todo con la estructura de la plantilla oficial:
+            {{ review?.submission_abstract?.template_problems?.join('; ') }}.
+            El documento reconstruido lo muestra tal cual fue enviado.
+          </div>
+          <p v-if="!review?.submission_abstract?.stored_path && !review?.submission_abstract?.generated_path" class="mt-2 text-xs text-cgr-subtle">
             Este resumen se subió antes del 10 de julio de 2026, cuando la plataforma no conservaba
             el archivo original: solo existe el texto extraído.
           </p>

@@ -70,17 +70,32 @@ class AdminSubmissionController extends Controller
         return response()->json($reviewers);
     }
 
-    /** GET /api/admin/submissions/{submission}/abstracts/{abstract}/download — archivo original del resumen */
+    /**
+     * GET /api/admin/submissions/{submission}/abstracts/{abstract}/download
+     * Archivo original del resumen; si no se guardó (histórico), sirve el
+     * documento reconstruido sobre la plantilla oficial (generated_path).
+     */
     public function downloadAbstractFile(Submission $submission, SubmissionAbstract $abstract): StreamedResponse
     {
         abort_if($abstract->submission_id !== $submission->id, 404);
-        abort_if(! $abstract->stored_path, 404, 'Este resumen no tiene archivo guardado (fue subido antes de que se conservaran los archivos).');
-        abort_unless(Storage::disk('local')->exists($abstract->stored_path), 404, 'Archivo no encontrado.');
+
+        if ($abstract->stored_path) {
+            abort_unless(Storage::disk('local')->exists($abstract->stored_path), 404, 'Archivo no encontrado.');
+
+            return Storage::disk('local')->download(
+                $abstract->stored_path,
+                $abstract->original_filename ?? 'resumen',
+                ['Content-Type' => $abstract->mime_type ?? 'application/octet-stream']
+            );
+        }
+
+        abort_if(! $abstract->generated_path, 404, 'Este resumen no tiene archivo guardado ni documento reconstruido.');
+        abort_unless(Storage::disk('local')->exists($abstract->generated_path), 404, 'Documento reconstruido no encontrado.');
 
         return Storage::disk('local')->download(
-            $abstract->stored_path,
-            $abstract->original_filename ?? 'resumen',
-            ['Content-Type' => $abstract->mime_type ?? 'application/octet-stream']
+            $abstract->generated_path,
+            "Resumen_reconstruido_ponencia{$submission->id}_v{$abstract->version}.docx",
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
         );
     }
 

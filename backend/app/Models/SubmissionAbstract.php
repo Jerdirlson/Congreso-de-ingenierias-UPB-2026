@@ -23,6 +23,8 @@ class SubmissionAbstract extends Model
         'stored_path',
         'mime_type',
         'file_size',
+        'generated_path',
+        'template_problems',
         'llm_status',
         'llm_confidence_score',
         'llm_justification',
@@ -31,6 +33,7 @@ class SubmissionAbstract extends Model
     ];
 
     protected $casts = [
+        'template_problems'    => 'array',
         'llm_confidence_score' => 'decimal:2',
         'llm_raw_response'     => 'array',
         'processed_at'         => 'datetime',

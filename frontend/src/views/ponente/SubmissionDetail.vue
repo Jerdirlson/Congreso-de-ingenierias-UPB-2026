@@ -219,9 +219,9 @@ function onAbstractFileChange(event: Event) {
   }
 
   const lower = file.name.toLowerCase()
-  if (!(lower.endsWith('.docx') || lower.endsWith('.pdf'))) {
+  if (!lower.endsWith('.pdf')) {
     abstractFile.value = null
-    abstractFileError.value = 'Solo se permiten archivos .docx o .pdf.'
+    abstractFileError.value = 'El resumen debe subirse en formato PDF (exporta la plantilla diligenciada a PDF).'
     return
   }
 
@@ -566,7 +566,7 @@ watch(() => route.params.id, () => {
       <div v-if="canSubmitAbstract">
         <input
           type="file"
-          accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+          accept=".pdf,application/pdf"
           class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
           @change="onAbstractFileChange"
         />
@@ -575,9 +575,10 @@ watch(() => route.params.id, () => {
           Archivo seleccionado: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
         </p>
         <p class="mt-2 text-xs text-cgr-subtle">
-          El archivo debe seguir la
-          <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>
-          (secciones Resumen, Palabras claves, Abstract, Key Words y Referencias); de lo contrario será rechazado.
+          Descarga la
+          <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>,
+          escribe tu contenido sobre ella (sin quitar el encabezado ni las secciones Resumen, Palabras claves,
+          Abstract, Key Words y Referencias) y expórtala a <strong>PDF</strong>; de lo contrario será rechazado.
         </p>
         <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
           Enviar resumen
@@ -668,7 +669,7 @@ watch(() => route.params.id, () => {
           <p class="text-xs text-cgr-muted mb-3">Sube un nuevo archivo para obtener una nueva recomendación de la IA.</p>
           <input
             type="file"
-            accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+            accept=".pdf,application/pdf"
             class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
             @change="onAbstractFileChange"
           />
@@ -677,9 +678,10 @@ watch(() => route.params.id, () => {
             Archivo seleccionado: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
           </p>
           <p class="mt-2 text-xs text-cgr-subtle">
-            El archivo debe seguir la
-            <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>
-            (secciones Resumen, Palabras claves, Abstract, Key Words y Referencias); de lo contrario será rechazado.
+            Descarga la
+            <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>,
+            escribe tu contenido sobre ella (sin quitar el encabezado ni las secciones Resumen, Palabras claves,
+            Abstract, Key Words y Referencias) y expórtala a <strong>PDF</strong>; de lo contrario será rechazado.
           </p>
           <div class="flex gap-3 mt-4">
             <UiButton :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
@@ -729,7 +731,7 @@ watch(() => route.params.id, () => {
         <p class="text-xs text-cgr-muted mb-3">Sube una nueva versión del resumen:</p>
         <input
           type="file"
-          accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+          accept=".pdf,application/pdf"
           class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer"
           @change="onAbstractFileChange"
         />
@@ -738,9 +740,10 @@ watch(() => route.params.id, () => {
           Archivo: {{ abstractFile.name }} ({{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB)
         </p>
         <p class="mt-2 text-xs text-cgr-subtle">
-          El archivo debe seguir la
-          <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>
-          (secciones Resumen, Palabras claves, Abstract, Key Words y Referencias); de lo contrario será rechazado.
+          Descarga la
+          <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>,
+          escribe tu contenido sobre ella (sin quitar el encabezado ni las secciones Resumen, Palabras claves,
+          Abstract, Key Words y Referencias) y expórtala a <strong>PDF</strong>; de lo contrario será rechazado.
         </p>
         <UiButton class="mt-4" :loading="api.loading.value" :disabled="!abstractFile || !!abstractFileError" @click="submitAbstract">
           Reenviar resumen

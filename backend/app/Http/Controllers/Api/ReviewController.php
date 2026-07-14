@@ -121,17 +121,27 @@ class ReviewController extends Controller
             default               => $review->submissionDocument,
         };
         abort_if(! $file, 404, 'No hay documento asociado a esta revisión.');
-        abort_if(
-            ! $file->stored_path,
-            404,
-            'Este resumen no tiene archivo original guardado (fue subido antes de que se conservaran los archivos).'
-        );
-        abort_unless(Storage::disk('local')->exists($file->stored_path), 404, 'Archivo no encontrado.');
+
+        if ($file->stored_path) {
+            abort_unless(Storage::disk('local')->exists($file->stored_path), 404, 'Archivo no encontrado.');
+
+            return Storage::disk('local')->download(
+                $file->stored_path,
+                $file->original_filename ?? 'archivo',
+                ['Content-Type' => $file->mime_type ?? 'application/pdf']
+            );
+        }
+
+        // Resúmenes históricos sin archivo original: servir el documento
+        // reconstruido sobre la plantilla oficial, si ya fue generado.
+        $generated = $review->type === Review::TYPE_ABSTRACT ? $file->generated_path : null;
+        abort_if(! $generated, 404, 'Este documento no tiene archivo guardado.');
+        abort_unless(Storage::disk('local')->exists($generated), 404, 'Documento reconstruido no encontrado.');
 
         return Storage::disk('local')->download(
-            $file->stored_path,
-            $file->original_filename ?? 'archivo',
-            ['Content-Type' => $file->mime_type ?? 'application/pdf']
+            $generated,
+            "Resumen_reconstruido_v{$file->version}.docx",
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
         );
     }
 

@@ -84,8 +84,8 @@ function onFileChange(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0] ?? null
   if (!file) { abstractFile.value = null; return }
   const lower = file.name.toLowerCase()
-  if (!(lower.endsWith('.docx') || lower.endsWith('.pdf'))) {
-    abstractFileError.value = 'Solo se permiten archivos .docx o .pdf'
+  if (!lower.endsWith('.pdf')) {
+    abstractFileError.value = 'El resumen debe subirse en formato PDF (exporta la plantilla diligenciada a PDF)'
     abstractFile.value = null
     return
   }
@@ -316,8 +316,8 @@ async function submit() {
         <!-- Archivo del resumen -->
         <div>
           <label class="block text-xs font-medium text-cgr-muted mb-1.5">
-            Archivo del resumen (Word o PDF) <span class="text-red-400">*</span>
-            <span class="ml-2 text-cgr-subtle font-normal">.docx o .pdf · máximo 10 MB</span>
+            Archivo del resumen (PDF) <span class="text-red-400">*</span>
+            <span class="ml-2 text-cgr-subtle font-normal">.pdf · máximo 10 MB</span>
           </label>
           <label
             class="flex items-center gap-3 w-full bg-cgr-section border rounded-lg px-3 py-2.5 cursor-pointer transition-colors"
@@ -331,19 +331,20 @@ async function submit() {
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
             </svg>
             <span class="text-sm flex-1 truncate" :class="abstractFile ? 'text-white' : 'text-cgr-subtle'">
-              {{ abstractFile ? abstractFile.name : 'Seleccionar archivo .docx o .pdf…' }}
+              {{ abstractFile ? abstractFile.name : 'Seleccionar archivo .pdf…' }}
             </span>
             <span v-if="abstractFile" class="text-xs text-cgr-muted shrink-0">
               {{ (abstractFile.size / 1024 / 1024).toFixed(2) }} MB
             </span>
-            <input type="file" accept=".docx,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf" class="hidden" @change="onFileChange" />
+            <input type="file" accept=".pdf,application/pdf" class="hidden" @change="onFileChange" />
           </label>
           <p v-if="abstractFileError" class="mt-1 text-xs text-red-400">{{ abstractFileError }}</p>
           <p class="mt-1.5 text-xs text-cgr-subtle">
-            El archivo debe seguir la
-            <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>
-            (secciones Resumen, Palabras claves, Abstract, Key Words y Referencias).
-            Si no conserva esa estructura, el sistema lo rechazará.
+            Descarga la
+            <a href="/api/docs/Plantilla_Resumen.docx" class="text-cgr-purple hover:underline">plantilla oficial</a>,
+            escribe tu contenido sobre ella (sin quitar el encabezado ni las secciones Resumen,
+            Palabras claves, Abstract, Key Words y Referencias) y expórtala a PDF.
+            Si el PDF no proviene de la plantilla, el sistema lo rechazará.
           </p>
         </div>
 
