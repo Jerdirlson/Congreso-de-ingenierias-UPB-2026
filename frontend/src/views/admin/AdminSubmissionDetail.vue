@@ -161,7 +161,7 @@ async function downloadAbstractOriginal() {
     a.href = url
     a.download = abs.stored_path
       ? (abs.original_filename ?? 'resumen')
-      : `Resumen_reconstruido_v${abs.version}.docx`
+      : `Resumen_v${abs.version}.docx`
     document.body.appendChild(a); a.click()
     document.body.removeChild(a); URL.revokeObjectURL(url)
   } finally { downloadingAbstractFile.value = false }
@@ -575,7 +575,7 @@ onMounted(load)
             :loading="downloadingAbstractFile"
             @click="downloadAbstractOriginal"
           >
-            {{ submission.abstracts[0]?.stored_path ? 'Descargar original' : 'Descargar reconstruido' }}
+            {{ submission.abstracts[0]?.stored_path ? 'Descargar original' : 'Descargar documento' }}
           </UiButton>
           <UiButton size="sm" variant="secondary" @click="downloadAbstract">
             {{ submission.abstracts[0]?.stored_path ? 'Descargar texto' : 'Descargar' }}

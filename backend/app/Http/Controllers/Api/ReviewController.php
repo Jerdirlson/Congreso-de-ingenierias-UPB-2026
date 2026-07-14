@@ -140,7 +140,7 @@ class ReviewController extends Controller
 
         return Storage::disk('local')->download(
             $generated,
-            "Resumen_reconstruido_v{$file->version}.docx",
+            "Resumen_v{$file->version}.docx",
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
         );
     }

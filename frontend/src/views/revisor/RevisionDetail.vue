@@ -116,7 +116,7 @@ async function downloadDocument() {
       : review.value?.type === 'abstract'
         ? (review.value?.submission_abstract?.stored_path
             ? (review.value?.submission_abstract?.original_filename ?? 'resumen')
-            : `Resumen_reconstruido_v${review.value?.submission_abstract?.version ?? 1}.docx`)
+            : `Resumen_v${review.value?.submission_abstract?.version ?? 1}.docx`)
         : (review.value?.submission_document?.original_filename ?? 'documento.pdf')
     document.body.appendChild(a)
     a.click()
@@ -316,7 +316,7 @@ onUnmounted(closePreview)
               {{ previewOpen ? 'Ocultar' : 'Vista previa' }}
             </UiButton>
             <UiButton size="sm" variant="secondary" :loading="downloading" @click="downloadDocument">
-              {{ review?.submission_abstract?.stored_path ? 'Descargar original' : 'Descargar reconstruido' }}
+              Descargar
             </UiButton>
           </div>
         </div>
@@ -326,23 +326,13 @@ onUnmounted(closePreview)
              ?? 'Sin resumen.' }}
         </div>
         <template v-if="review?.type === 'abstract'">
-          <p v-if="!review?.submission_abstract?.stored_path && review?.submission_abstract?.generated_path" class="mt-2 text-xs text-cgr-subtle">
-            El archivo original de este resumen no se conservó: la vista previa y la descarga
-            corresponden a un <strong>documento reconstruido sobre la plantilla oficial</strong> a partir
-            del texto enviado por el autor, sin modificar el contenido.
-          </p>
           <div
             v-if="!review?.submission_abstract?.stored_path && (review?.submission_abstract?.template_problems?.length ?? 0) > 0"
             class="mt-2 text-xs text-amber-300 border border-amber-400/30 bg-amber-500/10 rounded-lg px-3 py-2"
           >
-            ⚠ El texto de este resumen no coincide del todo con la estructura de la plantilla oficial:
-            {{ review?.submission_abstract?.template_problems?.join('; ') }}.
-            El documento reconstruido lo muestra tal cual fue enviado.
+            ⚠ Este resumen no coincide del todo con la estructura de la plantilla oficial:
+            {{ review?.submission_abstract?.template_problems?.join('; ') }}. Tenlo en cuenta al revisar.
           </div>
-          <p v-if="!review?.submission_abstract?.stored_path && !review?.submission_abstract?.generated_path" class="mt-2 text-xs text-cgr-subtle">
-            Este resumen se subió antes del 10 de julio de 2026, cuando la plataforma no conservaba
-            el archivo original: solo existe el texto extraído.
-          </p>
           <p v-if="previewError" class="mt-2 text-xs text-red-400">{{ previewError }}</p>
           <div v-if="previewOpen && previewPdfUrl" class="mt-3">
             <iframe

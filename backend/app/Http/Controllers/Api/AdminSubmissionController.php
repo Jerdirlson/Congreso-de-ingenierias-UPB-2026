@@ -94,7 +94,7 @@ class AdminSubmissionController extends Controller
 
         return Storage::disk('local')->download(
             $abstract->generated_path,
-            "Resumen_reconstruido_ponencia{$submission->id}_v{$abstract->version}.docx",
+            "Resumen_ponencia{$submission->id}_v{$abstract->version}.docx",
             ['Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
         );
     }
