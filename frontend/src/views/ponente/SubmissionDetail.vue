@@ -20,11 +20,11 @@ const submission = ref<{
   modality: string | null
   journal_opt_in_at?: string | null
   thematic_axis?: { id: number; name: string }
-  abstracts?: { id: number; content: string; llm_status: string; llm_axis?: { id: number; name: string }; llm_justification?: string; llm_confidence_score?: number }[]
+  abstracts?: { id: number; content: string; version?: number; llm_status: string; llm_axis?: { id: number; name: string }; llm_justification?: string; llm_confidence_score?: number }[]
   documents?: { id: number; original_filename: string; version: number; status: string }[]
   articles?: { id: number; original_filename: string; version: number; status: string }[]
   video?: { id: number; status: string; error_message?: string | null; original_filename?: string | null } | null
-  reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; type?: string; reviewer?: { name: string } }[]
+  reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; type?: string; submission_abstract_id?: number | null; reviewer?: { name: string } }[]
 } | null>(null)
 
 const abstractFile = ref<File | null>(null)
@@ -95,6 +95,29 @@ const abstractApprovalReview = computed(() => {
     .filter(r => r.type === 'abstract' && r.status === 'completed' && r.decision === 'approved' && !!r.comments)
     .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())[0] ?? null
 })
+// Dictámenes anteriores del resumen: todo dictamen completado distinto al que
+// se muestra como vigente, para que el ponente no pierda de vista las
+// correcciones pedidas sobre versiones previas.
+const abstractReviewHistory = computed(() => {
+  const currentId = abstractRejectionReview.value?.id ?? abstractApprovalReview.value?.id
+  const reviews = submission.value?.reviews ?? []
+  return reviews
+    .filter(r => r.type === 'abstract' && r.status === 'completed' && r.id !== currentId)
+    .sort((a, b) => new Date(b.completed_at ?? 0).getTime() - new Date(a.completed_at ?? 0).getTime())
+})
+
+function abstractVersionOf(review: { submission_abstract_id?: number | null }): number | null {
+  const abs = submission.value?.abstracts?.find(a => a.id === review.submission_abstract_id)
+  return abs?.version ?? null
+}
+
+function formatDate(value: string | null): string {
+  if (!value) return ''
+  return new Date(value).toLocaleDateString('es-CO', {
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+}
+
 const canConfirmAxis = computed(() =>
   submission.value?.status === 'abstract_submitted' && !submission.value?.thematic_axis
 )
@@ -720,6 +743,9 @@ watch(() => route.params.id, () => {
             <div>
               <p class="text-sm font-semibold text-yellow-300">El comité solicitó ajustes en tu resumen</p>
               <p class="text-xs text-yellow-200/70 mt-0.5">Revisa los comentarios y sube una nueva versión corregida.</p>
+              <p v-if="abstractRejectionReview?.completed_at" class="text-xs text-yellow-200/60 mt-0.5">
+                {{ formatDate(abstractRejectionReview.completed_at) }}
+              </p>
             </div>
           </div>
           <div v-if="abstractRejectionReview?.comments" class="bg-yellow-500/10 border border-yellow-400/20 rounded-lg px-3 py-3 text-sm text-yellow-100 whitespace-pre-wrap leading-relaxed">
@@ -773,6 +799,32 @@ watch(() => route.params.id, () => {
           <p v-if="submission?.thematic_axis" class="text-cgr-purple">
             Eje temático: <strong>{{ submission.thematic_axis.name }}</strong>
           </p>
+        </div>
+      </div>
+
+      <!-- Historial de dictámenes anteriores del resumen -->
+      <div v-if="abstractReviewHistory.length" class="mt-5 pt-4 border-t border-cgr-border">
+        <h3 class="text-xs font-semibold text-cgr-muted uppercase tracking-wide mb-3">Historial de dictámenes</h3>
+        <div class="space-y-3">
+          <div
+            v-for="h in abstractReviewHistory"
+            :key="h.id"
+            class="bg-cgr-section border border-cgr-border rounded-lg px-4 py-3"
+          >
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-cgr-subtle">Resumen{{ abstractVersionOf(h) ? ' v' + abstractVersionOf(h) : '' }}</span>
+                <UiBadge :variant="h.decision === 'approved' ? 'success' : 'warning'">
+                  {{ h.decision === 'approved' ? 'Aprobado' : 'Ajustes solicitados' }}
+                </UiBadge>
+              </div>
+              <span class="text-xs text-cgr-subtle shrink-0">{{ formatDate(h.completed_at) }}</span>
+            </div>
+            <p v-if="h.comments" class="text-xs text-cgr-muted leading-relaxed whitespace-pre-wrap">
+              {{ h.comments }}
+            </p>
+            <p v-else class="text-xs text-cgr-subtle italic">Sin comentarios.</p>
+          </div>
         </div>
       </div>
     </UiCard>
