@@ -15,15 +15,17 @@ interface Submission {
   user?: { id: number; name: string; email: string }
   thematic_axis?: { id: number; name: string }
   reviews?: { id: number; reviewer?: { name: string }; status: string; decision: string | null }[]
+  latest_article?: { id: number; status: string; version: number } | null
 }
 interface ThematicAxis { id: number; name: string }
 
 const submissions = ref<Submission[]>([])
 const axes = ref<ThematicAxis[]>([])
 const loading = ref(true)
-const filterStatus = ref('')
-const filterAxis   = ref('')
-const search       = ref('')
+const filterStatus  = ref('')
+const filterAxis    = ref('')
+const filterArticle = ref('')
+const search        = ref('')
 
 const statusLabels: Record<string, string> = {
   draft: 'Borrador',
@@ -54,6 +56,29 @@ const statusVariants: Record<string, 'default' | 'warning' | 'danger' | 'success
   confirmed: 'success',
 }
 
+// El artículo de revista es un carril paralelo: no cambia el estado de la
+// ponencia, por eso se filtra por el estado del propio artículo.
+// pending_review = subido y sin revisor asignado (asignar lo pasa a under_review).
+const ARTICLE_FILTERS = [
+  { value: 'with',               label: 'Con artículo' },
+  { value: 'pending_review',     label: 'Artículo por asignar revisor' },
+  { value: 'under_review',       label: 'Artículo en revisión' },
+  { value: 'revision_requested', label: 'Artículo con ajustes solicitados' },
+  { value: 'approved',           label: 'Artículo aprobado' },
+]
+const articleStatusLabels: Record<string, string> = {
+  pending_review: 'Por asignar',
+  under_review: 'En revisión',
+  revision_requested: 'Ajustes solicitados',
+  approved: 'Aprobado',
+}
+const articleStatusVariants: Record<string, 'default' | 'warning' | 'danger' | 'success' | 'info' | 'purple'> = {
+  pending_review: 'purple',
+  under_review: 'info',
+  revision_requested: 'warning',
+  approved: 'success',
+}
+
 const stats = computed(() => {
   const list = submissions.value
   return {
@@ -69,6 +94,10 @@ const filtered = computed(() => {
   return submissions.value.filter(s => {
     if (filterStatus.value && s.status !== filterStatus.value) return false
     if (filterAxis.value && s.thematic_axis?.id !== Number(filterAxis.value)) return false
+    if (filterArticle.value) {
+      if (!s.latest_article) return false
+      if (filterArticle.value !== 'with' && s.latest_article.status !== filterArticle.value) return false
+    }
     if (q) {
       const inTitle  = s.title.toLowerCase().includes(q)
       const inAuthor = (s.user?.name ?? '').toLowerCase().includes(q)
@@ -156,10 +185,17 @@ onMounted(loadData)
           <option value="">Todos los ejes</option>
           <option v-for="a in axes" :key="a.id" :value="a.id">{{ a.name }}</option>
         </select>
+        <select
+          v-model="filterArticle"
+          class="bg-cgr-section border border-cgr-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cgr-purple"
+        >
+          <option value="">Artículo (revista)</option>
+          <option v-for="f in ARTICLE_FILTERS" :key="f.value" :value="f.value">{{ f.label }}</option>
+        </select>
         <button
-          v-if="search || filterStatus || filterAxis"
+          v-if="search || filterStatus || filterAxis || filterArticle"
           class="text-xs text-cgr-muted hover:text-white transition-colors px-3 py-2"
-          @click="search = ''; filterStatus = ''; filterAxis = ''"
+          @click="search = ''; filterStatus = ''; filterAxis = ''; filterArticle = ''"
         >
           Limpiar
         </button>
@@ -177,6 +213,7 @@ onMounted(loadData)
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Autor</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Eje</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Estado</th>
+                <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Artículo</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Revisores</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Actualizado</th>
               </tr>
@@ -202,6 +239,12 @@ onMounted(loadData)
                     {{ statusLabels[s.status] ?? s.status }}
                   </UiBadge>
                 </td>
+                <td class="px-5 py-4">
+                  <UiBadge v-if="s.latest_article" :variant="articleStatusVariants[s.latest_article.status] ?? 'default'">
+                    {{ articleStatusLabels[s.latest_article.status] ?? s.latest_article.status }}
+                  </UiBadge>
+                  <span v-else class="text-xs text-cgr-subtle">—</span>
+                </td>
                 <td class="px-5 py-4 max-w-[180px]">
                   <div v-if="s.reviews?.length" class="flex flex-wrap gap-1">
                     <span
@@ -225,7 +268,7 @@ onMounted(loadData)
                 <td class="px-5 py-4 text-cgr-subtle text-xs">{{ formatDate(s.updated_at) }}</td>
               </tr>
               <tr v-if="filtered.length === 0">
-                <td colspan="7" class="px-5 py-12 text-center text-cgr-muted">No hay ponencias con estos filtros.</td>
+                <td colspan="8" class="px-5 py-12 text-center text-cgr-muted">No hay ponencias con estos filtros.</td>
               </tr>
             </tbody>
           </table>
