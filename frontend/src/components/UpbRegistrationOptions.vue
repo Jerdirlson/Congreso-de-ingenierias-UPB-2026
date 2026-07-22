@@ -34,7 +34,7 @@ const ALL_OPTIONS: NrcOption[] = [
   {
     nrc: '51884',
     title: 'Profesionales — Presencial',
-    description: 'Profesionales con ponencia presencial.',
+    description: 'Profesionales presencial, con o sin ponencia.',
     price: '$670.000 COP',
     url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51884&period=202650',
     audiences: ['ponente', 'participante'],
@@ -42,7 +42,7 @@ const ALL_OPTIONS: NrcOption[] = [
   {
     nrc: '51885',
     title: 'Profesionales — Virtual',
-    description: 'Profesionales con ponencia virtual.',
+    description: 'Profesionales virtual, con o sin ponencia.',
     price: '$670.000 COP',
     url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51885&period=202650',
     audiences: ['ponente', 'participante'],
