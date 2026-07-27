@@ -6,7 +6,7 @@ import FooterSection from '../../components/FooterSection.vue'
 type Conferencista = {
   nombre: string
   titulo: string
-  conferencia: string
+  conferencia?: string
   bio?: string
   institucion: string
   pais: string
@@ -101,6 +101,28 @@ const conferencistas: Conferencista[] = [
       'Biogás y energía',
       'Calidad del aire urbano',
     ],
+  },
+  // 6
+  {
+    nombre: 'Christian Frederick Gárate Rodríguez',
+    titulo: 'MBA.',
+    bio: 'Ingeniero Industrial por la Universidad Católica San Pablo (Perú) y MBA con mención en Gerencia Empresarial por la Universidad Nacional de San Agustín de Arequipa. Actualmente cursa el Doctorado en Ingeniería Industrial en la Universidad Nacional Mayor de San Marcos, donde desarrolla investigación sobre Industria 5.0, inteligencia artificial y bienestar laboral. Se desempeña como profesor a tiempo completo del Departamento de Ingeniería de la Industria y el Ambiente de la Universidad Católica San Pablo, donde dicta cursos de Ingeniería de Métodos, Gestión de la Calidad, Seguridad y Salud en el Trabajo e Investigación, además de coordinar procesos de investigación y titulación. Cuenta con experiencia profesional en sistemas de gestión, mejora de procesos, calidad, seguridad, compliance y gestión organizacional en los sectores de educación, salud, energía, minería y transporte.',
+    institucion: 'Universidad Católica San Pablo',
+    pais: 'Perú',
+    tipo: 'Internacional',
+    foto: '/speakers/christian-garate.png',
+    lineas: ['Industria 5.0', 'Inteligencia artificial aplicada a la ingeniería', 'Bienestar laboral', 'Gestión de la calidad y mejora continua', 'Seguridad y salud en el trabajo'],
+  },
+  // 7
+  {
+    nombre: 'Jhon Wilder Zartha Sossa',
+    titulo: 'Dr.',
+    bio: 'Ingeniero Agroindustrial, Magíster en Gestión Tecnológica y Doctor en Administración. Profesor Titular de la Universidad Pontificia Bolivariana (UPB), Profesor Invitado de la Universidad de Santiago de Chile (USACH), Profesor de Postgrado en Eafit e Investigador Senior reconocido por Minciencias. Ha participado en congresos y misiones tecnológicas en Alemania, Bolivia, Costa Rica, Chile, Egipto, Estados Unidos, Jamaica, Honduras, México, Panamá y Perú. Ha publicado más de 70 artículos en revistas internacionales indexadas, 20 libros y capítulos de libro y más de 50 ponencias. Creador de la metodología de alineamiento de estudios de prospectiva con estrategias y modelos de innovación, y de la matriz/cuadrantes patentes–papers. Es Chair del comité permanente de prospectiva y estudios de futuro de LACCEI.',
+    institucion: 'Universidad Pontificia Bolivariana (UPB)',
+    pais: 'Colombia',
+    tipo: 'Nacional',
+    foto: '/speakers/jhon-zartha.png',
+    lineas: ['Sostenibilidad e innovación regenerativa', 'Gestión del conocimiento, la innovación y la tecnología', 'Estudios de futuro y prospectiva', 'Tecnologías convergentes y KETs', 'Diagnósticos y modelos de innovación'],
   },
 ]
 </script>
@@ -205,7 +227,7 @@ const conferencistas: Conferencista[] = [
             <div class="h-px bg-cgr-border" />
 
             <!-- Conferencia -->
-            <div class="border-l-2 border-cgr-purple pl-4">
+            <div v-if="c.conferencia" class="border-l-2 border-cgr-purple pl-4">
               <p class="text-cgr-purple text-[10px] font-semibold uppercase tracking-widest mb-2">Conferencia</p>
               <p class="text-white font-semibold text-base leading-snug">{{ c.conferencia }}</p>
             </div>
