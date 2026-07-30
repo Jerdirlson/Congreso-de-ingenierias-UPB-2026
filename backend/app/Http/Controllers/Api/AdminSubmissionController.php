@@ -10,6 +10,7 @@ use App\Models\SubmissionArticle;
 use App\Models\SubmissionDocument;
 use App\Models\SubmissionVideo;
 use App\Models\User;
+use App\Services\ReviewOutcomeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminSubmissionController extends Controller
 {
+    public function __construct(private ReviewOutcomeService $outcomes)
+    {
+    }
+
     /** GET /api/admin/submissions */
     public function index(Request $request): JsonResponse
     {
@@ -267,6 +272,7 @@ class AdminSubmissionController extends Controller
 
         $documentId = $review->submission_document_id;
         $articleId  = $review->submission_article_id;
+        $abstractId = $review->submission_abstract_id;
 
         $review->delete();
 
@@ -289,6 +295,14 @@ class AdminSubmissionController extends Controller
                     ->update(['status' => SubmissionArticle::STATUS_PENDING_REVIEW]);
             }
         }
+
+        // Quitar un revisor cambia el conjunto de dictámenes: si los que quedan ya
+        // aprobaron, hay que avanzar. Sin esto, quitar al último revisor pendiente
+        // dejaba la ponencia congelada aunque su resumen estuviera aprobado.
+        $submission->refresh();
+        $this->outcomes->syncAbstract($submission, $abstractId);
+        $this->outcomes->syncDocument($submission, $documentId);
+        $this->outcomes->syncArticle($submission, $articleId ? SubmissionArticle::find($articleId) : null);
 
         return response()->json(['ok' => true]);
     }

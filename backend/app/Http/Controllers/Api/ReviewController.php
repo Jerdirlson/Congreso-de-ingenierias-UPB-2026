@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Review;
+use App\Services\ReviewOutcomeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReviewController extends Controller
 {
+    public function __construct(private ReviewOutcomeService $outcomes)
+    {
+    }
+
     /** GET /api/reviews — revisiones asignadas al revisor (con filtros) */
     public function index(Request $request): JsonResponse
     {
@@ -166,18 +171,7 @@ class ReviewController extends Controller
             return;
         }
 
-        // Solo evaluar las revisiones del documento actual (no historial de versiones anteriores)
-        $currentDocReviews = $submission->reviews
-            ->where('submission_document_id', $review->submission_document_id)
-            ->where('type', Review::TYPE_DOCUMENT);
-
-        $allCompleted = $currentDocReviews->every(fn ($r) => $r->status === Review::STATUS_COMPLETED);
-        $allApproved  = $currentDocReviews->every(fn ($r) => $r->decision === Review::DECISION_APPROVED);
-
-        if ($allCompleted && $allApproved) {
-            $submission->advanceTo('document_approved');
-            $submission->latestDocument?->update(['status' => 'approved']);
-        }
+        $this->outcomes->syncDocument($submission, $review->submission_document_id);
     }
 
     /**
@@ -196,17 +190,7 @@ class ReviewController extends Controller
             return;
         }
 
-        // Solo evaluar las revisiones del artículo actual
-        $articleReviews = $submission->reviews
-            ->where('submission_article_id', $review->submission_article_id)
-            ->where('type', Review::TYPE_ARTICLE);
-
-        $allCompleted = $articleReviews->every(fn ($r) => $r->status === Review::STATUS_COMPLETED);
-        $allApproved  = $articleReviews->every(fn ($r) => $r->decision === Review::DECISION_APPROVED);
-
-        if ($allCompleted && $allApproved) {
-            $article->update(['status' => \App\Models\SubmissionArticle::STATUS_APPROVED]);
-        }
+        $this->outcomes->syncArticle($submission, $article);
     }
 
     private function updateAbstractStatus(Review $review, \App\Models\Submission $submission): void
@@ -216,16 +200,6 @@ class ReviewController extends Controller
             return;
         }
 
-        // Verificar si todos los revisores del resumen actual aprobaron
-        $abstractReviews = $submission->reviews
-            ->where('submission_abstract_id', $review->submission_abstract_id)
-            ->where('type', Review::TYPE_ABSTRACT);
-
-        $allCompleted = $abstractReviews->every(fn ($r) => $r->status === Review::STATUS_COMPLETED);
-        $allApproved  = $abstractReviews->every(fn ($r) => $r->decision === Review::DECISION_APPROVED);
-
-        if ($allCompleted && $allApproved) {
-            $submission->advanceTo(\App\Models\Submission::STATUS_ABSTRACT_APPROVED);
-        }
+        $this->outcomes->syncAbstract($submission, $review->submission_abstract_id);
     }
 }
