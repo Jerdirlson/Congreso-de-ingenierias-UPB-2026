@@ -48,15 +48,6 @@ const ALL_OPTIONS: NrcOption[] = [
     audiences: ['ponente', 'participante'],
   },
   {
-    nrc: '51888',
-    title: 'Estudiantes UPB — Asistencia virtual',
-    description: 'Asistencia virtual al congreso.',
-    price: '$350.000 COP',
-    url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51888&period=202650',
-    audiences: ['participante'],
-    unavailable: true,
-  },
-  {
     nrc: '51890',
     title: 'Egresados UPB',
     description: 'Evento Viernes - Solo tiene derecho a la conferencia de Egresado y Coctel de Cierre.',
