@@ -11,6 +11,7 @@ interface Submission {
   id: number
   title: string
   status: string
+  modality: string | null
   updated_at: string
   user?: { id: number; name: string; email: string }
   thematic_axis?: { id: number; name: string }
@@ -22,18 +23,19 @@ interface ThematicAxis { id: number; name: string }
 const submissions = ref<Submission[]>([])
 const axes = ref<ThematicAxis[]>([])
 const loading = ref(true)
-const filterStatus  = ref('')
-const filterAxis    = ref('')
-const filterArticle = ref('')
-const search        = ref('')
+const filterStatus   = ref('')
+const filterAxis     = ref('')
+const filterArticle  = ref('')
+const filterModality = ref('')
+const search         = ref('')
 
 const statusLabels: Record<string, string> = {
   draft: 'Borrador',
   abstract_submitted: 'Resumen enviado',
-  abstract_rejected: 'Pendiente de ajustes',
+  abstract_rejected: 'Pendiente de ajustes (resumen)',
   abstract_approved: 'Resumen aprobado',
   under_review: 'En revisión',
-  revision_requested: 'Pendiente de ajustes',
+  revision_requested: 'Pendiente de ajustes (doc.)',
   document_approved: 'Doc. aprobado',
   modality_selected: 'Modalidad elegida',
   video_pending: 'Video pendiente',
@@ -79,6 +81,29 @@ const articleStatusVariants: Record<string, 'default' | 'warning' | 'danger' | '
   approved: 'success',
 }
 
+// La modalidad se elige después de aprobar el resumen, por eso puede venir
+// vacía. "presencial" agrupa oral + póster, que es como se pide el corte.
+const modalityLabels: Record<string, string> = {
+  presencial_oral: 'Presencial — Oral',
+  presencial_poster: 'Presencial — Póster',
+  virtual: 'Virtual',
+  proyecto_aula: 'Proyecto de aula',
+}
+const MODALITY_FILTERS = [
+  { value: 'presencial',        label: 'Presencial (oral + póster)' },
+  { value: 'presencial_oral',   label: 'Presencial — Oral' },
+  { value: 'presencial_poster', label: 'Presencial — Póster' },
+  { value: 'virtual',           label: 'Virtual' },
+  { value: 'proyecto_aula',     label: 'Proyecto de aula' },
+  { value: 'none',              label: 'Sin modalidad definida' },
+]
+
+function matchesModality(modality: string | null, filter: string): boolean {
+  if (filter === 'none') return !modality
+  if (filter === 'presencial') return modality === 'presencial_oral' || modality === 'presencial_poster'
+  return modality === filter
+}
+
 const stats = computed(() => {
   const list = submissions.value
   return {
@@ -94,6 +119,7 @@ const filtered = computed(() => {
   return submissions.value.filter(s => {
     if (filterStatus.value && s.status !== filterStatus.value) return false
     if (filterAxis.value && s.thematic_axis?.id !== Number(filterAxis.value)) return false
+    if (filterModality.value && !matchesModality(s.modality ?? null, filterModality.value)) return false
     if (filterArticle.value) {
       if (!s.latest_article) return false
       if (filterArticle.value !== 'with' && s.latest_article.status !== filterArticle.value) return false
@@ -186,6 +212,13 @@ onMounted(loadData)
           <option v-for="a in axes" :key="a.id" :value="a.id">{{ a.name }}</option>
         </select>
         <select
+          v-model="filterModality"
+          class="bg-cgr-section border border-cgr-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cgr-purple"
+        >
+          <option value="">Todas las modalidades</option>
+          <option v-for="m in MODALITY_FILTERS" :key="m.value" :value="m.value">{{ m.label }}</option>
+        </select>
+        <select
           v-model="filterArticle"
           class="bg-cgr-section border border-cgr-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cgr-purple"
         >
@@ -193,9 +226,9 @@ onMounted(loadData)
           <option v-for="f in ARTICLE_FILTERS" :key="f.value" :value="f.value">{{ f.label }}</option>
         </select>
         <button
-          v-if="search || filterStatus || filterAxis || filterArticle"
+          v-if="search || filterStatus || filterAxis || filterArticle || filterModality"
           class="text-xs text-cgr-muted hover:text-white transition-colors px-3 py-2"
-          @click="search = ''; filterStatus = ''; filterAxis = ''; filterArticle = ''"
+          @click="search = ''; filterStatus = ''; filterAxis = ''; filterArticle = ''; filterModality = ''"
         >
           Limpiar
         </button>
@@ -213,6 +246,7 @@ onMounted(loadData)
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Autor</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Eje</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Estado</th>
+                <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Modalidad</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Artículo</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Revisores</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Actualizado</th>
@@ -238,6 +272,12 @@ onMounted(loadData)
                   <UiBadge :variant="statusVariants[s.status] ?? 'default'">
                     {{ statusLabels[s.status] ?? s.status }}
                   </UiBadge>
+                </td>
+                <td class="px-5 py-4">
+                  <UiBadge v-if="s.modality" :variant="s.modality === 'virtual' ? 'info' : 'purple'">
+                    {{ modalityLabels[s.modality] ?? s.modality }}
+                  </UiBadge>
+                  <span v-else class="text-xs text-cgr-subtle">—</span>
                 </td>
                 <td class="px-5 py-4">
                   <UiBadge v-if="s.latest_article" :variant="articleStatusVariants[s.latest_article.status] ?? 'default'">
@@ -268,7 +308,7 @@ onMounted(loadData)
                 <td class="px-5 py-4 text-cgr-subtle text-xs">{{ formatDate(s.updated_at) }}</td>
               </tr>
               <tr v-if="filtered.length === 0">
-                <td colspan="8" class="px-5 py-12 text-center text-cgr-muted">No hay ponencias con estos filtros.</td>
+                <td colspan="9" class="px-5 py-12 text-center text-cgr-muted">No hay ponencias con estos filtros.</td>
               </tr>
             </tbody>
           </table>
