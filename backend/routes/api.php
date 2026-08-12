@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AdminMetricsController;
 use App\Http\Controllers\Api\AdminSubmissionController;
 use App\Http\Controllers\Api\AdminImpersonateController;
 use App\Http\Controllers\Api\AdminMailController;
+use App\Http\Controllers\Api\AdminPonenteExportController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AxisConfirmationController;
@@ -157,6 +158,7 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::patch('/submissions/{submission}/video/approve',      [AdminSubmissionController::class, 'approveVideo']);
     Route::patch('/submissions/{submission}/video/reject',       [AdminSubmissionController::class, 'rejectVideo']);
     Route::apiResource('thematic-axes', ThematicAxisController::class);
+    Route::get('/ponentes/export',               AdminPonenteExportController::class);
     Route::get('/users',                         [AdminUserController::class, 'index']);
     Route::get('/users/{user}',                  [AdminUserController::class, 'show']);
     Route::patch('/users/{user}/role',           [AdminUserController::class, 'updateRole']);

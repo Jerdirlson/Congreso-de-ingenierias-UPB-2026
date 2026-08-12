@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useFetchApi } from '../../composables/useFetchApi'
+import { useFetchApi, getApiToken } from '../../composables/useFetchApi'
 import { useAuthStore } from '../../stores/auth'
 import type { UserRole } from '../../stores/auth'
 import UiCard from '../../components/ui/UiCard.vue'
@@ -59,6 +59,39 @@ const router = useRouter()
 const auth = useAuthStore()
 const impersonating = ref(false)
 const impersonateError = ref('')
+
+// ── Export de contactos de ponentes (CSV para Decanatura) ──
+const exporting = ref(false)
+const exportSoloConPonencia = ref(false)
+const exportError = ref('')
+
+async function exportPonentes() {
+  exporting.value = true
+  exportError.value = ''
+  try {
+    const query = exportSoloConPonencia.value ? '?solo_con_ponencia=1' : ''
+    const res = await fetch(`/api/admin/ponentes/export${query}`, {
+      headers: { Authorization: `Bearer ${getApiToken()}` },
+    })
+    if (!res.ok) {
+      exportError.value = 'No se pudo generar el archivo. Intenta de nuevo.'
+      return
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ponentes-congreso-2026-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch {
+    exportError.value = 'No se pudo generar el archivo. Revisa tu conexión.'
+  } finally {
+    exporting.value = false
+  }
+}
 
 const roles = ['ponente', 'participante', 'revisor', 'admin', 'administrativo']
 
@@ -228,6 +261,26 @@ onMounted(load)
       <div>
         <h1 class="text-2xl font-black text-white">Usuarios</h1>
         <p class="text-cgr-muted text-sm mt-0.5">{{ total }} usuarios registrados</p>
+      </div>
+
+      <!-- Export de contactos de ponentes (pedido de Decanatura) -->
+      <div class="flex flex-col items-stretch sm:items-end gap-2">
+        <button
+          type="button"
+          :disabled="exporting"
+          class="inline-flex items-center justify-center gap-2 border border-cgr-purple/50 text-cgr-purple hover:bg-cgr-purple/10 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+          @click="exportPonentes"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          {{ exporting ? 'Generando…' : 'Descargar ponentes (CSV)' }}
+        </button>
+        <label class="flex items-center gap-2 text-xs text-cgr-muted cursor-pointer">
+          <input v-model="exportSoloConPonencia" type="checkbox" class="accent-cgr-purple" />
+          Solo quienes ya enviaron ponencia
+        </label>
+        <p v-if="exportError" class="text-xs text-red-400">{{ exportError }}</p>
       </div>
     </div>
 

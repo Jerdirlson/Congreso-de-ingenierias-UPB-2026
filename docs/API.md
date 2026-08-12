@@ -61,7 +61,7 @@
 | POST | `/submissions/{id}/abstracts` | Sí | Subir resumen (dispara clasificación LLM) |
 | POST | `/submissions/{id}/documents` | Sí | Subir documento PDF |
 | PATCH | `/submissions/{id}/modality` | Sí | Elegir modalidad |
-| POST | `/submissions/{id}/videos` | Sí | Iniciar subida de videoponencia |
+| POST | `/submissions/{id}/videos` | Sí | Compartir el link de YouTube de la videoponencia (`{ youtube_url }`) |
 
 ---
 
@@ -82,6 +82,7 @@
 | GET | `/admin/submissions` | Sí | Listar todas las ponencias |
 | GET | `/admin/submissions/{id}` | Sí | Ver ponencia |
 | POST | `/admin/submissions/{id}/assign-reviewer` | Sí | Asignar revisor |
+| GET | `/admin/ponentes/export` | Sí | CSV de contactos de ponentes (`?solo_con_ponencia=1`) |
 | GET | `/admin/thematic-axes` | Sí | Listar ejes |
 | POST | `/admin/thematic-axes` | Sí | Crear eje |
 | GET | `/admin/thematic-axes/{id}` | Sí | Ver eje |
