@@ -14,6 +14,7 @@ class AppSetting extends Model
     /** Claves disponibles */
     public const PONENTE_REGISTRATION_OPEN = 'ponente_registration_open';
     public const SUBMISSIONS_OPEN          = 'submissions_open';
+    public const VIDEO_UPLOAD_OPEN         = 'video_upload_open';
 
     public static function get(string $key): ?string
     {

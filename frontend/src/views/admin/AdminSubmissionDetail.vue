@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFetchApi, getApiToken } from '../../composables/useFetchApi'
 import UiCard from '../../components/ui/UiCard.vue'
@@ -29,7 +29,7 @@ interface Submission {
   documents?: Document[]
   articles?: Article[]
   reviews?: Review[]
-  video?: { id: number; status: string; original_filename?: string; file_size?: number; uploaded_at?: string; error_message?: string | null } | null
+  video?: { id: number; status: string; original_filename?: string; file_size?: number; uploaded_at?: string; error_message?: string | null; youtube_url?: string | null } | null
   events?: SubmissionEvent[]
 }
 interface SubmissionEvent {
@@ -66,6 +66,14 @@ const rejectingVideo = ref(false)
 const showRejectVideoModal = ref(false)
 const videoRejectReason = ref('')
 const videoRejectError = ref('')
+
+// ID del video de YouTube para reproducirlo aquí mismo al revisarlo.
+const adminVideoId = computed(() => {
+  const url = submission.value?.video?.youtube_url
+  if (!url) return null
+  const match = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:[^\s]*&)?v=|embed\/|live\/|shorts\/))([A-Za-z0-9_-]{11})/.exec(url)
+  return match?.[1] ?? null
+})
 
 const removeReviewModalOpen = ref(false)
 const reviewToRemove = ref<Review | null>(null)
@@ -342,6 +350,9 @@ function eventLabel(ev: SubmissionEvent): string {
     case 'articulo_subido':      return `Artículo v${d.version} subido · ${d.archivo ?? ''}`
     case 'video_subido':         return `Video subido · ${d.archivo ?? ''}`
     case 'video_reemplazado':    return `Video reemplazado · ${d.archivo ?? ''} (anterior conservado)`
+    case 'video_link_compartido': return `Link de YouTube compartido · ${d.link ?? ''}`
+    case 'video_link_actualizado': return `Link de YouTube actualizado · ${d.link ?? ''} (anterior: ${d.link_anterior ?? '—'})`
+    case 'video_link_requerido': return 'Se le pidió compartir el link de YouTube (el archivo subido se conserva)'
     case 'revision_asignada':    return `Revisión asignada (${d.tipo}) a ${d.revisor ?? '—'}`
     case 'revision_completada':  return `Dictamen (${d.tipo}): ${d.decision === 'approved' ? 'aprobado' : 'ajustes solicitados'} por ${d.revisor ?? '—'}`
     default:                     return ev.event
@@ -837,35 +848,60 @@ onMounted(load)
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
           <div class="min-w-0">
-            <p class="text-sm text-white truncate">{{ submission.video.original_filename ?? 'video' }}</p>
+            <a
+              v-if="submission.video.youtube_url"
+              :href="submission.video.youtube_url"
+              target="_blank"
+              rel="noopener"
+              class="text-sm text-cgr-purple hover:underline truncate block"
+            >{{ submission.video.youtube_url }}</a>
+            <p v-else class="text-sm text-white truncate">{{ submission.video.original_filename ?? 'video' }}</p>
             <p class="text-xs text-cgr-subtle">
-              {{ formatFileSize(submission.video.file_size) }}
-              <span v-if="submission.video.uploaded_at"> · Subido {{ formatDate(submission.video.uploaded_at) }}</span>
+              <span v-if="!submission.video.youtube_url">{{ formatFileSize(submission.video.file_size) }}</span>
+              <span v-if="submission.video.uploaded_at">{{ submission.video.youtube_url ? 'Compartido' : ' · Subido' }} {{ formatDate(submission.video.uploaded_at) }}</span>
             </p>
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <UiBadge :variant="submission.video.status === 'ready' ? 'success' : submission.video.status === 'rejected' ? 'danger' : submission.video.status === 'processing' ? 'info' : 'warning'">
-            {{ submission.video.status === 'ready' ? 'Listo' : submission.video.status === 'rejected' ? 'Rechazado' : submission.video.status === 'processing' ? 'Procesando' : submission.video.status === 'pending' ? 'Pendiente' : submission.video.status }}
+          <UiBadge :variant="submission.video.status === 'ready' ? 'success' : submission.video.status === 'rejected' ? 'danger' : 'warning'">
+            {{ submission.video.status === 'ready' ? 'Listo' : submission.video.status === 'rejected' ? 'Rechazado' : submission.video.status === 'pending' ? 'Pendiente' : submission.video.status }}
           </UiBadge>
-          <UiButton size="sm" variant="secondary" :loading="downloadingVideo" @click="downloadVideo">
-            Descargar
+          <UiButton v-if="submission.video.original_filename" size="sm" variant="secondary" :loading="downloadingVideo" @click="downloadVideo">
+            Descargar archivo
+          </UiButton>
+          <UiButton v-if="submission.video.status === 'ready'" size="sm" variant="danger" @click="showRejectVideoModal = true">
+            Rechazar
           </UiButton>
         </div>
       </div>
+
+      <!-- Reproductor: así se verá el día del congreso -->
+      <div v-if="adminVideoId" class="rounded-lg overflow-hidden border border-cgr-border aspect-video mb-3">
+        <iframe
+          :src="`https://www.youtube.com/embed/${adminVideoId}`"
+          class="w-full h-full"
+          title="Videoponencia"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+
       <p v-if="submission.video.status === 'rejected' && submission.video.error_message" class="text-xs text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-3">
         Motivo del rechazo: {{ submission.video.error_message }}
       </p>
-      <!-- La confirmación es automática al subir el video -->
+      <!-- La confirmación es automática al compartir el link -->
       <p v-if="submission.video.status === 'ready'" class="text-xs text-green-400 mt-1">
-        El ponente fue confirmado automáticamente al subir este video.
+        El ponente fue confirmado automáticamente al enviar este video.
+      </p>
+      <p v-else-if="submission.video.status === 'pending' && submission.video.original_filename" class="text-xs text-amber-400 mt-1">
+        Subió el archivo antes del cambio de flujo — está pendiente de compartir su link de YouTube.
       </p>
     </UiCard>
 
     <!-- Modal rechazar video -->
     <UiModal v-model="showRejectVideoModal" title="Rechazar videoponencia">
       <div class="space-y-3">
-        <p class="text-sm text-cgr-muted">El ponente deberá subir una nueva versión del video.</p>
+        <p class="text-sm text-cgr-muted">El ponente deberá corregir su video y compartir el nuevo enlace.</p>
         <div>
           <label class="block text-xs font-medium text-cgr-muted mb-2">Motivo del rechazo <span class="text-red-400">*</span></label>
           <textarea

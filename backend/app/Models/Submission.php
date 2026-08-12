@@ -38,6 +38,8 @@ class Submission extends Model
     public const STATUS_MODALITY_SELECTED = 'modality_selected';
     public const STATUS_VIDEO_PENDING = 'video_pending';
     public const STATUS_VIDEO_READY = 'video_ready';
+    /** @deprecated Paso eliminado del flujo: la ponencia pasa directo a `confirmed`.
+     *  Se conserva solo para ponencias antiguas que quedaron en este estado. */
     public const STATUS_PAYMENT_PENDING = 'payment_pending';
     public const STATUS_CONFIRMED = 'confirmed';
 

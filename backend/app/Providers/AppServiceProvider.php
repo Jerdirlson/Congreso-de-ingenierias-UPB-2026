@@ -88,6 +88,14 @@ class AppServiceProvider extends ServiceProvider
         });
 
         SubmissionVideo::created(function (SubmissionVideo $v) {
+            if ($v->youtube_url) {
+                SubmissionTrail::log($v->submission_id, 'video_link_compartido', [
+                    'link' => $v->youtube_url,
+                ]);
+
+                return;
+            }
+
             SubmissionTrail::log($v->submission_id, 'video_subido', [
                 'archivo' => $v->original_filename,
                 'ruta'    => $v->stored_path,
@@ -102,6 +110,17 @@ class AppServiceProvider extends ServiceProvider
                     'archivo_anterior' => $v->getOriginal('original_filename'),
                     'ruta_anterior'    => $v->getOriginal('stored_path'),
                 ]);
+            }
+
+            if ($v->wasChanged('youtube_url') && $v->youtube_url) {
+                SubmissionTrail::log(
+                    $v->submission_id,
+                    $v->getOriginal('youtube_url') ? 'video_link_actualizado' : 'video_link_compartido',
+                    array_filter([
+                        'link'          => $v->youtube_url,
+                        'link_anterior' => $v->getOriginal('youtube_url'),
+                    ])
+                );
             }
         });
 

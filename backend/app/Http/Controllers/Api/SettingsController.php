@@ -21,6 +21,7 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'ponente_registration_open' => 'sometimes|boolean',
             'submissions_open'          => 'sometimes|boolean',
+            'video_upload_open'         => 'sometimes|boolean',
         ]);
 
         if (array_key_exists('ponente_registration_open', $validated)) {
@@ -31,6 +32,10 @@ class SettingsController extends Controller
             AppSetting::setBool(AppSetting::SUBMISSIONS_OPEN, $validated['submissions_open']);
         }
 
+        if (array_key_exists('video_upload_open', $validated)) {
+            AppSetting::setBool(AppSetting::VIDEO_UPLOAD_OPEN, $validated['video_upload_open']);
+        }
+
         return response()->json($this->payload());
     }
 
@@ -39,6 +44,7 @@ class SettingsController extends Controller
         return [
             'ponente_registration_open' => AppSetting::getBool(AppSetting::PONENTE_REGISTRATION_OPEN, true),
             'submissions_open'          => AppSetting::getBool(AppSetting::SUBMISSIONS_OPEN, true),
+            'video_upload_open'         => AppSetting::getBool(AppSetting::VIDEO_UPLOAD_OPEN, true),
         ];
     }
 }

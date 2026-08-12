@@ -37,10 +37,15 @@ class PaymentController extends Controller
                 ->where('user_id', $user->id)
                 ->firstOrFail();
 
+            // La ponencia queda confirmada al aprobarse; `payment_pending` se acepta
+            // por compatibilidad con ponencias antiguas que quedaron en ese estado.
             abort_if(
-                $submission->status !== \App\Models\Submission::STATUS_PAYMENT_PENDING,
+                ! in_array($submission->status, [
+                    \App\Models\Submission::STATUS_CONFIRMED,
+                    \App\Models\Submission::STATUS_PAYMENT_PENDING,
+                ], true),
                 422,
-                'La ponencia debe estar en estado "Pago pendiente" para proceder.'
+                'La ponencia debe estar aprobada para proceder.'
             );
             abort_if(
                 $user->registrations()->where('submission_id', $submission->id)->whereNotNull('ticket_code')->exists(),

@@ -6,8 +6,13 @@ import UiCard from '../../components/ui/UiCard.vue'
 import UiButton from '../../components/ui/UiButton.vue'
 import UiBadge from '../../components/ui/UiBadge.vue'
 import UiSteps from '../../components/ui/UiSteps.vue'
+import UiModal from '../../components/ui/UiModal.vue'
 import UpbRegistrationOptions from '../../components/UpbRegistrationOptions.vue'
+import { useAuthStore } from '../../stores/auth'
+import { useSettingsStore } from '../../stores/settings'
 
+const auth = useAuthStore()
+const settings = useSettingsStore()
 const route = useRoute()
 const router = useRouter()
 const api = useFetchApi()
@@ -23,7 +28,7 @@ const submission = ref<{
   abstracts?: { id: number; content: string; version?: number; llm_status: string; llm_axis?: { id: number; name: string }; llm_justification?: string; llm_confidence_score?: number }[]
   documents?: { id: number; original_filename: string; version: number; status: string }[]
   articles?: { id: number; original_filename: string; version: number; status: string }[]
-  video?: { id: number; status: string; error_message?: string | null; original_filename?: string | null } | null
+  video?: { id: number; status: string; error_message?: string | null; original_filename?: string | null; youtube_url?: string | null } | null
   reviews?: { id: number; status: string; decision: string | null; comments: string | null; completed_at: string | null; type?: string; submission_abstract_id?: number | null; reviewer?: { name: string } }[]
 } | null>(null)
 
@@ -35,11 +40,11 @@ const modalityChoice = ref<string>('')
 const errorMessage = ref('')
 const confirmDelete = ref(false)
 const deleting = ref(false)
-const videoFile = ref<File | null>(null)
-const uploadProgress = ref(0)
-const uploading = ref(false)
-const videoValidationError = ref('')
-let videoPolling: ReturnType<typeof setInterval> | null = null
+const youtubeUrl = ref('')
+const sendingVideoLink = ref(false)
+const videoLinkError = ref('')
+// Infografía del comité con el protocolo de grabación (pieza de Comunicaciones).
+const protocolOpen = ref(false)
 const llmTimedOut = ref(false)
 let llmPolling: ReturnType<typeof setInterval> | null = null
 let llmPollCount = 0
@@ -66,18 +71,24 @@ const MODALITIES = [
   { value: 'virtual',           label: 'Ponencia Oral Virtual (requiere video)' },
 ]
 
+// La ponencia queda confirmada al aprobarse; el último paso (inscripción en el
+// portal UPB) se mide con el usuario, no con el estado de la ponencia.
+// `payment_pending` solo aparece en ponencias antiguas del flujo anterior.
+const registrationDone = computed(() => !!auth.user?.external_registration_at)
+const isApproved = computed(() =>
+  ['confirmed', 'payment_pending'].includes(submission.value?.status ?? '')
+)
+
 const currentStepIndex = computed(() => {
   const s = submission.value?.status
   if (!s) return 0
   if (['draft', 'abstract_submitted', 'abstract_rejected'].includes(s)) return 0
   // Estados del antiguo paso "documento" cuentan como resumen aprobado → elegir modalidad
   if (['abstract_approved', 'under_review', 'revision_requested', 'document_approved'].includes(s)) return 1
-  if (['modality_selected', 'video_pending', 'video_ready', 'payment_pending'].includes(s)) return 2
-  if (s === 'confirmed') return 3
+  if (['modality_selected', 'video_pending', 'video_ready'].includes(s)) return 2
+  if (isApproved.value) return registrationDone.value ? 3 : 2
   return 0
 })
-
-const canPay = computed(() => submission.value?.status === 'payment_pending')
 
 const canSubmitAbstract = computed(() => submission.value?.status === 'draft')
 const canResubmitAbstract = computed(() => submission.value?.status === 'abstract_rejected')
@@ -164,14 +175,22 @@ const articleApprovalReview = computed(() => {
 })
 
 const isVirtual = computed(() => submission.value?.modality === 'virtual')
-const canUploadVideo = computed(() => {
+
+// La ponencia ya llegó al paso del video y todavía no hay un enlace aceptado.
+const videoStageReached = computed(() => {
   const s = submission.value?.status
-  const vs = submission.value?.video?.status
-  // Show upload form only when no ready/processing video exists
   return (s === 'video_pending' || s === 'video_ready')
-    && vs !== 'ready'
-    && vs !== 'processing'
+    && submission.value?.video?.status !== 'ready'
 })
+
+// El envío está en pausa mientras el comité prepara las indicaciones del video.
+const videoUploadPaused = computed(() => videoStageReached.value && !settings.videoUploadOpen)
+const canUploadVideo = computed(() => videoStageReached.value && settings.videoUploadOpen)
+
+// Ya había subido el archivo antes de que el flujo cambiara al link de YouTube.
+const hadUploadedFile = computed(() =>
+  !!submission.value?.video?.original_filename && !submission.value?.video?.youtube_url
+)
 
 const latestAbstract = computed(() => {
   const abs = submission.value?.abstracts
@@ -381,123 +400,47 @@ async function deleteSubmission() {
   router.push({ name: 'ponente-home' })
 }
 
-const VIDEO_MAX_DURATION  = 600  // 10 min in seconds
-const VIDEO_MIN_WIDTH     = 1280 // 720p minimum
-const VIDEO_MIN_HEIGHT    = 720
-const VIDEO_ASPECT_MIN    = 1.6  // allow ~16:10 and above
-const VIDEO_ASPECT_MAX    = 2.0  // up to ~2:1
+// Formas válidas de enlace: watch, youtu.be, embed, live y shorts.
+const YOUTUBE_PATTERNS = [
+  /youtu\.be\/([A-Za-z0-9_-]{11})/,
+  /youtube\.com\/watch\?(?:[^\s]*&)?v=([A-Za-z0-9_-]{11})/,
+  /youtube(?:-nocookie)?\.com\/(?:embed|live|shorts|v)\/([A-Za-z0-9_-]{11})/,
+]
 
-async function validateVideoFile(file: File): Promise<string> {
-  return new Promise((resolve) => {
-    const video = document.createElement('video')
-    video.preload = 'metadata'
-    const url = URL.createObjectURL(file)
-    video.src = url
-
-    const cleanup = () => { URL.revokeObjectURL(url); video.src = '' }
-
-    video.onloadedmetadata = () => {
-      const { duration, videoWidth, videoHeight } = video
-      cleanup()
-
-      if (duration > VIDEO_MAX_DURATION) {
-        resolve(`La duración del video es ${Math.round(duration / 60)} min — el máximo permitido es 10 min.`)
-        return
-      }
-      if (videoWidth < VIDEO_MIN_WIDTH || videoHeight < VIDEO_MIN_HEIGHT) {
-        resolve(`La resolución mínima requerida es 1280×720 (720p). Tu video es ${videoWidth}×${videoHeight}.`)
-        return
-      }
-      const ratio = videoWidth / videoHeight
-      if (ratio < VIDEO_ASPECT_MIN || ratio > VIDEO_ASPECT_MAX) {
-        resolve(`El video debe tener proporción 16:9. Tu video tiene proporción ${ratio.toFixed(2)}:1.`)
-        return
-      }
-      resolve('')
-    }
-
-    video.onerror = () => {
-      cleanup()
-      resolve('No se pudo leer el archivo de video. Verifica que sea un archivo válido (mp4, mov, webm).')
-    }
-
-    // Timeout fallback if metadata never loads
-    setTimeout(() => {
-      cleanup()
-      resolve('')  // allow upload if we can't read metadata (server will validate size/type)
-    }, 8000)
-  })
+function youtubeIdFrom(url: string | null | undefined): string | null {
+  if (!url) return null
+  for (const pattern of YOUTUBE_PATTERNS) {
+    const match = pattern.exec(url.trim())
+    if (match) return match[1] ?? null
+  }
+  return null
 }
 
-async function uploadVideo() {
-  if (!videoFile.value) return
-  errorMessage.value = ''
-  videoValidationError.value = ''
+// Previsualización mientras escribe, para que confirme que es el video correcto.
+const typedVideoId = computed(() => youtubeIdFrom(youtubeUrl.value))
+const savedVideoId = computed(() => youtubeIdFrom(submission.value?.video?.youtube_url))
 
-  // Client-side validation
-  const validationErr = await validateVideoFile(videoFile.value)
-  if (validationErr) {
-    videoValidationError.value = validationErr
+async function submitVideoLink() {
+  videoLinkError.value = ''
+  errorMessage.value = ''
+
+  if (!typedVideoId.value) {
+    videoLinkError.value = 'El enlace no parece ser de YouTube. Debe verse así: https://www.youtube.com/watch?v=…'
     return
   }
 
-  uploading.value = true
-  uploadProgress.value = 0
-
-  const token = getApiToken()
-  const form = new FormData()
-  form.append('file', videoFile.value)
-
-  await new Promise<void>((resolve) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', `/api/submissions/${route.params.id}/videos`)
-    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-    xhr.setRequestHeader('Accept', 'application/json')
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) uploadProgress.value = Math.round((e.loaded / e.total) * 100)
-    }
-
-    xhr.onload = async () => {
-      uploading.value = false
-      uploadProgress.value = 0
-      videoFile.value = null
-      if (xhr.status === 201) {
-        await loadSubmission()
-        startVideoPolling()
-      } else {
-        try {
-          errorMessage.value = JSON.parse(xhr.responseText)?.message ?? `Error ${xhr.status}`
-        } catch {
-          errorMessage.value = `Error al subir el video (${xhr.status})`
-        }
-      }
-      resolve()
-    }
-
-    xhr.onerror = () => {
-      uploading.value = false
-      errorMessage.value = 'Error de red al subir el video.'
-      resolve()
-    }
-
-    xhr.send(form)
+  sendingVideoLink.value = true
+  const data = await api.post<unknown>(`/submissions/${route.params.id}/videos`, {
+    youtube_url: youtubeUrl.value.trim(),
   })
-}
+  sendingVideoLink.value = false
 
-function startVideoPolling() {
-  stopVideoPolling()
-  videoPolling = setInterval(async () => {
-    const data = await useFetchApi().get<{ status: string }>(`/submissions/${route.params.id}/videos/status`)
-    if (data?.status === 'ready' || data?.status === 'error') {
-      stopVideoPolling()
-      await loadSubmission()
-    }
-  }, 3000)
-}
-
-function stopVideoPolling() {
-  if (videoPolling) { clearInterval(videoPolling); videoPolling = null }
+  if (data) {
+    youtubeUrl.value = ''
+    await loadSubmission()
+  } else {
+    videoLinkError.value = api.error.value?.message ?? 'No se pudo guardar el enlace. Intenta de nuevo.'
+  }
 }
 
 function startLlmPolling() {
@@ -525,6 +468,7 @@ function stopLlmPolling() {
 }
 
 onMounted(async () => {
+  await settings.fetch()
   const axisData = await useFetchApi().get<{ data: typeof axes.value } | typeof axes.value>('/thematic-axes')
   if (axisData) axes.value = Array.isArray(axisData) ? axisData : axisData.data
   await loadSubmission()
@@ -535,7 +479,6 @@ onMounted(async () => {
   }
 })
 watch(() => route.params.id, () => {
-  stopVideoPolling()
   stopLlmPolling()
   loadSubmission()
 })
@@ -1060,109 +1003,181 @@ watch(() => route.params.id, () => {
     </UiCard>
 
     <!-- ── Paso 3 (solo virtual): Video ── -->
-    <UiCard v-if="isVirtual || canUploadVideo || submission?.video" class="p-6 mb-4">
+    <UiCard v-if="isVirtual || canUploadVideo || videoUploadPaused || submission?.video" class="p-6 mb-4">
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
         3. Videoponencia
         <UiBadge v-if="submission?.video?.status === 'ready'" variant="success">Lista</UiBadge>
-        <UiBadge v-else-if="submission?.video?.status === 'processing'" variant="info">Procesando…</UiBadge>
+        <UiBadge v-else-if="videoUploadPaused" variant="info">Próximamente</UiBadge>
       </h2>
 
-      <!-- Video listo -->
+      <!-- Link recibido -->
       <div v-if="submission?.video?.status === 'ready'">
         <div class="flex items-center gap-3 bg-cgr-section border border-cgr-border rounded-lg px-4 py-3">
           <svg class="w-5 h-5 text-green-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <div class="min-w-0">
-            <p class="text-sm font-semibold text-white">Video recibido correctamente</p>
-            <p v-if="submission.video?.original_filename" class="text-xs text-cgr-subtle truncate">{{ submission.video.original_filename }}</p>
+            <p class="text-sm font-semibold text-white">Recibimos tu videoponencia</p>
+            <a
+              v-if="submission.video?.youtube_url"
+              :href="submission.video.youtube_url"
+              target="_blank"
+              rel="noopener"
+              class="text-xs text-cgr-purple hover:underline truncate block"
+            >{{ submission.video.youtube_url }}</a>
+            <p v-else-if="submission.video?.original_filename" class="text-xs text-cgr-subtle truncate">{{ submission.video.original_filename }}</p>
           </div>
           <span class="ml-auto text-xs text-green-400 shrink-0 font-medium">Listo</span>
         </div>
+
+        <div v-if="savedVideoId" class="mt-4 rounded-lg overflow-hidden border border-cgr-border aspect-video">
+          <iframe
+            :src="`https://www.youtube.com/embed/${savedVideoId}`"
+            class="w-full h-full"
+            title="Videoponencia"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
+
+        <p class="text-xs text-cgr-subtle mt-3">
+          No borres el video ni cambies su visibilidad hasta después del congreso —
+          es el que se transmitirá el día de tu ponencia.
+        </p>
       </div>
 
-      <!-- Procesando -->
-      <div v-else-if="submission?.video?.status === 'processing'" class="flex items-center gap-3 text-sm text-cgr-muted">
-        <div class="w-4 h-4 border-2 border-cgr-purple border-t-transparent rounded-full animate-spin shrink-0"></div>
-        Procesando tu video, espera un momento…
+      <!-- Ya había subido el archivo: ahora necesitamos el link -->
+      <div v-if="hadUploadedFile" class="mb-4">
+        <div class="flex items-start gap-3 bg-cgr-purple/10 border border-cgr-purple/25 rounded-xl px-4 py-4">
+          <svg class="w-5 h-5 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>
+            <p class="text-sm font-semibold text-white mb-1">Cambiamos la forma de entregar el video</p>
+            <p class="text-sm text-cgr-muted leading-relaxed">
+              Ya recibimos el archivo que subiste
+              <span v-if="submission?.video?.original_filename" class="text-cgr-subtle">({{ submission.video.original_filename }})</span>,
+              pero ahora la videoponencia se transmite desde YouTube. Sube ese mismo video a tu
+              canal y comparte el enlace aquí abajo — no tienes que volver a grabar nada.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <!-- Video rechazado por admin -->
+      <!-- Video rechazado por el comité -->
       <div v-if="submission?.video?.status === 'rejected'" class="mb-4">
         <div class="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-4">
           <svg class="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <div>
             <p class="text-sm font-semibold text-red-300 mb-1">El comité rechazó tu videoponencia</p>
-            <p class="text-xs text-red-200/70 mt-0.5">Sube una nueva versión corregida.</p>
+            <p class="text-xs text-red-200/70 mt-0.5">Corrige el video y comparte el nuevo enlace.</p>
             <p v-if="submission.video.error_message" class="text-sm text-red-200/80 whitespace-pre-wrap mt-2">{{ submission.video.error_message }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Error al procesar el video (fallo técnico) -->
-      <div v-else-if="submission?.video?.status === 'error'" class="mb-4">
-        <div class="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-4">
-          <svg class="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <!-- En pausa: aún no publicamos las indicaciones del video -->
+      <div v-if="videoUploadPaused">
+        <div class="flex items-start gap-3 bg-cgr-purple/10 border border-cgr-purple/25 rounded-xl px-4 py-4">
+          <svg class="w-5 h-5 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <div>
-            <p class="text-sm font-semibold text-yellow-300 mb-1">Hubo un problema al procesar el video</p>
-            <p class="text-xs text-yellow-200/70">El archivo no se guardó correctamente. Por favor vuelve a subir el video.</p>
+            <p class="text-sm font-semibold text-white mb-1">Aún no habilitamos el envío del video</p>
+            <p class="text-sm text-cgr-muted leading-relaxed">
+              Estamos terminando de definir el formato de las videoponencias. En los próximos días
+              te enviaremos por correo las <strong class="text-white font-medium">indicaciones</strong>
+              de cómo grabar tu video y subirlo a YouTube.
+            </p>
+            <p class="text-xs text-cgr-subtle mt-2">
+              No necesitas hacer nada por ahora — te avisaremos apenas esté disponible.
+            </p>
           </div>
         </div>
       </div>
 
-      <!-- Subir video (también cuando fue rechazado) -->
-      <div v-if="canUploadVideo">
-        <p class="text-sm text-cgr-muted mb-4">
-          Requisitos: MP4 / MOV / WebM · Máx. 2 GB · Máx. 10 min · Mínimo 720p (1280×720) · Proporción 16:9
-        </p>
-        <p v-if="videoValidationError" class="mb-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-          {{ videoValidationError }}
+      <!-- Compartir el link de YouTube (también cuando fue rechazado) -->
+      <div v-else-if="canUploadVideo">
+        <p class="text-sm text-cgr-muted mb-3 leading-relaxed">
+          Sube tu videoponencia a YouTube y pega aquí el enlace. Ese es el video que se
+          transmitirá el día del congreso, así que no tienes que subir ningún archivo.
         </p>
 
-        <!-- Barra de progreso -->
-        <div v-if="uploading" class="mb-4">
-          <div class="flex justify-between text-xs text-cgr-muted mb-1">
-            <span>Subiendo…</span>
-            <span>{{ uploadProgress }}%</span>
-          </div>
-          <div class="w-full bg-cgr-section rounded-full h-2">
-            <div
-              class="bg-cgr-purple h-2 rounded-full transition-all duration-300"
-              :style="{ width: uploadProgress + '%' }"
-            ></div>
-          </div>
-          <p class="text-xs text-cgr-subtle mt-2">No cierres esta página hasta que termine la subida.</p>
+        <!-- Protocolo de grabación (infografía del comité) -->
+        <button
+          type="button"
+          class="w-full flex items-center gap-3 bg-cgr-purple/10 border border-cgr-purple/30 hover:border-cgr-purple/60 rounded-xl px-4 py-3 mb-4 text-left transition-colors"
+          @click="protocolOpen = true"
+        >
+          <svg class="w-5 h-5 text-cgr-purple shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h8.25a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H4.5A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+          </svg>
+          <span class="min-w-0 flex-1">
+            <span class="block text-sm font-semibold text-white">Cómo grabar tu videoponencia</span>
+            <span class="block text-xs text-cgr-muted">Protocolo paso a paso y requisitos técnicos</span>
+          </span>
+          <svg class="w-4 h-4 text-cgr-purple shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+
+        <div class="bg-cgr-section border border-cgr-border rounded-xl px-4 py-3 mb-4">
+          <p class="text-xs font-semibold text-white mb-2">Antes de pegar el enlace, revisa que:</p>
+          <ul class="text-xs text-cgr-muted space-y-1.5 list-disc list-inside leading-relaxed">
+            <li>
+              La visibilidad del video sea <strong class="text-white font-medium">No listado (Unlisted)</strong>.
+              Así solo quien tenga el enlace puede verlo, pero nosotros sí podemos reproducirlo y
+              transmitirlo. Si lo dejas en <strong class="text-white font-medium">Privado</strong> no
+              podremos verlo.
+            </li>
+            <li>Permita <strong class="text-white font-medium">insertarse en otras páginas</strong>, sin restricciones ni contraseña.</li>
+            <li>Dure <strong class="text-white font-medium">máximo 10 minutos</strong>, en 720p o más (recomendado 1080p) y en proporción 16:9 horizontal.</li>
+            <li>No lo borres ni le cambies la visibilidad hasta después del congreso.</li>
+          </ul>
         </div>
 
-        <!-- Selector de archivo -->
-        <div v-else>
-          <input
-            type="file"
-            accept="video/mp4,video/quicktime,video/x-msvideo,video/webm"
-            class="block w-full text-sm text-cgr-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cgr-purple file:text-white cursor-pointer mb-4"
-            @change="videoFile = ($event.target as HTMLInputElement).files?.[0] ?? null; videoValidationError = ''"
-          />
-          <UiButton :disabled="!videoFile || !!videoValidationError" :loading="uploading" @click="uploadVideo">
-            Subir videoponencia
-          </UiButton>
-          <p v-if="videoFile" class="text-xs text-cgr-subtle mt-2">
-            Archivo: {{ videoFile.name }} ({{ (videoFile.size / 1024 / 1024).toFixed(1) }} MB)
-          </p>
+        <label class="block text-sm text-cgr-muted mb-2" for="youtube-url">Enlace de YouTube</label>
+        <input
+          id="youtube-url"
+          v-model="youtubeUrl"
+          type="url"
+          inputmode="url"
+          placeholder="https://www.youtube.com/watch?v=..."
+          class="w-full bg-cgr-section border border-cgr-border rounded-lg px-3 py-2 text-sm text-white placeholder:text-cgr-subtle focus:outline-none focus:border-cgr-purple mb-3"
+          @input="videoLinkError = ''"
+        />
+
+        <p v-if="videoLinkError" class="mb-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+          {{ videoLinkError }}
+        </p>
+
+        <!-- Previsualización: que confirme que es el video correcto -->
+        <div v-if="typedVideoId" class="mb-4">
+          <p class="text-xs text-cgr-subtle mb-2">Revisa que sea el video correcto:</p>
+          <div class="rounded-lg overflow-hidden border border-cgr-border aspect-video">
+            <iframe
+              :src="`https://www.youtube.com/embed/${typedVideoId}`"
+              class="w-full h-full"
+              title="Previsualización de la videoponencia"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
         </div>
+
+        <UiButton :disabled="!youtubeUrl.trim()" :loading="sendingVideoLink" @click="submitVideoLink">
+          Compartir enlace
+        </UiButton>
       </div>
 
-      <div v-else class="text-cgr-subtle text-sm">
+      <div v-else-if="!submission?.video" class="text-cgr-subtle text-sm">
         Disponible tras seleccionar modalidad virtual.
       </div>
     </UiCard>
 
     <!-- ── Paso 4: Inscripción y pago (portal UPB) ── -->
-    <UiCard v-if="canPay || submission?.status === 'confirmed'" class="p-6 mb-4">
+    <UiCard v-if="isApproved" class="p-6 mb-4">
       <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
         4. Inscripción y pago
-        <UiBadge v-if="submission?.status === 'confirmed'" variant="success">Completado</UiBadge>
+        <UiBadge v-if="registrationDone" variant="success">Completado</UiBadge>
         <UiBadge v-else variant="warning">Pendiente</UiBadge>
       </h2>
 
-      <div v-if="canPay" class="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-4 mb-5">
+      <div v-if="!registrationDone" class="flex items-start gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-4 mb-5">
         <svg class="w-5 h-5 text-green-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
@@ -1176,5 +1191,28 @@ watch(() => route.params.id, () => {
 
       <UpbRegistrationOptions audience="ponente" @confirmed="loadSubmission" />
     </UiCard>
+
+    <!-- Protocolo de grabación de la videoponencia -->
+    <UiModal v-model="protocolOpen" size="wide" title="Cómo grabar tu videoponencia">
+      <img
+        src="/protocolo-video.png"
+        alt="Protocolo para grabar la videoponencia: planifica, prepara tu entorno, graba, edita, sube el video a YouTube, configura la visibilidad como No listado y comparte el enlace. Requisitos técnicos: MP4 (también MOV o AVI), mínimo 1280x720 y recomendado 1920x1080, proporción 16:9 horizontal, duración máxima 10 minutos, códec de video H.264, audio AAC estéreo y 30 fotogramas por segundo."
+        class="w-full h-auto rounded-lg"
+      />
+      <template #footer>
+        <a
+          href="/protocolo-video.png"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center gap-2 border border-cgr-purple/50 text-cgr-purple hover:bg-cgr-purple/10 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+          Abrir en tamaño completo
+        </a>
+        <UiButton @click="protocolOpen = false">Entendido</UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>

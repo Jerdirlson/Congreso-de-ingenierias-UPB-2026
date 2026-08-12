@@ -16,6 +16,7 @@ class SubmissionVideo extends Model
 
     protected $fillable = [
         'submission_id',
+        'youtube_url',
         'stored_path',
         'original_filename',
         'mime_type',

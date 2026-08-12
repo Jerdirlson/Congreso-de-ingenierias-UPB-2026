@@ -94,7 +94,6 @@ const MODALITY_FILTERS = [
   { value: 'presencial_oral',   label: 'Presencial — Oral' },
   { value: 'presencial_poster', label: 'Presencial — Póster' },
   { value: 'virtual',           label: 'Virtual' },
-  { value: 'proyecto_aula',     label: 'Proyecto de aula' },
   { value: 'none',              label: 'Sin modalidad definida' },
 ]
 

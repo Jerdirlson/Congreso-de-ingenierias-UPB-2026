@@ -13,11 +13,18 @@ resumen, documento completo, revisión del documento, modalidad, video/pago y co
 
 ## Máquina de estados (`Submission::STATUS_*`)
 ```
-draft → abstract_submitted → abstract_approved → modality_selected →
-  [virtual] video_pending → video_ready → payment_pending → confirmed
-  [presencial] payment_pending → confirmed
+draft → abstract_submitted → abstract_approved →
+  [virtual] video_pending → confirmed                 (al compartir el link de YouTube)
+  [presencial] confirmed                              (al elegir modalidad)
 abstract_submitted → abstract_rejected   (rechazo de resumen; permite reenvío)
 ```
+> **Cambio 30-jul-2026**: se eliminó el paso `payment_pending`. La ponencia queda
+> `confirmed` en cuanto se aprueba; la inscripción y el pago se hacen en el portal
+> de la UPB y ya **no bloquean el estado de la ponencia**. `payment_pending` es
+> **legado**: solo lo conservan ponencias antiguas (migración
+> `2026_07_30_000001_confirm_legacy_payment_pending_submissions` las pasa a
+> `confirmed`).
+
 > **Cambio jul-2026**: con el resumen aprobado se pasa **directo a modalidad** — el
 > antiguo paso 2 obligatorio ("documento PDF") se eliminó. Los estados `under_review`,
 > `revision_requested` y `document_approved` son **legados**: se conservan por
@@ -53,8 +60,9 @@ abstract_submitted → abstract_rejected   (rechazo de resumen; permite reenvío
   en `abstract_approved` o `revision_requested`. La descarga sigue activa para históricos.
 - **Elegir modalidad** `PATCH /submissions/{id}/modality`: desde `abstract_approved`
   (también estados legados `under_review`/`revision_requested`/`document_approved`).
-  `virtual` → `video_pending`; presencial (oral/póster) → `payment_pending`.
-- **Video** `POST /submissions/{id}/videos` (+ `/videos/status`): ver video-streaming.md.
+  `virtual` → `video_pending`; presencial (oral/póster) → `confirmed`.
+- **Video** `POST /submissions/{id}/videos` con `{ youtube_url }` (+ `/videos/status`):
+  el ponente comparte el link de YouTube y la ponencia pasa a `confirmed`. Ver video-streaming.md.
 - Gestión: `GET /submissions`, `GET/PATCH/DELETE /submissions/{id}` (editar título solo en
   `draft`; borrar = soft delete, solo en estados iniciales).
 

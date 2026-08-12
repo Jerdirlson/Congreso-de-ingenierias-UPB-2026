@@ -151,13 +151,6 @@ onMounted(loadData)
                 <UiBadge :variant="statusVariants[s.status] ?? 'default'">
                   {{ statusLabels[s.status] ?? s.status }}
                 </UiBadge>
-                <!-- Alerta de pago pendiente -->
-                <span
-                  v-if="s.status === 'payment_pending'"
-                  class="text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full"
-                >
-                  Acción requerida: completar pago
-                </span>
               </div>
             </div>
             <div class="flex items-center gap-2 shrink-0">

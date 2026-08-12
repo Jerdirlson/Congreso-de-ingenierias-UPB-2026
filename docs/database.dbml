@@ -32,7 +32,7 @@ Table submissions {
   user_id bigint [ref: > users.id]
   thematic_axis_id bigint [ref: > thematic_axes.id, null, note: 'Asignado por LLM']
   title varchar(500)
-  status varchar(30) [note: 'draft → abstract_submitted → abstract_rejected → abstract_approved → under_review → revision_requested → document_approved → modality_selected → video_pending → video_ready → payment_pending → confirmed']
+  status varchar(30) [note: 'draft → abstract_submitted → abstract_rejected → abstract_approved → under_review → revision_requested → document_approved → modality_selected → video_pending → video_ready → confirmed (payment_pending: legado, fuera del flujo desde jul-2026)']
   modality enum('presencial_oral', 'presencial_poster', 'virtual', 'proyecto_aula') [null, note: 'Nullable hasta que el ponente elija']
   abstract_attempts int [default: 0]
   document_version int [default: 0]
@@ -83,11 +83,16 @@ Table reviews {
 Table submission_videos {
   id bigint [pk, increment]
   submission_id bigint [ref: - submissions.id, note: 'Solo ponencias virtuales']
-  cloudflare_uid varchar(255)
-  cloudflare_playback_url varchar(500)
-  cloudflare_thumbnail_url varchar(500) [null]
+  youtube_url varchar(500) [null, note: 'Link de la videoponencia (flujo actual)']
+  stored_path varchar(500) [null, note: 'Legado: archivo subido antes del flujo por link']
+  original_filename varchar(255) [null, note: 'Legado']
+  mime_type varchar(100) [null, note: 'Legado']
+  file_size bigint [null, note: 'Legado']
+  cloudflare_uid varchar(255) [null, note: 'Legado / sin uso']
+  cloudflare_playback_url varchar(500) [null, note: 'Legado / sin uso']
+  cloudflare_thumbnail_url varchar(500) [null, note: 'Legado / sin uso']
   duration_seconds int [null]
-  status enum('pending', 'processing', 'ready', 'error')
+  status enum('pending', 'processing', 'ready', 'error', 'rejected')
   error_message text [null]
   uploaded_at timestamp [null]
   ready_at timestamp [null]

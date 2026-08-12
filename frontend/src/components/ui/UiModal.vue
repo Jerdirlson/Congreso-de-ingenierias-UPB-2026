@@ -1,12 +1,23 @@
 <script setup lang="ts">
-defineProps<{
-  modelValue: boolean
-  title?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    title?: string
+    /** Ancho máximo del diálogo. `wide` sirve para contenido horizontal (infografías, tablas). */
+    size?: 'md' | 'lg' | 'wide'
+  }>(),
+  { size: 'lg' },
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
 }>()
+
+const sizeClass: Record<NonNullable<typeof props.size>, string> = {
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  wide: 'max-w-6xl',
+}
 
 function close() {
   emit('update:modelValue', false)
@@ -23,7 +34,8 @@ function close() {
       >
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" />
         <div
-          class="relative bg-cgr-card border border-cgr-border rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col"
+          class="relative bg-cgr-card border border-cgr-border rounded-2xl shadow-xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+          :class="sizeClass[size]"
           role="dialog"
           aria-modal="true"
         >

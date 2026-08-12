@@ -36,7 +36,7 @@ erDiagram
         bigint user_id FK
         bigint thematic_axis_id FK "nullable — asignado por LLM"
         varchar title
-        enum status "draft | abstract_submitted | abstract_rejected | abstract_approved | under_review | revision_requested | document_approved | modality_selected | video_pending | video_ready | payment_pending | confirmed"
+        enum status "draft | abstract_submitted | abstract_rejected | abstract_approved | under_review | revision_requested | document_approved | modality_selected | video_pending | video_ready | confirmed (payment_pending: legado)"
         enum modality "nullable | presencial_oral | presencial_poster | virtual | proyecto_aula"
         int abstract_attempts "veces que intentó con resumen"
         int document_version "versión actual del documento"
@@ -87,11 +87,16 @@ erDiagram
     submission_videos {
         bigint id PK
         bigint submission_id FK
-        varchar cloudflare_uid
-        varchar cloudflare_playback_url
-        varchar cloudflare_thumbnail_url
+        varchar youtube_url "link de la videoponencia (flujo actual)"
+        varchar stored_path "legado — archivo subido antes del flujo por link"
+        varchar original_filename "legado"
+        varchar mime_type "legado"
+        bigint file_size "legado"
+        varchar cloudflare_uid "legado / sin uso"
+        varchar cloudflare_playback_url "legado / sin uso"
+        varchar cloudflare_thumbnail_url "legado / sin uso"
         int duration_seconds
-        enum status "pending | processing | ready | error"
+        enum status "pending | processing | ready | error | rejected"
         text error_message
         timestamp uploaded_at
         timestamp ready_at
@@ -172,15 +177,12 @@ stateDiagram-v2
 
     document_approved --> modality_selected : Elige modalidad
 
-    modality_selected --> video_pending  : Eligió VIRTUAL
-    modality_selected --> payment_pending : Eligió PRESENCIAL / PROYECTO AULA
+    modality_selected --> video_pending : Eligió VIRTUAL
+    modality_selected --> confirmed : Eligió PRESENCIAL / PROYECTO AULA
 
-    video_pending --> video_ready : Video procesado en Cloudflare ✅
+    video_pending --> confirmed : Comparte el link de YouTube ✅
 
-    video_ready --> payment_pending : Avanza al pago
-
-    payment_pending --> confirmed : Pago completado ✅
-    payment_pending --> payment_pending : Pago fallido ❌ (reintenta)
+    confirmed --> video_pending : El comité rechaza el video ❌
 
     confirmed --> [*]
 ```

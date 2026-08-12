@@ -139,7 +139,8 @@ class AuthController extends Controller
 
     /** POST /api/me/confirm-external-registration
      *  Marca al usuario como inscrito en la plataforma institucional UPB.
-     *  Para ponentes con ponencia en payment_pending, también la avanza a confirmed.
+     *  Las ponencias ya no dependen de este paso; se sigue avanzando a confirmed
+     *  cualquier ponencia antigua que quedara en payment_pending.
      *  No-op si ya está marcado.
      */
     public function confirmExternalRegistration(Request $request): JsonResponse

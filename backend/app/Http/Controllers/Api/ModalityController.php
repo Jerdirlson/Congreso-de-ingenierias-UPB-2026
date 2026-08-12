@@ -31,10 +31,11 @@ class ModalityController extends Controller
 
         $submission->update(['modality' => $validated['modality']]);
 
-        // El pago ocurre al final: presencial/póster esperan pago; virtual sube video primero
+        // Presencial/póster quedan confirmadas de una vez; virtual sube video primero.
+        // La inscripción/pago se hace en el portal de la UPB y ya no bloquea la ponencia.
         $nextStatus = $validated['modality'] === Submission::MODALITY_VIRTUAL
             ? Submission::STATUS_VIDEO_PENDING
-            : Submission::STATUS_PAYMENT_PENDING;
+            : Submission::STATUS_CONFIRMED;
 
         $submission->advanceTo($nextStatus);
 
