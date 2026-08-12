@@ -49,6 +49,12 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/agenda',
+      name: 'agenda',
+      component: () => import('../views/public/AgendaView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/public/LoginView.vue'),

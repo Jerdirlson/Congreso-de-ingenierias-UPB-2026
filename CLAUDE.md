@@ -44,7 +44,8 @@ docker compose exec backend php artisan tinker            # consola
 - [Ponencias — flujo del ponente](docs/features/ponencias-flujo.md) — creación, resumen, eje, documento, modalidad, máquina de estados.
 - [Revisión (revisor y comité)](docs/features/revision.md) — asignación y dictamen de resúmenes y documentos.
 - [Inscripciones y pagos](docs/features/inscripciones-y-pagos.md) — pago (modo demo), tickets, inscripción externa UPB.
-- [Video y streaming](docs/features/video-streaming.md) — videoponencias (Cloudflare Stream).
+- [Video y streaming](docs/features/video-streaming.md) — videoponencias por link de YouTube + protocolo de grabación.
+- [Agenda pública](docs/features/agenda-publica.md) — vista `/agenda` con el inicio de cada jornada.
 - [Panel de administración](docs/features/admin.md) — usuarios, ponencias, revisores, métricas, correo masivo, ejes.
 - [Configuración / cierre del congreso](docs/features/configuracion-cierre.md) — banderas para cerrar registro de ponentes y subida de ponencias.
 - [Correos y notificaciones](docs/features/correos-y-notificaciones.md) — códigos, confirmaciones, correo masivo.

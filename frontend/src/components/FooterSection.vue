@@ -7,6 +7,7 @@ const colCongreso = [
   { label: 'Inicio',           href: '#inicio' },
   { label: 'Acerca de',        href: '#acerca' },
   { label: 'Ejes temáticos',   href: '#ejes' },
+  { label: 'Agenda',           href: '/agenda' },
   { label: 'Actividades',      href: '#actividades' },
   { label: 'Fechas',           href: '#fechas' },
   { label: 'Inscripción',      href: '#inscripcion' },
