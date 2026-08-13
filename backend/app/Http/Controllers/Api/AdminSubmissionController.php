@@ -31,6 +31,7 @@ class AdminSubmissionController extends Controller
                 'reviews:id,submission_id,reviewer_id,status,decision',
                 'reviews.reviewer:id,name',
                 'latestArticle',
+                'latestAbstract',
             ])
             ->orderByDesc('updated_at');
 

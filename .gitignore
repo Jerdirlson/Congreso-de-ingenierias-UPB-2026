@@ -54,6 +54,7 @@ backend/.docker-packages-installed
 
 # ── Docker (datos locales) ────────────────────────────────────────────────────
 docker/data/
+docker-compose.override.yml
 
 # ── Logs y temporales ─────────────────────────────────────────────────────────
 *.log

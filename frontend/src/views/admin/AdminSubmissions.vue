@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useFetchApi } from '../../composables/useFetchApi'
+import { useFetchApi, getApiToken } from '../../composables/useFetchApi'
 import UiCard from '../../components/ui/UiCard.vue'
 import UiBadge from '../../components/ui/UiBadge.vue'
+import UiButton from '../../components/ui/UiButton.vue'
 
 const router = useRouter()
 
@@ -16,7 +17,8 @@ interface Submission {
   user?: { id: number; name: string; email: string }
   thematic_axis?: { id: number; name: string }
   reviews?: { id: number; reviewer?: { name: string }; status: string; decision: string | null }[]
-  latest_article?: { id: number; status: string; version: number } | null
+  latest_article?: { id: number; status: string; version: number; original_filename?: string | null } | null
+  latest_abstract?: { id: number; version: number; stored_path?: string | null; generated_path?: string | null; original_filename?: string | null } | null
 }
 interface ThematicAxis { id: number; name: string }
 
@@ -137,6 +139,57 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+const downloadingAbstract = ref<number | null>(null)
+const downloadingArticle = ref<number | null>(null)
+
+async function fetchFileBlob(path: string): Promise<Blob | null> {
+  const token = getApiToken()
+  const res = await fetch(`/api${path}`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) return null
+  return await res.blob()
+}
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** Descarga el archivo tal como lo subió el ponente (resumen en PDF). */
+async function downloadAbstractOriginal(s: Submission) {
+  const abs = s.latest_abstract
+  if (!abs || !abs.stored_path) return
+  downloadingAbstract.value = abs.id
+  try {
+    const blob = await fetchFileBlob(`/admin/submissions/${s.id}/abstracts/${abs.id}/download`)
+    if (blob) triggerDownload(blob, abs.original_filename ?? `resumen_${s.id}`)
+  } finally { downloadingAbstract.value = null }
+}
+
+/** Descarga el .docx de la última versión, para resúmenes sin archivo original guardado. */
+async function downloadAbstractDocx(s: Submission) {
+  const abs = s.latest_abstract
+  if (!abs || abs.stored_path || !abs.generated_path) return
+  downloadingAbstract.value = abs.id
+  try {
+    const blob = await fetchFileBlob(`/admin/submissions/${s.id}/abstracts/${abs.id}/download`)
+    if (blob) triggerDownload(blob, `Resumen_v${abs.version}.docx`)
+  } finally { downloadingAbstract.value = null }
+}
+
+async function downloadLatestArticleFile(s: Submission) {
+  const art = s.latest_article
+  if (!art) return
+  downloadingArticle.value = art.id
+  try {
+    const blob = await fetchFileBlob(`/admin/submissions/${s.id}/articles/${art.id}/download`)
+    if (blob) triggerDownload(blob, art.original_filename ?? `articulo_${s.id}`)
+  } finally { downloadingArticle.value = null }
+}
+
 async function loadData() {
   loading.value = true
   const api1 = useFetchApi()
@@ -249,6 +302,7 @@ onMounted(loadData)
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Artículo</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Revisores</th>
                 <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Actualizado</th>
+                <th class="px-5 py-3 text-xs font-semibold text-cgr-muted uppercase tracking-wide">Acciones</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-cgr-border">
@@ -305,9 +359,40 @@ onMounted(loadData)
                   <span v-else class="text-xs text-cgr-subtle">—</span>
                 </td>
                 <td class="px-5 py-4 text-cgr-subtle text-xs">{{ formatDate(s.updated_at) }}</td>
+                <td class="px-5 py-4" @click.stop>
+                  <div class="flex flex-col gap-1 items-start">
+                    <UiButton
+                      v-if="s.latest_abstract?.stored_path"
+                      size="sm" variant="secondary"
+                      :loading="downloadingAbstract === s.latest_abstract.id"
+                      title="Descargar el resumen tal como lo subió el ponente"
+                      @click="downloadAbstractOriginal(s)"
+                    >
+                      Descargar resumen
+                    </UiButton>
+                    <UiButton
+                      v-else-if="s.latest_abstract?.generated_path"
+                      size="sm" variant="secondary"
+                      :loading="downloadingAbstract === s.latest_abstract.id"
+                      title="Resumen histórico: descargar la última versión en .docx"
+                      @click="downloadAbstractDocx(s)"
+                    >
+                      Descargar resumen (.docx)
+                    </UiButton>
+                    <UiButton
+                      v-if="s.latest_article"
+                      size="sm" variant="secondary"
+                      :loading="downloadingArticle === s.latest_article.id"
+                      title="Descargar la última versión del artículo para revista"
+                      @click="downloadLatestArticleFile(s)"
+                    >
+                      Descargar artículo
+                    </UiButton>
+                  </div>
+                </td>
               </tr>
               <tr v-if="filtered.length === 0">
-                <td colspan="9" class="px-5 py-12 text-center text-cgr-muted">No hay ponencias con estos filtros.</td>
+                <td colspan="10" class="px-5 py-12 text-center text-cgr-muted">No hay ponencias con estos filtros.</td>
               </tr>
             </tbody>
           </table>

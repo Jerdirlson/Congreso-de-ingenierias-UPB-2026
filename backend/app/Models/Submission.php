@@ -63,6 +63,11 @@ class Submission extends Model
         return $this->hasMany(SubmissionAbstract::class)->orderByDesc('version');
     }
 
+    public function latestAbstract(): HasOne
+    {
+        return $this->hasOne(SubmissionAbstract::class)->latestOfMany('version');
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(SubmissionDocument::class)->orderByDesc('version');
