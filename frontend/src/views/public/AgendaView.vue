@@ -28,28 +28,28 @@ const jornadas: Jornada[] = [
     fecha: '14',
     dia: 'Miércoles',
     titulo: 'Transformación Digital y Tecnología Humanocéntrica',
-    imagen: '/agenda/miercoles-14.png',
+    imagen: '/carteleras/miercoles-14.png',
   },
   {
     key: 'jue',
     fecha: '15',
     dia: 'Jueves',
     titulo: 'Tecnologías Emergentes y Sociedad',
-    imagen: '/agenda/jueves-15.png',
+    imagen: '/carteleras/jueves-15.png',
   },
   {
     key: 'vie',
     fecha: '16',
     dia: 'Viernes',
     titulo: 'Sostenibilidad, Inteligencia Avanzada y Redes del Futuro',
-    imagen: '/agenda/viernes-16.png',
+    imagen: '/carteleras/viernes-16.png',
   },
   {
     key: 'sab',
     fecha: '17',
     dia: 'Sábado',
     titulo: 'Integración y Salud',
-    imagen: '/agenda/sabado-17.png',
+    imagen: '/carteleras/sabado-17.png',
   },
 ]
 
