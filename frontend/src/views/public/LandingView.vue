@@ -5,6 +5,7 @@ import HeroSection from '../../components/HeroSection.vue'
 import AboutSection from '../../components/AboutSection.vue'
 import TracksSection from '../../components/TracksSection.vue'
 import SpeakersSection from '../../components/SpeakersSection.vue'
+import ScheduleSection from '../../components/ScheduleSection.vue'
 import TimelineSection from '../../components/TimelineSection.vue'
 import PricingSection from '../../components/PricingSection.vue'
 import CtaSection from '../../components/CtaSection.vue'
@@ -20,6 +21,7 @@ import FooterSection from '../../components/FooterSection.vue'
       <AboutSection />
       <TracksSection />
       <SpeakersSection />
+      <ScheduleSection />
       <TimelineSection />
       <PricingSection />
       <CtaSection />
