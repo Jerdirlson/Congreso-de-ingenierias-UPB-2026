@@ -54,7 +54,7 @@ const jornadas: Jornada[] = [
 ]
 
 const activeDay = ref('mie')
-const current = computed(() => jornadas.find(j => j.key === activeDay.value) ?? jornadas[0])
+const current = computed(() => jornadas.find(j => j.key === activeDay.value) ?? jornadas[0]!)
 
 // Lightbox
 const zoomed = ref(false)
