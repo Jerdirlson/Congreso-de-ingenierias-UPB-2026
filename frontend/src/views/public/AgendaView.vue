@@ -1,68 +1,65 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 import FooterSection from '../../components/FooterSection.vue'
 
 /**
- * Agenda pública — solo los inicios de cada jornada.
+ * Agenda pública — cartelera por jornada.
  *
- * El comité pidió publicar únicamente la apertura de cada día: la agenda
- * detallada sigue siendo preliminar y hay actividades sin confirmar, así que
- * el detalle por franja horaria no va a la web todavía. Tampoco se publican
- * los responsables internos de cada actividad.
+ * Se publican los pósters oficiales de cada día (del miércoles 14 al sábado 17
+ * de octubre) con la programación completa. El **martes 13 no se publica**
+ * (confirmado por el comité: "solo hay que publicar a partir del miércoles").
+ * Es la jornada "Futuros Ingenieros", dirigida a semilleros y colegios.
  *
- * El **martes 13 no se publica** (confirmado por Francisco el 12-ago-2026:
- * "solo hay que publicar a partir del miércoles"). Es la jornada "Futuros
- * Ingenieros", dirigida a semilleros y colegios, y en el Excel venía marcada
- * en rojo completa. La agenda pública va del miércoles 14 al sábado 17.
- *
- * Fuente: "Agenda V10_Agosto5_FISI.xlsx" (comité organizador).
+ * Fuente: pósters oficiales del comité de Comunicaciones.
  */
 
 interface Jornada {
+  key: string
   fecha: string
   dia: string
   titulo: string
-  enfoque?: string
-  hora: string
-  apertura: string
-  lugar: string
+  imagen: string
 }
 
 const jornadas: Jornada[] = [
   {
+    key: 'mie',
     fecha: '14',
     dia: 'Miércoles',
     titulo: 'Transformación Digital y Tecnología Humanocéntrica',
-    hora: '7:30 a. m.',
-    apertura: 'Registro general y entrega de kits',
-    lugar: 'Plazoleta Caracolí, frente al Auditorio Juan Pablo II',
+    imagen: '/agenda/miercoles-14.png',
   },
   {
+    key: 'jue',
     fecha: '15',
     dia: 'Jueves',
     titulo: 'Tecnologías Emergentes y Sociedad',
-    hora: '8:00 a. m.',
-    apertura: 'Inicio de jornada académica',
-    lugar: 'Auditorio Juan Pablo II',
+    imagen: '/agenda/jueves-15.png',
   },
   {
+    key: 'vie',
     fecha: '16',
     dia: 'Viernes',
     titulo: 'Sostenibilidad, Inteligencia Avanzada y Redes del Futuro',
-    hora: '8:00 a. m.',
-    apertura: 'Inicio de jornada académica',
-    lugar: 'Auditorio Juan Pablo II',
+    imagen: '/agenda/viernes-16.png',
   },
   {
+    key: 'sab',
     fecha: '17',
     dia: 'Sábado',
     titulo: 'Integración y Salud',
-    enfoque: 'Bienestar personal y cierre de comunidad.',
-    hora: '8:30 a. m.',
-    apertura: 'Jornada deportiva de integración',
-    lugar: 'Escenario deportivo',
+    imagen: '/agenda/sabado-17.png',
   },
 ]
+
+const activeDay = ref('mie')
+const current = computed(() => jornadas.find(j => j.key === activeDay.value) ?? jornadas[0])
+
+// Lightbox
+const zoomed = ref(false)
+function openZoom() { zoomed.value = true }
+function closeZoom() { zoomed.value = false }
 </script>
 
 <template>
@@ -99,81 +96,90 @@ const jornadas: Jornada[] = [
 
       <!-- JORNADAS -->
       <section class="bg-cgr-section py-20 px-5 lg:px-20">
-        <div class="max-w-4xl mx-auto">
+        <div class="max-w-5xl mx-auto">
 
-          <div class="text-center mb-12">
-            <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Inicio de cada jornada</span>
+          <div class="text-center mb-10">
+            <span class="text-cgr-purple text-xs font-semibold tracking-widest uppercase">Programación por día</span>
             <h2 class="mt-3 text-3xl font-black text-white">Cuatro días, cuatro enfoques</h2>
           </div>
 
           <!-- Aviso: la agenda todavía es preliminar -->
-          <div class="mb-10 flex items-start gap-3 bg-cgr-card border border-cgr-purple/30 rounded-2xl px-5 py-4">
+          <div class="mb-10 flex items-start gap-3 bg-cgr-card border border-cgr-purple/30 rounded-2xl px-5 py-4 max-w-3xl mx-auto">
             <svg class="w-5 h-5 text-cgr-purple shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
             </svg>
             <p class="text-sm text-cgr-muted leading-relaxed">
               Esta agenda es <strong class="text-white font-semibold">preliminar</strong> y puede cambiar.
-              Aquí publicamos el inicio de cada jornada; la programación detallada por franja horaria
-              se publicará cuando el comité organizador la confirme.
+              Selecciona un día para ver su cartelera completa.
             </p>
           </div>
 
-          <!-- Línea de tiempo de jornadas -->
-          <ol class="relative space-y-5">
-            <li v-for="(j, i) in jornadas" :key="j.fecha">
-              <article
-                class="relative bg-cgr-card border border-cgr-border rounded-2xl p-6 sm:p-7 hover:border-cgr-purple/50 transition-colors"
-              >
-                <div class="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-7">
+          <!-- Tabs de días -->
+          <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-10">
+            <button
+              v-for="j in jornadas"
+              :key="j.key"
+              @click="activeDay = j.key"
+              class="shrink-0 px-4 sm:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              :class="activeDay === j.key
+                ? 'bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white shadow-lg shadow-cgr-purple/20'
+                : 'border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple'"
+            >
+              {{ j.dia }} {{ j.fecha }}
+            </button>
+          </div>
 
-                  <!-- Fecha -->
-                  <div class="shrink-0 flex sm:flex-col items-center sm:items-start gap-3 sm:gap-0">
-                    <div class="text-center sm:text-left">
-                      <p class="text-4xl sm:text-5xl font-black leading-none bg-gradient-to-br from-cgr-purple-dark to-cgr-purple bg-clip-text text-transparent">
-                        {{ j.fecha }}
-                      </p>
-                      <p class="text-cgr-subtle text-xs uppercase tracking-widest mt-1.5">Octubre</p>
-                    </div>
-                    <span class="sm:mt-3 text-cgr-muted text-sm font-semibold">{{ j.dia }}</span>
-                  </div>
-
-                  <!-- Divider vertical (desktop) -->
-                  <div class="hidden sm:block w-px self-stretch bg-gradient-to-b from-cgr-purple/40 to-transparent shrink-0" />
-
-                  <!-- Contenido -->
-                  <div class="flex-1 min-w-0">
-                    <p class="text-cgr-purple text-[11px] font-semibold tracking-widest uppercase mb-1.5">
-                      Jornada {{ i + 1 }} de {{ jornadas.length }}
-                    </p>
-                    <h3 class="text-white font-bold text-lg sm:text-xl leading-snug">
-                      {{ j.titulo }}
-                    </h3>
-                    <p v-if="j.enfoque" class="text-cgr-muted text-sm leading-relaxed mt-2">
-                      {{ j.enfoque }}
-                    </p>
-
-                    <!-- Inicio de la jornada -->
-                    <div class="mt-5 bg-cgr-section border border-cgr-border rounded-xl px-4 py-3">
-                      <div class="flex items-center gap-2 mb-1.5">
-                        <svg class="w-4 h-4 text-cgr-purple shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                        <span class="text-white font-bold text-sm">{{ j.hora }}</span>
-                        <span class="text-cgr-subtle text-xs">— {{ j.apertura }}</span>
-                      </div>
-                      <div class="flex items-start gap-2 text-cgr-subtle text-xs leading-relaxed">
-                        <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-                        </svg>
-                        {{ j.lugar }}
-                      </div>
-                    </div>
-                  </div>
+          <!-- Card del día activo -->
+          <div class="bg-cgr-card border border-cgr-border rounded-3xl overflow-hidden">
+            <!-- Cabecera del día -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 sm:p-8 border-b border-cgr-border">
+              <div class="min-w-0">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-white font-black text-2xl sm:text-3xl">{{ current.dia }}</span>
+                  <span class="text-cgr-purple font-bold text-lg">{{ current.fecha }} de octubre</span>
                 </div>
-              </article>
-            </li>
-          </ol>
+                <p class="mt-1 text-cgr-muted text-sm leading-snug">{{ current.titulo }}</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button
+                  @click="openZoom"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-cgr-border text-cgr-muted hover:text-white hover:border-cgr-purple transition-all"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 8v6M8 11h6M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0z"/>
+                  </svg>
+                  Ampliar
+                </button>
+                <a
+                  :href="current.imagen"
+                  :download="`agenda-${current.dia.toLowerCase()}-${current.fecha}.png`"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-cgr-purple-dark to-cgr-purple text-white shadow-lg shadow-cgr-purple/20 transition-all hover:opacity-90"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 10l5 5 5-5M12 15V3"/>
+                  </svg>
+                  Descargar
+                </a>
+              </div>
+            </div>
+
+            <!-- Póster del día -->
+            <div class="p-4 sm:p-6 bg-cgr-bg/40 flex justify-center">
+              <button
+                @click="openZoom"
+                class="group relative block w-full max-w-2xl rounded-2xl overflow-hidden cursor-zoom-in"
+                aria-label="Ampliar agenda"
+              >
+                <img
+                  :src="current.imagen"
+                  :alt="`Agenda ${current.dia} ${current.fecha} de octubre — ${current.titulo}`"
+                  class="w-full h-auto block transition-transform duration-300 group-hover:scale-[1.01]"
+                  loading="lazy"
+                />
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -205,5 +211,41 @@ const jornadas: Jornada[] = [
 
       <FooterSection />
     </main>
+
+    <!-- Lightbox -->
+    <Transition name="fade">
+      <div
+        v-if="zoomed"
+        @click="closeZoom"
+        class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8 cursor-zoom-out"
+      >
+        <button
+          @click.stop="closeZoom"
+          class="absolute top-4 right-4 sm:top-6 sm:right-6 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-colors"
+          aria-label="Cerrar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+        <img
+          :src="current.imagen"
+          :alt="`Agenda ${current.dia} ${current.fecha} de octubre`"
+          class="max-w-full max-h-full w-auto h-auto object-contain rounded-lg shadow-2xl"
+          @click.stop
+        />
+      </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

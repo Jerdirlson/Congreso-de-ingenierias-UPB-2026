@@ -19,7 +19,6 @@ const links: { label: string; href?: string; to?: string }[] = [
   { label: 'Conferencistas',       to: '/conferencistas' },
   { label: 'Agenda',               to: '/agenda' },
   { label: 'Actividades',          to: '/#actividades' },
-  { label: 'Agenda',               to: '/#agenda' },
   { label: 'Fechas',               to: '/#fechas' },
   { label: 'Precios',              to: '/#precios' },
   { label: 'Inscripción',          to: '/#inscripcion' },
