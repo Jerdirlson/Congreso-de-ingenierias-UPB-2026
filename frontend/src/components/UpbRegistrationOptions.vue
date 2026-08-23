@@ -19,7 +19,7 @@ const ALL_OPTIONS: NrcOption[] = [
     nrc: '51882',
     title: 'Estudiantes UPB',
     description: 'Presencial, con o sin ponencia.',
-    price: '$300.000 COP',
+    price: '$350.000 COP',
     url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51882&period=202650',
     audiences: ['ponente', 'participante'],
   },
@@ -27,7 +27,7 @@ const ALL_OPTIONS: NrcOption[] = [
     nrc: '51883',
     title: 'Estudiantes externos',
     description: 'Estudiantes de otras instituciones, con o sin ponencia.',
-    price: '$370.000 COP',
+    price: '$420.000 COP',
     url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51883&period=202650',
     audiences: ['ponente', 'participante'],
   },
@@ -35,7 +35,7 @@ const ALL_OPTIONS: NrcOption[] = [
     nrc: '51884',
     title: 'Profesionales — Presencial',
     description: 'Profesionales presencial, con o sin ponencia.',
-    price: '$670.000 COP',
+    price: '$720.000 COP',
     url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51884&period=202650',
     audiences: ['ponente', 'participante'],
   },
@@ -43,7 +43,7 @@ const ALL_OPTIONS: NrcOption[] = [
     nrc: '51885',
     title: 'Profesionales — Virtual',
     description: 'Profesionales virtual, con o sin ponencia.',
-    price: '$670.000 COP',
+    price: '$720.000 COP',
     url: 'https://micrositios.upb.edu.co/fcontinua/pages/index.php?nrc=51885&period=202650',
     audiences: ['ponente', 'participante'],
   },
@@ -120,7 +120,6 @@ async function confirmExternal() {
       <p class="text-cgr-muted leading-relaxed">
         Selecciona la opción que corresponde a tu perfil. Al continuar se abrirá el
         portal oficial de la UPB para completar el formulario y el pago de tu inscripción.
-        <strong class="text-white">Tarifas vigentes hasta el 10 de julio de 2026.</strong>
       </p>
     </div>
 
