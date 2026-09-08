@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AdminImpersonateController;
 use App\Http\Controllers\Api\AdminMailController;
 use App\Http\Controllers\Api\AdminPonenteExportController;
 use App\Http\Controllers\Api\AdminUserController;
+use App\Http\Controllers\Api\AgendaController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AxisConfirmationController;
 use App\Http\Controllers\Api\EmailVerificationController;
@@ -58,6 +59,7 @@ Route::middleware('throttle:120,1')->group(function () {
     Route::get('/thematic-axes', [ThematicAxisController::class, 'index']);
     Route::get('/events',        [CongressEventController::class, 'index']);
     Route::get('/settings',      [SettingsController::class, 'publicSettings']);
+    Route::get('/agenda',        [AgendaController::class, 'index']);
 });
 
 // ── Auth (público) ────────────────────────────────────────────────────────
@@ -169,6 +171,15 @@ Route::middleware(['auth:sanctum', 'role:admin|administrativo', 'throttle:60,1']
     Route::post('/mail/send',           [AdminMailController::class, 'send']);
     Route::get('/settings',             [SettingsController::class, 'publicSettings']);
     Route::put('/settings',             [SettingsController::class, 'update']);
+
+    // Agenda editable (admin + administrativo, p. ej. Liney)
+    Route::put('/agenda/reorder',       [AgendaController::class, 'reorder']);
+    Route::put('/agenda/days/{dia}',            [AgendaController::class, 'updateDay']);
+    Route::post('/agenda/days/{dia}/poster',    [AgendaController::class, 'uploadPoster']);
+    Route::delete('/agenda/days/{dia}/poster',  [AgendaController::class, 'deletePoster']);
+    Route::post('/agenda',              [AgendaController::class, 'store']);
+    Route::put('/agenda/{item}',        [AgendaController::class, 'update']);
+    Route::delete('/agenda/{item}',     [AgendaController::class, 'destroy']);
 });
 
 // ── Webhooks (sin auth) ───────────────────────────────────────────────────

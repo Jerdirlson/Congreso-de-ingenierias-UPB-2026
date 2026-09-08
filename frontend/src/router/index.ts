@@ -126,6 +126,7 @@ const router = createRouter({
         { path: 'submissions', name: 'admin-submissions', component: () => import('../views/admin/AdminSubmissions.vue') },
         { path: 'submissions/:id', name: 'admin-submission-detail', component: () => import('../views/admin/AdminSubmissionDetail.vue') },
         { path: 'thematic-axes', name: 'admin-axes', component: () => import('../views/admin/AdminAxes.vue') },
+        { path: 'agenda', name: 'admin-agenda', component: () => import('../views/admin/AdminAgendaView.vue') },
         { path: 'analytics', name: 'admin-analytics', component: () => import('../views/admin/AdminAnalytics.vue') },
         { path: 'mail', name: 'admin-mail', component: () => import('../views/admin/AdminMailView.vue') },
         { path: 'settings', name: 'admin-settings', component: () => import('../views/admin/AdminSettingsView.vue') },
