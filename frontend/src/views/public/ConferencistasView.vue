@@ -8,7 +8,7 @@ type Conferencista = {
   titulo: string
   conferencia?: string
   bio?: string
-  institucion: string
+  institucion?: string
   pais: string
   tipo: 'Internacional' | 'Nacional'
   modalidad?: 'Presencial' | 'Virtual' | 'Híbrida'
@@ -202,27 +202,26 @@ const conferencistas: Conferencista[] = [
   },
   // 14
   {
-    nombre: 'Silvia Nathalia Mantilla Niño',
+    nombre: 'Andrés Fernando Pérez Gutiérrez',
     titulo: 'MSc.',
-    bio: 'Cofundadora de U-Think, Diseñadora Industrial y MSc. en Ingeniería Industrial por la Universidad Industrial de Santander (UIS). Es docente e investigadora del programa de Diseño Industrial de la UIS y coinvestigadora del Centro de Desarrollo Tecnológico Smart Regions Center de la UNAB. Fue admitida en el Doctorado en Tecnologías de la Información y las Comunicaciones de la Universitat Pompeu Fabra, donde iniciará sus estudios en 2026–2027, con énfasis en interacción humano–IA. Su trayectoria se enfoca en investigación aplicada, diseño, factores humanos, desarrollo de nuevos productos, maduración tecnológica, IoT, inteligencia artificial y transferencia de tecnología, con especial interés en soluciones centradas en las personas.',
-    institucion: 'Universidad Industrial de Santander (UIS) · U-Think',
+    bio: 'Fundador de Estándar & Excelencia S.A.S. BIC y docente catedrático de la Universidad Pontificia Bolivariana. Ingeniero Civil, MSc en Ingeniería y Gerencia de la Construcción, MBA y con estudios ejecutivos en VDC. Se especializa en el desarrollo de soluciones digitales y la automatización de procesos Scan-to-BIM para optimizar la productividad constructiva de proyectos de infraestructura, integrando Gemelos Digitales, Inteligencia Artificial Predictiva, BIM, VDC, Realidades Extendidas y Lean Construction.',
+    institucion: 'Estándar & Excelencia S.A.S. BIC · Universidad Pontificia Bolivariana (UPB)',
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
-    foto: '/speakers/silvia-mantilla.png',
-    lineas: ['Diseño centrado en las personas', 'Interacción humano–IA', 'Factores humanos', 'Desarrollo de nuevos productos', 'Transferencia de tecnología'],
+    foto: '/speakers/andres-perez.png',
+    lineas: ['Scan-to-BIM', 'BIM y VDC', 'Gemelos digitales', 'Inteligencia artificial predictiva', 'Lean Construction'],
   },
   // 15
   {
-    nombre: 'Camilo Andrés Hernández Orduz',
-    titulo: 'MSc.',
-    bio: 'Cofundador de U-Think, Ingeniero Industrial por la Universidad Industrial de Santander (UIS), especialista en Finanzas por la UNAB y MSc. en Economía y Desarrollo por la UIS. Es profesor del programa de Ingeniería Industrial de la Universidad Pontificia Bolivariana (UPB) y de la Escuela de Economía y Administración de la UIS. Su trayectoria integra economía, gestión organizacional, transformación digital y mejoramiento de procesos, con experiencia en proyectos de los sectores salud, educación superior, investigación económica, turismo y patrimonio. Su trabajo se orienta al diseño de estrategias y soluciones para fortalecer la productividad, la toma de decisiones y el desarrollo organizacional.',
-    institucion: 'Universidad Pontificia Bolivariana (UPB) · U-Think',
+    nombre: 'Laura Catalina Cruz',
+    titulo: 'Ing.',
+    bio: 'Ingeniera Industrial con experiencia en gestión estratégica, calidad y excelencia operacional en el sector salud, con trayectoria en auditorías internas, planificación estratégica, gestión documental, diseño y seguimiento de indicadores de desempeño y liderazgo de iniciativas de mejoramiento continuo. Experiencia en procesos de acreditación nacional (SUA) e internacional (Joint Commission International – JCI), contribuyendo al fortalecimiento de estándares de calidad, seguridad del paciente y excelencia en la prestación de servicios. Profesional orientada a resultados, con capacidad para liderar proyectos, articular equipos multidisciplinarios y gestionar relaciones con clientes y aliados nacionales e internacionales. Se destaca por su orientación al servicio, proactividad, capacidad de organización, pensamiento estratégico y compromiso con el logro de objetivos institucionales, así como por su experiencia en el desarrollo y fortalecimiento de alianzas estratégicas. Dominio del idioma inglés.',
     pais: 'Colombia',
     tipo: 'Nacional',
     modalidad: 'Presencial',
-    foto: '/speakers/camilo-hernandez.png',
-    lineas: ['Economía y desarrollo', 'Gestión organizacional', 'Transformación digital', 'Mejoramiento de procesos', 'Excelencia operacional'],
+    foto: '/speakers/laura-cruz.png',
+    lineas: ['Gestión estratégica', 'Calidad y excelencia operacional', 'Acreditación en salud (SUA · JCI)', 'Mejoramiento continuo', 'Indicadores de desempeño'],
   },
   // 16
   {
@@ -342,8 +341,10 @@ const conferencistas: Conferencista[] = [
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 9.2c0 7.3-8 11.8-8 11.8z"/>
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
-                <span>{{ c.institucion }}</span>
-                <span class="text-cgr-border">·</span>
+                <template v-if="c.institucion">
+                  <span>{{ c.institucion }}</span>
+                  <span class="text-cgr-border">·</span>
+                </template>
                 <span>{{ c.pais }}</span>
               </div>
             </div>
