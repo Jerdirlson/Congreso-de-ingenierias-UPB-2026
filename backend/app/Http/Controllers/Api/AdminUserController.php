@@ -37,6 +37,17 @@ class AdminUserController extends Controller
                 : $query->whereNull('email_verified_at');
         }
 
+        // Estado de la inscripción en el portal UPB:
+        // paid = pago verificado · confirmed = dijo que se inscribió, pago sin verificar · pending = nada.
+        if ($request->filled('payment')) {
+            match ($request->payment) {
+                'paid'      => $query->whereNotNull('external_registration_paid_at'),
+                'confirmed' => $query->whereNotNull('external_registration_at')->whereNull('external_registration_paid_at'),
+                'pending'   => $query->whereNull('external_registration_at')->whereNull('external_registration_paid_at'),
+                default     => null,
+            };
+        }
+
         $users = $query->paginate(25)->through(fn (User $u) => [
             'id'                  => $u->id,
             'name'                => $u->name,
@@ -54,6 +65,8 @@ class AdminUserController extends Controller
             'submissions_count'   => $u->submissions_count,
             'registrations_count' => $u->registrations_count,
             'payments_count'      => $u->payments_count,
+            'external_registration_at'      => $u->external_registration_at?->toIso8601String(),
+            'external_registration_paid_at' => $u->external_registration_paid_at?->toIso8601String(),
         ]);
 
         return response()->json($users);
@@ -80,6 +93,8 @@ class AdminUserController extends Controller
             'city'              => $user->city,
             'email_verified_at' => $user->email_verified_at?->toIso8601String(),
             'created_at'        => $user->created_at->toIso8601String(),
+            'external_registration_at'      => $user->external_registration_at?->toIso8601String(),
+            'external_registration_paid_at' => $user->external_registration_paid_at?->toIso8601String(),
             'submissions'       => $user->submissions,
             'registrations'     => $user->registrations,
             'payments'          => $user->payments,
@@ -99,6 +114,29 @@ class AdminUserController extends Controller
             'id'    => $user->id,
             'role'  => $user->getRoleNames()->first(),
             'roles' => $user->getRoleNames()->values()->all(),
+        ]);
+    }
+
+    // PATCH /api/admin/users/{user}/payment — marcar/desmarcar a mano el pago verificado
+    // de la inscripción en el portal UPB (lo que el usuario ve como "totalmente inscrito").
+    public function updatePayment(Request $request, User $user): JsonResponse
+    {
+        $validated = $request->validate([
+            'paid' => 'required|boolean',
+        ]);
+
+        if ($validated['paid']) {
+            // Conserva la fecha original si ya estaba marcado (idempotente).
+            $user->external_registration_paid_at ??= now();
+        } else {
+            $user->external_registration_paid_at = null;
+        }
+        $user->save();
+
+        return response()->json([
+            'id'                            => $user->id,
+            'external_registration_at'      => $user->external_registration_at?->toIso8601String(),
+            'external_registration_paid_at' => $user->external_registration_paid_at?->toIso8601String(),
         ]);
     }
 

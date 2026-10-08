@@ -23,6 +23,8 @@ interface User {
   submissions_count: number
   registrations_count: number
   payments_count: number
+  external_registration_at: string | null
+  external_registration_paid_at: string | null
 }
 
 interface UserDetail extends User {
@@ -47,6 +49,7 @@ const loading   = ref(true)
 const search    = ref('')
 const roleFilter = ref('')
 const verifiedFilter = ref('')
+const paymentFilter = ref('')
 
 const selected  = ref<UserDetail | null>(null)
 const loadingDetail = ref(false)
@@ -105,7 +108,7 @@ const roleColors: Record<string, string> = {
 
 let searchTimeout: ReturnType<typeof setTimeout>
 
-watch([roleFilter, verifiedFilter], () => {
+watch([roleFilter, verifiedFilter, paymentFilter], () => {
   page.value = 1
   load()
 })
@@ -122,6 +125,7 @@ async function load() {
   if (search.value)        params.set('search', search.value)
   if (roleFilter.value)    params.set('role', roleFilter.value)
   if (verifiedFilter.value) params.set('verified', verifiedFilter.value)
+  if (paymentFilter.value)  params.set('payment', paymentFilter.value)
 
   const data = await api.get<Paginated>(`/admin/users?${params}`)
   if (data) {
@@ -179,6 +183,45 @@ async function toggleReviewer() {
     if (idx !== -1) users.value[idx]!.role = primary
   }
   togglingReviewer.value = false
+}
+
+// ── Pago verificado de la inscripción UPB (marcado a mano por admin/administrativo) ──
+type PaymentState = 'paid' | 'confirmed' | 'pending'
+
+function paymentState(u: Pick<User, 'external_registration_at' | 'external_registration_paid_at'>): PaymentState {
+  if (u.external_registration_paid_at) return 'paid'
+  if (u.external_registration_at) return 'confirmed'
+  return 'pending'
+}
+
+const paymentBadges: Record<PaymentState, { label: string; class: string }> = {
+  paid:      { label: 'Pagado',          class: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' },
+  confirmed: { label: 'Por verificar',   class: 'bg-amber-500/15 text-amber-400 border border-amber-500/30' },
+  pending:   { label: 'Sin inscripción', class: 'bg-cgr-border/40 text-cgr-subtle border border-cgr-border' },
+}
+
+const togglingPayment = ref<number | null>(null)
+const paymentError = ref('')
+
+async function togglePayment(u: User) {
+  togglingPayment.value = u.id
+  paymentError.value = ''
+  const api = useFetchApi()
+  const res = await api.patch<{ id: number; external_registration_at: string | null; external_registration_paid_at: string | null }>(
+    `/admin/users/${u.id}/payment`,
+    { paid: !u.external_registration_paid_at },
+  )
+  if (res) {
+    // Reflejar en la fila y en el drawer (si es el mismo usuario).
+    for (const target of [users.value.find(x => x.id === res.id), selected.value?.id === res.id ? selected.value : null]) {
+      if (!target) continue
+      target.external_registration_at = res.external_registration_at
+      target.external_registration_paid_at = res.external_registration_paid_at
+    }
+  } else {
+    paymentError.value = 'No se pudo actualizar el pago. Intenta de nuevo.'
+  }
+  togglingPayment.value = null
 }
 
 function redirectByRole(role: string | null) {
@@ -316,7 +359,18 @@ onMounted(load)
           <option value="yes">Verificados</option>
           <option value="no">Sin verificar</option>
         </select>
+        <!-- Pago -->
+        <select
+          v-model="paymentFilter"
+          class="bg-cgr-bg border border-cgr-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cgr-purple"
+        >
+          <option value="">Pago: todos</option>
+          <option value="paid">Pagado</option>
+          <option value="confirmed">Por verificar</option>
+          <option value="pending">Sin inscripción</option>
+        </select>
       </div>
+      <p v-if="paymentError" class="mt-2 text-xs text-red-400">{{ paymentError }}</p>
     </UiCard>
 
     <!-- Tabla -->
@@ -342,6 +396,7 @@ onMounted(load)
               <th class="text-left px-4 py-3 hidden lg:table-cell">País</th>
               <th class="text-center px-4 py-3 hidden sm:table-cell">Ponencias</th>
               <th class="text-center px-4 py-3 hidden sm:table-cell">Verificado</th>
+              <th class="text-left px-4 py-3">Pago</th>
               <th class="text-left px-4 py-3 hidden lg:table-cell">Registro</th>
               <th class="px-4 py-3"></th>
             </tr>
@@ -385,6 +440,24 @@ onMounted(load)
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                 </span>
+              </td>
+              <td class="px-4 py-3" @click.stop>
+                <div class="flex items-center gap-2">
+                  <span
+                    :class="paymentBadges[paymentState(u)].class"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap"
+                  >{{ paymentBadges[paymentState(u)].label }}</span>
+                  <button
+                    type="button"
+                    :disabled="togglingPayment === u.id"
+                    :title="u.external_registration_paid_at ? 'Quitar pago verificado' : 'Marcar como pagado'"
+                    class="text-[11px] font-semibold px-2 py-0.5 rounded-md border transition-colors disabled:opacity-50 whitespace-nowrap"
+                    :class="u.external_registration_paid_at
+                      ? 'border-cgr-border text-cgr-subtle hover:text-red-400 hover:border-red-500/40'
+                      : 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10'"
+                    @click="togglePayment(u)"
+                  >{{ togglingPayment === u.id ? '…' : u.external_registration_paid_at ? 'Quitar' : 'Marcar pagado' }}</button>
+                </div>
               </td>
               <td class="px-4 py-3 hidden lg:table-cell text-cgr-subtle text-xs">
                 {{ formatDate(u.created_at) }}
@@ -483,6 +556,40 @@ onMounted(load)
                 <p class="text-cgr-subtle text-[10px] uppercase tracking-widest font-semibold mb-0.5">{{ label }}</p>
                 <p class="text-white text-sm">{{ val ?? '—' }}</p>
               </div>
+            </div>
+
+            <!-- Pago de inscripción (portal UPB) -->
+            <div class="bg-cgr-card border border-cgr-border rounded-xl p-4">
+              <p class="text-cgr-subtle text-xs font-semibold uppercase tracking-widest mb-3">Pago de inscripción</p>
+              <p class="text-cgr-muted text-xs mb-3">
+                El pago se hace en el portal de la UPB. Al marcarlo como pagado, el usuario ve en su
+                cuenta que está totalmente inscrito al congreso.
+              </p>
+              <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <span
+                    :class="paymentBadges[paymentState(selected)].class"
+                    class="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"
+                  >{{ paymentBadges[paymentState(selected)].label }}</span>
+                  <p v-if="selected.external_registration_paid_at" class="text-cgr-subtle text-xs mt-2">
+                    Verificado el {{ formatDate(selected.external_registration_paid_at) }}
+                  </p>
+                  <p v-else-if="selected.external_registration_at" class="text-cgr-subtle text-xs mt-2">
+                    Confirmó su inscripción el {{ formatDate(selected.external_registration_at) }}
+                  </p>
+                </div>
+                <button
+                  @click="togglePayment(selected)"
+                  :disabled="togglingPayment === selected.id"
+                  class="shrink-0 text-xs px-4 py-1.5 rounded-lg font-semibold border transition-colors disabled:opacity-50"
+                  :class="selected.external_registration_paid_at
+                    ? 'border-red-500/40 text-red-400 hover:bg-red-500/10'
+                    : 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10'"
+                >
+                  {{ togglingPayment === selected.id ? '…' : selected.external_registration_paid_at ? 'Quitar pago' : 'Marcar como pagado' }}
+                </button>
+              </div>
+              <p v-if="paymentError" class="mt-2 text-xs text-red-400">{{ paymentError }}</p>
             </div>
 
             <!-- Cambiar rol -->
