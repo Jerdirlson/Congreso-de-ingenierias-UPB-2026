@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import NavBar from '../../components/NavBar.vue'
 import FooterSection from '../../components/FooterSection.vue'
+import ProgramacionPonencias from '../../components/ProgramacionPonencias.vue'
+import { programacionPonencias } from '../../data/programacionPonencias'
 import { useFetchApi } from '../../composables/useFetchApi'
 
 /**
@@ -64,6 +66,7 @@ const api = useFetchApi()
 const porDia = ref<Record<string, AgendaItem[]>>({})
 const diasMeta = ref<Record<string, DiaMeta>>({})
 const loading = ref(true)
+const hayProgramacion = programacionPonencias.length > 0
 
 const activeDay = ref('mie')
 const current = computed(() => jornadas.find(j => j.key === activeDay.value) ?? jornadas[0]!)
@@ -176,6 +179,7 @@ onMounted(load)
             <p class="text-sm text-cgr-muted leading-relaxed">
               Esta agenda es <strong class="text-white font-semibold">preliminar</strong> y puede cambiar.
               Selecciona un día para ver su programación completa.
+              <a v-if="hayProgramacion" href="#ponencias" class="text-cgr-purple font-semibold hover:underline">¿Eres ponente? Consulta aquí la programación de ponencias.</a>
             </p>
           </div>
 
@@ -313,8 +317,10 @@ onMounted(load)
         </div>
       </section>
 
+      <ProgramacionPonencias />
+
       <!-- CTA -->
-      <section class="bg-cgr-bg py-20 px-5 lg:px-20">
+      <section class="bg-cgr-bg border-t border-cgr-border py-20 px-5 lg:px-20">
         <div class="max-w-3xl mx-auto text-center">
           <h2 class="text-2xl sm:text-3xl font-black text-white mb-4">
             ¿Quieres participar como ponente?
